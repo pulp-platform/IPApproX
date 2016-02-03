@@ -76,3 +76,10 @@ class IPDatabase(object):
             vivado_script += self.ip_dic[i].export_vivado(abs_path, more_opts)
         with open(filename, "wb") as f:
             f.write(vivado_script)
+
+    def generate_vsim_libs(self):
+        l = []
+        for i in self.ip_dic.keys():
+            l.extend(self.ip_dic[i].generate_vsim_libs())
+        for el in l:
+            print "%s_lib" % el

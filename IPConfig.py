@@ -32,3 +32,9 @@ class IPConfig(object):
         for s in self.sub_ips.keys():
             vivado_script += self.sub_ips[s].export_vivado(abs_path, more_opts)
         return vivado_script
+
+    def generate_vsim_libs(self):
+        l = []
+        for s in self.sub_ips.keys():
+            l.append(s)
+        return l
