@@ -27,7 +27,7 @@ endif
 
 set LIB_NAME="${IP}_lib"
 set LIB_PATH="${MSIM_LIBS_PATH}/${LIB_NAME}"
-set IP_PATH="${IPS_PATH}/${IP}"
+set IP_PATH="${IPS_PATH}/%s"
 set RTL_PATH="${RTL_PATH}"
 
 ##############################################################################

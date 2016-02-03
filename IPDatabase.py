@@ -51,14 +51,14 @@ class IPDatabase(object):
             #     ip_full_name = "%s_%s" % (ip['path'], ip['name'])
             ip_full_name = ip['name']
             ip_full_path = "%s/%s/%s/src_files.txt" % (ips_list_path, IP_DIR, ip['path'])
-            self.import_yaml(ip_full_name, ip_full_path)
+            self.import_yaml(ip_full_name, ip_full_path, ip['path'])
 
-    def import_yaml(self, ip_name, filename):
+    def import_yaml(self, ip_name, filename, ip_path):
         with open(filename, "rb") as f:
             ip_dic = ordered_load(f, yaml.SafeLoader)
 
         try:
-            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic)
+            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path)
         except KeyError:
             print("Skipped IP %s from %s config file as it seems it is already in the IP Config database." % (ip_name, filename))
 
