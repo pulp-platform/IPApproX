@@ -65,3 +65,5 @@ echo "${Red}"
 """
 VSIM_VLOG_INCDIR_CMD = "+incdir+"
 VSIM_VLOG_CMD = "vlog -quiet -sv -work ${LIB_PATH} %s %s %s || goto error\n"
+
+VSIM_VCOM_CMD = "vcom -quiet -work ${LIB_PATH} %s %s || goto error\n"

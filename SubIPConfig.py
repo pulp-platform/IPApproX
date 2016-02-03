@@ -21,13 +21,22 @@ class SubIPConfig(object):
             print "ERROR: failed to find any files associated to ip %s, sub-ip %s." % (ip_name, sub_ip_name)
             sys.exit(1)
 
+        try:
+            self.vhdl = sub_ip_dic['vhdl']
+        except KeyError:
+            self.vhdl = False
+
     def export_vsim(self, abs_path, more_opts):
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
-        vlog_includes = ""
-        for i in self.incdirs:
-            vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
-        for f in self.files:
-            vlog_cmd += VSIM_VLOG_CMD % (more_opts, vlog_includes, "%s/%s" % (abs_path, f))
+        if not self.vhdl:
+            vlog_includes = ""
+            for i in self.incdirs:
+                vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
+            for f in self.files:
+                vlog_cmd += VSIM_VLOG_CMD % (more_opts, vlog_includes, "%s/%s" % (abs_path, f))
+        else:
+            for f in self.files:
+                vlog_cmd += VSIM_VCOM_CMD % (more_opts, "%s/%s" % (abs_path, f))
         return vlog_cmd
         
     def export_vivado(self, abs_path, more_opts):
