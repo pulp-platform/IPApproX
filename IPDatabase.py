@@ -80,6 +80,15 @@ class IPDatabase(object):
     def generate_vsim_libs(self):
         l = []
         for i in self.ip_dic.keys():
-            l.extend(self.ip_dic[i].generate_vsim_libs())
+            #l.extend(self.ip_dic[i].generate_list())
+            l.append(i)
         for el in l:
             print "%s_lib" % el
+
+    def generate_vsim_csh(self):
+        l = []
+        for i in self.ip_dic.keys():
+            #l.extend(self.ip_dic[i].generate_list())
+            l.append(i)
+        for el in l:
+            print "vcompile_%s.csh" % el

@@ -26,6 +26,11 @@ class SubIPConfig(object):
         except KeyError:
             self.vhdl = False
 
+        try:
+            self.more_opts = " ".join(sub_ip_dic['vsim_opts'])
+        except KeyError:
+            self.more_opts = ""
+
     def export_vsim(self, abs_path, more_opts):
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
         if not self.vhdl:
@@ -33,10 +38,10 @@ class SubIPConfig(object):
             for i in self.incdirs:
                 vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
             for f in self.files:
-                vlog_cmd += VSIM_VLOG_CMD % (more_opts, vlog_includes, "%s/%s" % (abs_path, f))
+                vlog_cmd += VSIM_VLOG_CMD % ("%s %s" % (more_opts, self.more_opts), vlog_includes, "%s/%s" % (abs_path, f))
         else:
             for f in self.files:
-                vlog_cmd += VSIM_VCOM_CMD % (more_opts, "%s/%s" % (abs_path, f))
+                vlog_cmd += VSIM_VCOM_CMD % ("%s %s" % (more_opts, self.more_opts), "%s/%s" % (abs_path, f))
         return vlog_cmd
         
     def export_vivado(self, abs_path, more_opts):
