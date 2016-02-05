@@ -20,10 +20,10 @@ class IPConfig(object):
             for k in ip_dic.keys():
                 self.sub_ips[k] = SubIPConfig(ip_name, k, ip_dic[k])
 
-    def export_vsim(self, abs_path, more_opts):
+    def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
         vsim_script = VSIM_PREAMBLE % (self.ip_name, self.ip_path)
         for s in self.sub_ips.keys():
-            vsim_script += self.sub_ips[s].export_vsim(abs_path, more_opts)
+            vsim_script += self.sub_ips[s].export_vsim(abs_path, more_opts, target_tech=target_tech)
         vsim_script += VSIM_POSTAMBLE
         return vsim_script
         

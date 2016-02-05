@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # KISS script to load configuration files from IPs
 
+# templates for vcompile.csh scripts
 VSIM_PREAMBLE = """#!/bin/tcsh
 source ${IPS_PATH}/scripts/colors.sh
 
@@ -67,3 +68,45 @@ VSIM_VLOG_INCDIR_CMD = "+incdir+"
 VSIM_VLOG_CMD = "vlog -quiet -sv -work ${LIB_PATH} %s %s %s || goto error\n"
 
 VSIM_VCOM_CMD = "vcom -quiet -work ${LIB_PATH} %s %s || goto error\n"
+
+# templates for vsim.tcl
+VSIM_TCL_PREAMBLE = """set CORE_LIB "or10n_lib"
+
+if {[info exists env(PULP_CORE)]} {
+  if {$env(PULP_CORE) == "riscv"} {
+    set CORE_LIB "riscv_lib"
+  }
+}
+
+set cmd "vsim -quiet $TB \\
+  -L pulp_components_lib \\
+  -L ulpcluster_lib \\
+  -L ulpsoc_lib \\
+  -L models_lib \\
+"""
+
+VSIM_TCL_CMD = "  -L %s_lib \\\n"
+
+VSIM_TCL_POSTAMBLE = """
+  +nowarnTRAN \\
+  +nowarnTSCALE \\
+  +nowarnTFMPC \\
+  -t ps \\
+  -voptargs=\\\"+acc -suppress 2103\\\" \\
+  $VSIM_FLAGS"
+
+eval $cmd
+
+set StdArithNoWarnings 1
+set NumericStdNoWarnings 1
+run 1ps
+set StdArithNoWarnings 0
+set NumericStdNoWarnings 0
+"""
+
+# templates for vcompile_libs.tc
+VCOMPILE_LIBS_PREAMBLE = """#!/usr/bin/tcsh
+
+"""
+
+VCOMPILE_LIBS_CMD = "source ips_scripts/vcompile_%s.csh\n"

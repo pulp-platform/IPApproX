@@ -62,10 +62,10 @@ class IPDatabase(object):
         except KeyError:
             print("Skipped IP %s from %s config file as it seems it is already in the IP Config database." % (ip_name, filename))
 
-    def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts=""):
+    def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts="", target_tech='st28fdsoi'):
         for i in self.ip_dic.keys():
             filename = "%svcompile_%s.csh" % (script_path, i)
-            vcompile_script = self.ip_dic[i].export_vsim(abs_path, more_opts)
+            vcompile_script = self.ip_dic[i].export_vsim(abs_path, more_opts, target_tech=target_tech)
             with open(filename, "wb") as f:
                 f.write(vcompile_script)
 
@@ -77,18 +77,23 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vivado_script)
 
-    def generate_vsim_libs(self):
+    def generate_vsim_tcl(self, filename):
         l = []
         for i in self.ip_dic.keys():
-            #l.extend(self.ip_dic[i].generate_list())
             l.append(i)
+        vsim_tcl = VSIM_TCL_PREAMBLE
         for el in l:
-            print "%s_lib" % el
+            vsim_tcl += VSIM_TCL_CMD % el
+        vsim_tcl += VSIM_TCL_POSTAMBLE
+        with open(filename, "wb") as f:
+            f.write(vsim_tcl)
 
-    def generate_vsim_csh(self):
+    def generate_vcompile_libs_csh(self, filename):
         l = []
         for i in self.ip_dic.keys():
-            #l.extend(self.ip_dic[i].generate_list())
             l.append(i)
+        vcompile_libs = VCOMPILE_LIBS_PREAMBLE
         for el in l:
-            print "vcompile_%s.csh" % el
+            vcompile_libs += VCOMPILE_LIBS_CMD % el
+        with open(filename, "wb") as f:
+            f.write(vcompile_libs)
