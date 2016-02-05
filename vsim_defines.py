@@ -87,8 +87,7 @@ set cmd "vsim -quiet $TB \\
 
 VSIM_TCL_CMD = "  -L %s_lib \\\n"
 
-VSIM_TCL_POSTAMBLE = """
-  +nowarnTRAN \\
+VSIM_TCL_POSTAMBLE = """  +nowarnTRAN \\
   +nowarnTSCALE \\
   +nowarnTFMPC \\
   -t ps \\
