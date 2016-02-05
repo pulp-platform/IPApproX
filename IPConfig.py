@@ -15,10 +15,10 @@ class IPConfig(object):
 
         # if the keyword "files" is in the ip_dic dictionary, then there are no sub-IPs
         if "files" in ip_dic.keys():
-            self.sub_ips[ip_name] = SubIPConfig(ip_name, ip_name, ip_dic)
+            self.sub_ips[ip_name] = SubIPConfig(ip_name, ip_name, ip_dic, ip_path)
         else:
             for k in ip_dic.keys():
-                self.sub_ips[k] = SubIPConfig(ip_name, k, ip_dic[k])
+                self.sub_ips[k] = SubIPConfig(ip_name, k, ip_dic[k], ip_path)
 
     def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
         vsim_script = VSIM_PREAMBLE % (self.ip_name, self.ip_path)

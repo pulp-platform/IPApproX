@@ -69,8 +69,8 @@ class IPDatabase(object):
             with open(filename, "wb") as f:
                 f.write(vcompile_script)
 
-    def export_vivado(self, abs_path="$IPS", script_path="./", more_opts=""):
-        filename = "%ssrc_files.tcl" % (script_path)
+    def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", more_opts=""):
+        filename = "%s" % (script_path)
         vivado_script = VIVADO_PREAMBLE
         for i in self.ip_dic.keys():
             vivado_script += self.ip_dic[i].export_vivado(abs_path, more_opts)

@@ -13,5 +13,11 @@ VIVADO_PREAMBLE_SUBIP = """
 # %s
 set SRC_%s " \\
 """
+
+VIVADO_PREAMBLE_SUBIP_INCDIRS = """set INC_%s " \\
+"""
+
+VIVADO_SUBIP_LIB = "set LIB_%s\n"
+
 VIVADO_POSTAMBLE_SUBIP = """"
 """

@@ -5,9 +5,11 @@ from vsim_defines   import *
 from vivado_defines import *
 
 class SubIPConfig(object):
-    def __init__(self, ip_name, sub_ip_name, sub_ip_dic):
+    def __init__(self, ip_name, sub_ip_name, sub_ip_dic, ip_path):
         super(SubIPConfig, self).__init__()
 
+        self.ip_name     = ip_name
+        self.ip_path     = ip_path
         self.sub_ip_name = sub_ip_name
 
         try:
@@ -20,25 +22,25 @@ class SubIPConfig(object):
         self.target_rtl  = 0
         self.target_fpga = 0
         try:
-            self.files_umc65 = sub_ip_dic['files_umc65_synth']
+            self.files_umc65_synth = sub_ip_dic['files_umc65_synth']
             self.target_tech += 1
         except KeyError:
-            self.files_umc65 = []
+            self.files_umc65_synth = []
         try:
-            self.files_st28fdsoi = sub_ip_dic['files_st28fdsoi_synth']
+            self.files_st28fdsoi_synth = sub_ip_dic['files_st28fdsoi_synth']
             self.target_tech += 1
         except KeyError:
-            self.files_st28fdsoi = []
+            self.files_st28fdsoi_synth = []
         try:
-            self.files_gf28 = sub_ip_dic['files_gf28_synth']
+            self.files_gf28_synth = sub_ip_dic['files_gf28_synth']
             self.target_tech += 1
         except KeyError:
-            self.files_gf28 = []
+            self.files_gf28_synth = []
         try:
-            self.files_xilinx = sub_ip_dic['files_xilinx_synth']
+            self.files_xilinx_synth = sub_ip_dic['files_xilinx_synth']
             self.target_fpga += 1
         except KeyError:
-            self.files_xilinx = []
+            self.files_xilinx_synth = []
         try:
             self.files_umc65 = sub_ip_dic['files_umc65']
             self.target_tech += 1
@@ -114,6 +116,11 @@ class SubIPConfig(object):
         files = self.files[:]
         files.extend(self.files_xilinx_synth)
         for f in files:
-            vivado_cmd += "    %s/%s \\\n" % (abs_path, f)
+            vivado_cmd += "    %s/%s/%s \\\n" % (abs_path, self.ip_path, f)
         vivado_cmd += VIVADO_POSTAMBLE_SUBIP
+        if len(self.incdirs) > 0:
+            vivado_cmd += VIVADO_PREAMBLE_SUBIP_INCDIRS % (self.sub_ip_name.upper())
+            for i in self.incdirs:
+                vivado_cmd += "    %s/%s/%s \\\n" % (abs_path, self.ip_path, i)
+            vivado_cmd += VIVADO_POSTAMBLE_SUBIP
         return vivado_cmd
