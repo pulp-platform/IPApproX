@@ -50,7 +50,7 @@ class IPDatabase(object):
             # else:
             #     ip_full_name = "%s_%s" % (ip['path'], ip['name'])
             ip_full_name = ip['name']
-            ip_full_path = "%s/%s/%s/src_files.txt" % (ips_list_path, IP_DIR, ip['path'])
+            ip_full_path = "%s/%s/%s/src_files.yml" % (ips_list_path, IP_DIR, ip['path'])
             self.import_yaml(ip_full_name, ip_full_path, ip['path'])
 
     def import_yaml(self, ip_name, filename, ip_path):

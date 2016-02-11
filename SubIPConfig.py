@@ -77,7 +77,7 @@ class SubIPConfig(object):
             self.files = []
 
         if self.target_rtl+self.target_tech+self.target_fpga == 0:
-            print "ERROR: there are no sources associated to ip %s, sub-ip %s. Check its src_files.txt file." % (ip_name, sub_ip_name)
+            print "ERROR: there are no sources associated to ip %s, sub-ip %s. Check its src_files.yml file." % (ip_name, sub_ip_name)
             sys.exit(1)
 
         try:
