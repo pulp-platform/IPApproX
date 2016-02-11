@@ -32,6 +32,12 @@ class IPConfig(object):
         for s in self.sub_ips.keys():
             vivado_script += self.sub_ips[s].export_vivado(abs_path, more_opts)
         return vivado_script
+        
+    def export_synplify(self, abs_path, more_opts):
+        synplify_script = ""
+        for s in self.sub_ips.keys():
+            synplify_script += self.sub_ips[s].export_synplify(abs_path, more_opts)
+        return synplify_script
 
     def generate_list(self):
         l = []

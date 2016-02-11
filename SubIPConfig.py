@@ -113,8 +113,9 @@ class SubIPConfig(object):
         
     def export_vivado(self, abs_path, more_opts):
         vivado_cmd = VIVADO_PREAMBLE_SUBIP % (self.sub_ip_name, self.sub_ip_name.upper())
-        files = self.files[:]
-        files.extend(self.files_xilinx_synth)
+        files = self.files_xilinx_synth[:]
+        if len(files) == 0:
+            files.extend(self.files)
         for f in files:
             vivado_cmd += "    %s/%s/%s \\\n" % (abs_path, self.ip_path, f)
         vivado_cmd += VIVADO_POSTAMBLE_SUBIP
@@ -124,3 +125,16 @@ class SubIPConfig(object):
                 vivado_cmd += "    %s/%s/%s \\\n" % (abs_path, self.ip_path, i)
             vivado_cmd += VIVADO_POSTAMBLE_SUBIP
         return vivado_cmd
+        
+    def export_synplify(self, abs_path, more_opts):
+        synplify_cmd = ""
+        files = self.files_xilinx_synth[:]
+        if len(files) == 0:
+            files.extend(self.files)
+        if not self.vhdl:
+            for f in files:
+                synplify_cmd += "add_file -verilog %s/%s/%s\n" % (abs_path, self.ip_path, f)
+        else:
+            for f in files:
+                synplify_cmd += "add_file -vhdl %s/%s/%s\n" % (abs_path, self.ip_path, f)
+        return synplify_cmd

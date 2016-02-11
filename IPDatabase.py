@@ -77,6 +77,14 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vivado_script)
 
+    def export_synplify(self, abs_path="$IPS", script_path="./src_files_synplify.tcl", more_opts=""):
+        filename = "%s" % (script_path)
+        synplify_script = ""
+        for i in self.ip_dic.keys():
+            synplify_script += self.ip_dic[i].export_synplify(abs_path, more_opts)
+        with open(filename, "wb") as f:
+            f.write(synplify_script)
+
     def generate_vsim_tcl(self, filename):
         l = []
         for i in self.ip_dic.keys():
