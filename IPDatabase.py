@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # KISS script to load configuration files from IPs
 
+# YAML workaround
+import sys,os
+sys.path.append(os.path.abspath("yaml/lib64/python"))
 import yaml
 import collections
 from IPConfig import *
