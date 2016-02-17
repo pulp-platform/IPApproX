@@ -61,6 +61,9 @@ class IPDatabase(object):
             self.import_yaml(ip_full_name, ip_full_path, ip['path'])
 
     def import_yaml(self, ip_name, filename, ip_path):
+        if not os.path.exists(os.path.dirname(filename)):
+            print("ERROR: ip '%s' does not exist." % ip_name)
+            sys.exit(1)
         try:
             with open(filename, "rb") as f:
                 ip_dic = ordered_load(f, yaml.SafeLoader)
