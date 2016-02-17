@@ -3,6 +3,33 @@
 
 from vsim_defines   import *
 from vivado_defines import *
+import sys
+
+# returns true if source file is VHDL
+def is_vhdl(f):
+    if f[-4:] == ".vhd":
+        return True
+    else:
+        return False
+
+# list of allowed and mandatory keys for the Yaml dictionary
+ALLOWED_KEYS = [
+    'incdirs',
+    'vlog_opts',
+    'vcom_opts',
+    'tech',
+    'targets'
+]
+MANDATORY_KEYS = [
+    'files'
+]
+
+# list of allowed targets
+ALLOWED_TARGETS = [
+    'all',
+    'xilinx',
+    'rtl'
+]
 
 class SubIPConfig(object):
     def __init__(self, ip_name, sub_ip_name, sub_ip_dic, ip_path):
@@ -11,111 +38,36 @@ class SubIPConfig(object):
         self.ip_name     = ip_name
         self.ip_path     = ip_path
         self.sub_ip_name = sub_ip_name
+        self.sub_ip_dic  = sub_ip_dic
 
-        try:
-            self.incdirs = sub_ip_dic['incdirs']
-        except KeyError:
-            self.incdirs = []
-
-        # target-specific source files for the IP (mutually exclusive)
-        self.target_tech = 0
-        self.target_rtl  = 0
-        self.target_fpga = 0
-        try:
-            self.files_umc65_synth = sub_ip_dic['files_umc65_synth']
-            self.target_tech += 1
-        except KeyError:
-            self.files_umc65_synth = []
-        try:
-            self.files_st28fdsoi_synth = sub_ip_dic['files_st28fdsoi_synth']
-            self.target_tech += 1
-        except KeyError:
-            self.files_st28fdsoi_synth = []
-        try:
-            self.files_gf28_synth = sub_ip_dic['files_gf28_synth']
-            self.target_tech += 1
-        except KeyError:
-            self.files_gf28_synth = []
-        try:
-            self.files_xilinx_synth = sub_ip_dic['files_xilinx_synth']
-            self.target_fpga += 1
-        except KeyError:
-            self.files_xilinx_synth = []
-        try:
-            self.files_umc65 = sub_ip_dic['files_umc65']
-            self.target_tech += 1
-        except KeyError:
-            self.files_umc65 = []
-        try:
-            self.files_st28fdsoi = sub_ip_dic['files_st28fdsoi']
-            self.target_tech += 1
-        except KeyError:
-            self.files_st28fdsoi = []
-        try:
-            self.files_gf28 = sub_ip_dic['files_gf28']
-            self.target_tech += 1
-        except KeyError:
-            self.files_gf28 = []
-        try:
-            self.files_xilinx = sub_ip_dic['files_xilinx']
-            self.target_fpga += 1
-        except KeyError:
-            self.files_xilinx = []
-        try:
-            self.files_rtl = sub_ip_dic['files_rtl']
-            self.target_rtl += 1
-        except KeyError:
-            self.files_rtl = []
-
-        # generic source files of the IP (for all targets)
-        try:
-            self.files = sub_ip_dic['files']
-            self.target_tech += 1
-            self.target_rtl  += 1
-            self.target_fpga += 1
-        except KeyError:
-            self.files = []
-
-        if self.target_rtl+self.target_tech+self.target_fpga == 0:
-            print "ERROR: there are no sources associated to ip %s, sub-ip %s. Check its src_files.yml file." % (ip_name, sub_ip_name)
-            sys.exit(1)
-
-        try:
-            self.vhdl = sub_ip_dic['vhdl']
-        except KeyError:
-            self.vhdl = False
-
-        try:
-            self.more_opts = " ".join(sub_ip_dic['vsim_opts'])
-        except KeyError:
-            self.more_opts = ""
+        self.__check_dic()
+        self.files     = self.__get_files()     # list of source files in the sub-IP
+        self.targets   = self.__get_targets()   # target (all, rtl or fpga at the moment)
+        self.incdirs   = self.__get_incdirs()   # verilog include directory
+        self.tech      = self.__get_tech()      # if True, do not generate analyze scripts for this ip :)
+        self.vlog_opts = self.__get_vlog_opts() # generic vlog options
+        self.vcom_opts = self.__get_vcom_opts() # generic vcom options
 
     def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
+        if not ("all" in self.targets or "rtl" in self.targets):
+            return "\n"
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
-        files = self.files[:]
-        files.extend(self.files_rtl)
-        if target_tech=='st28fdsoi':
-            files.extend(self.files_st28fdsoi)
-        elif target_tech=='umc65':
-            files.extend(self.files_umc65)
-        elif target_tech=='gf28':
-            files.extend(self.files_gf28)
-        if not self.vhdl:
-            vlog_includes = ""
-            for i in self.incdirs:
-                vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
-            for f in files:
-                vlog_cmd += VSIM_VLOG_CMD % ("%s %s" % (more_opts, self.more_opts), vlog_includes, "%s/%s" % (abs_path, f))
-        else:
-            for f in files:
-                vlog_cmd += VSIM_VCOM_CMD % ("%s %s" % (more_opts, self.more_opts), "%s/%s" % (abs_path, f))
+        files = self.files
+        vlog_includes = ""
+        for i in self.incdirs:
+            vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
+        for f in files:
+            if not is_vhdl(f):
+                vlog_cmd += VSIM_VLOG_CMD % ("%s %s" % (more_opts, self.vlog_opts), vlog_includes, "%s/%s" % (abs_path, f))
+            else:
+                vlog_cmd += VSIM_VCOM_CMD % ("%s %s" % (more_opts, self.vcom_opts), "%s/%s" % (abs_path, f))
         return vlog_cmd
         
     def export_vivado(self, abs_path, more_opts):
+        if not ("all" in self.targets or "xilinx" in self.targets):
+            return "\n"
         vivado_cmd = VIVADO_PREAMBLE_SUBIP % (self.sub_ip_name, self.sub_ip_name.upper())
-        files = self.files_xilinx_synth[:]
-        if len(files) == 0:
-            files.extend(self.files)
+        files = self.files
         for f in files:
             vivado_cmd += "    %s/%s/%s \\\n" % (abs_path, self.ip_path, f)
         vivado_cmd += VIVADO_POSTAMBLE_SUBIP
@@ -127,14 +79,77 @@ class SubIPConfig(object):
         return vivado_cmd
         
     def export_synplify(self, abs_path, more_opts):
+        if not ("all" in self.targets or "xilinx" in self.targets):
+            return "\n"
         synplify_cmd = ""
-        files = self.files_xilinx_synth[:]
+        files = self.files
         if len(files) == 0:
             files.extend(self.files)
-        if not self.vhdl:
-            for f in files:
+        for f in files:
+            if not is_vhdl(f):
                 synplify_cmd += "add_file -verilog %s/%s/%s\n" % (abs_path, self.ip_path, f)
-        else:
-            for f in files:
+            else:
                 synplify_cmd += "add_file -vhdl %s/%s/%s\n" % (abs_path, self.ip_path, f)
         return synplify_cmd
+
+    ### management of the Yaml dictionary
+
+    def __check_dic(self):
+        dic = self.sub_ip_dic
+        if set(MANDATORY_KEYS).intersection(set(dic.keys())) == set([]):
+            print "ERROR: there are no files for ip '%s', sub-ip '%s'. Check its src_files.yml file." % (self.ip_name, self.sub_ip_name)
+            sys.exit(1)
+        not_allowed = set(dic.keys()) - set(MANDATORY_KEYS) - set(ALLOWED_KEYS)
+        if not_allowed != set([]):
+            print "ERROR: there are unallowed keys for ip '%s', sub-ip '%s':" % (self.ip_name, self.sub_ip_name)
+            for el in list(not_allowed):
+                print "    %s" % el
+            print "Check the src_files.yml file."
+            sys.exit(1)
+
+    def __get_files(self):
+        return self.sub_ip_dic['files']
+
+    def __get_targets(self):
+        try:
+            targets = self.sub_ip_dic['targets']
+        except KeyError:
+            targets = ["all"]
+        not_allowed = set(targets) - (set(ALLOWED_TARGETS))
+        if not_allowed != set([]):
+            print "ERROR: targets not allowed for ip '%s', sub-ip '%s':" % (self.ip_name, self.sub_ip_name)
+            print not_allowed
+            for el in list(not_allowed):
+                print "    %s" % el
+            print "Check the src_files.yml file."
+            sys.exit(1)
+        return targets
+
+    def __get_incdirs(self):
+        try:
+            incdirs = self.sub_ip_dic['incdirs']
+        except KeyError:
+            incdirs = []
+        return incdirs
+
+    def __get_tech(self):
+        try:
+            tech = self.sub_ip_dic['tech']
+        except KeyError:
+            tech = False
+        return tech
+
+    def __get_vlog_opts(self):
+        try:
+            vlog_opts = " ".join(self.sub_ip_dic['vlog_opts'])
+        except KeyError:
+            vlog_opts = ""
+        return vlog_opts
+
+    def __get_vcom_opts(self):
+        try:
+            vcom_opts = " ".join(self.sub_ip_dic['vcom_opts'])
+        except KeyError:
+            vcom_opts = ""
+        return vcom_opts
+

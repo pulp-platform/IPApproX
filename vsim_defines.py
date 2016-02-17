@@ -3,7 +3,7 @@
 
 # templates for vcompile.csh scripts
 VSIM_PREAMBLE = """#!/bin/tcsh
-source ${PULP_PATH}/fe/sim/scripts/colors.sh
+source ${PULP_PATH}/fe/sim/compile/colors.sh
 
 ##############################################################################
 # Settings
@@ -70,42 +70,20 @@ VSIM_VLOG_CMD = "vlog -quiet -sv -work ${LIB_PATH} %s %s %s || goto error\n"
 VSIM_VCOM_CMD = "vcom -quiet -work ${LIB_PATH} %s %s || goto error\n"
 
 # templates for vsim.tcl
-VSIM_TCL_PREAMBLE = """set CORE_LIB "or10n_lib"
+VSIM_TCL_PREAMBLE = """set VSIM_IP_LIBS " \\\
 
-if {[info exists env(PULP_CORE)]} {
-  if {$env(PULP_CORE) == "riscv"} {
-    set CORE_LIB "riscv_lib"
-  }
-}
-
-set cmd "vsim -quiet $TB \\
-  -L pulp_components_lib \\
-  -L ulpcluster_lib \\
-  -L ulpsoc_lib \\
-  -L models_lib \\
 """
 
 VSIM_TCL_CMD = "  -L %s_lib \\\n"
 
-VSIM_TCL_POSTAMBLE = """  +nowarnTRAN \\
-  +nowarnTSCALE \\
-  +nowarnTFMPC \\
-  -t ps \\
-  -voptargs=\\\"+acc -suppress 2103\\\" \\
-  $VSIM_FLAGS"
-
-eval $cmd
-
-set StdArithNoWarnings 1
-set NumericStdNoWarnings 1
-run 1ps
-set StdArithNoWarnings 0
-set NumericStdNoWarnings 0
+VSIM_TCL_POSTAMBLE = """"
 """
 
 # templates for vcompile_libs.tc
 VCOMPILE_LIBS_PREAMBLE = """#!/usr/bin/tcsh
 
+echo \"\"
+echo \"${Green}--> Compiling PULP IPs libraries... ${NC}\"
 """
 
-VCOMPILE_LIBS_CMD = "source ips_scripts/vcompile_%s.csh\n"
+VCOMPILE_LIBS_CMD = "tcsh compile/ips/vcompile_%s.csh || exit 1\n"

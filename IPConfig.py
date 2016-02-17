@@ -4,6 +4,10 @@
 from vsim_defines   import *
 from vivado_defines import *
 from SubIPConfig    import *
+import re
+
+def prepare(s):
+    return re.sub("[^a-zA-Z0-9_]", "_", s)
 
 class IPConfig(object):
     def __init__(self, ip_name, ip_dic, ip_path):
@@ -21,7 +25,7 @@ class IPConfig(object):
                 self.sub_ips[k] = SubIPConfig(ip_name, k, ip_dic[k], ip_path)
 
     def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
-        vsim_script = VSIM_PREAMBLE % (self.ip_name, self.ip_path)
+        vsim_script = VSIM_PREAMBLE % (prepare(self.ip_name), self.ip_path)
         for s in self.sub_ips.keys():
             vsim_script += self.sub_ips[s].export_vsim(abs_path, more_opts, target_tech=target_tech)
         vsim_script += VSIM_POSTAMBLE

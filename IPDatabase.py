@@ -5,8 +5,12 @@ import yaml
 import collections
 from IPConfig import *
 from vivado_defines import *
+import re
 
 IP_DIR = "fe/ips"
+
+def prepare(s):
+    return re.sub("[^a-zA-Z0-9_]", "_", s)
 
 def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.OrderedDict):
     class OrderedLoader(Loader):
@@ -54,13 +58,17 @@ class IPDatabase(object):
             self.import_yaml(ip_full_name, ip_full_path, ip['path'])
 
     def import_yaml(self, ip_name, filename, ip_path):
-        with open(filename, "rb") as f:
-            ip_dic = ordered_load(f, yaml.SafeLoader)
+        try:
+            with open(filename, "rb") as f:
+                ip_dic = ordered_load(f, yaml.SafeLoader)
+        except IOError:
+            print("WARNING: Skipped ip '%s' as it has no src_files.yml file." % (ip_name))
+            return
 
         try:
             self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path)
         except KeyError:
-            print("Skipped IP %s from %s config file as it seems it is already in the IP Config database." % (ip_name, filename))
+            print("Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename))
 
     def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts="", target_tech='st28fdsoi'):
         for i in self.ip_dic.keys():
@@ -91,7 +99,7 @@ class IPDatabase(object):
             l.append(i)
         vsim_tcl = VSIM_TCL_PREAMBLE
         for el in l:
-            vsim_tcl += VSIM_TCL_CMD % el
+            vsim_tcl += VSIM_TCL_CMD % prepare(el)
         vsim_tcl += VSIM_TCL_POSTAMBLE
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
