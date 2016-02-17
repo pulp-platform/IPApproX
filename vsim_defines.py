@@ -3,7 +3,7 @@
 
 # templates for vcompile.csh scripts
 VSIM_PREAMBLE = """#!/bin/tcsh
-source ${PULP_PATH}/fe/sim/compile/colors.sh
+source ${PULP_PATH}/fe/sim/vcompile/colors.csh
 
 ##############################################################################
 # Settings
@@ -86,4 +86,4 @@ echo \"\"
 echo \"${Green}--> Compiling PULP IPs libraries... ${NC}\"
 """
 
-VCOMPILE_LIBS_CMD = "tcsh compile/ips/vcompile_%s.csh || exit 1\n"
+VCOMPILE_LIBS_CMD = "tcsh vcompile/ips/vcompile_%s.csh || exit 1\n"
