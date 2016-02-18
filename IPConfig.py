@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # KISS script to load configuration files from IPs
 
-from vsim_defines   import *
-from vivado_defines import *
-from SubIPConfig    import *
+from vsim_defines     import *
+from vivado_defines   import *
+from synopsys_defines import *
+from SubIPConfig      import *
 import re
 
 def prepare(s):
@@ -30,6 +31,12 @@ class IPConfig(object):
             vsim_script += self.sub_ips[s].export_vsim(abs_path, more_opts, target_tech=target_tech)
         vsim_script += VSIM_POSTAMBLE
         return vsim_script
+
+    def export_synopsys(self, target_tech='st28fdsoi'):
+        analyze_script = SYNOPSYS_ANALYZE_PREAMBLE % (self.ip_name)
+        for s in self.sub_ips.keys():
+            analyze_script += self.sub_ips[s].export_synopsys(self.ip_path, target_tech=target_tech)
+        return analyze_script
         
     def export_vivado(self, abs_path, more_opts):
         vivado_script = ""

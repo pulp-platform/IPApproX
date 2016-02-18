@@ -8,6 +8,7 @@ import yaml
 import collections
 from IPConfig import *
 from vivado_defines import *
+from synopsys_defines import *
 import re
 
 IP_DIR = "fe/ips"
@@ -78,6 +79,13 @@ class IPDatabase(object):
             vcompile_script = self.ip_dic[i].export_vsim(abs_path, more_opts, target_tech=target_tech)
             with open(filename, "wb") as f:
                 f.write(vcompile_script)
+
+    def export_synopsys(self, script_path=".", target_tech='st28fdsoi'):
+        for i in self.ip_dic.keys():
+            filename = "%s/analyze_%s.tcl" % (script_path, i)
+            analyze_script = self.ip_dic[i].export_synopsys(target_tech=target_tech)
+            with open(filename, "wb") as f:
+                f.write(analyze_script)
 
     def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", more_opts=""):
         filename = "%s" % (script_path)

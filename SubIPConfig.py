@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # KISS script to load configuration files from IPs
 
-from vsim_defines   import *
-from vivado_defines import *
+from vsim_defines     import *
+from vivado_defines   import *
+from synopsys_defines import *
 import sys
 
 # returns true if source file is VHDL
@@ -28,7 +29,10 @@ MANDATORY_KEYS = [
 ALLOWED_TARGETS = [
     'all',
     'xilinx',
-    'rtl'
+    'rtl',
+    'st28fdsoi',
+    'umc65',
+    'gf28'
 ]
 
 class SubIPConfig(object):
@@ -62,6 +66,18 @@ class SubIPConfig(object):
             else:
                 vlog_cmd += VSIM_VCOM_CMD % ("%s %s" % (more_opts, self.vcom_opts), "%s/%s" % (abs_path, f))
         return vlog_cmd
+
+    def export_synopsys(self, path, target_tech='st28fdsoi'):
+        if not ("all" in self.targets or target_tech in self.targets):
+            return "\n"
+        analyze_cmd = SYNOPSYS_ANALYZE_PREAMBLE_SUBIP % (self.sub_ip_name)
+        files = self.files
+        for f in files:
+            if not is_vhdl(f):
+                analyze_cmd += SYNOPSYS_ANALYZE_SV_CMD % ("%s/%s" % (path, f))
+            else:
+                analyze_cmd += SYNOPSYS_ANALYZE_VHDL_CMD % ("%s/%s" % (path, f))
+        return analyze_cmd
         
     def export_vivado(self, abs_path, more_opts):
         if not ("all" in self.targets or "xilinx" in self.targets):
