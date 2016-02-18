@@ -7,14 +7,11 @@ sys.path.append(os.path.abspath("yaml/lib64/python"))
 import yaml
 import collections
 from IPConfig import *
+from IPApproX_common import *
 from vivado_defines import *
 from synopsys_defines import *
-import re
 
 IP_DIR = "fe/ips"
-
-def prepare(s):
-    return re.sub("[^a-zA-Z0-9_]", "_", s)
 
 def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.OrderedDict):
     class OrderedLoader(Loader):
@@ -28,34 +25,29 @@ def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.Order
     return yaml.load(stream, OrderedLoader)
 
 def load_ips_list(filename):
-    # get a list of all IPs that we are interested in from ips_list.txt
+    # get a list of all IPs that we are interested in from ips_list.yml
     with open(filename, "rb") as f:
-        ips_list = f.readlines()
+        ips_list = ordered_load(f, yaml.SafeLoader)
     ips = []
-    for ips_el in ips_list:
-        if ips_el[0] == "#":
-            continue
-        try:
-            splits = ips_el.split()
-            path   = splits[0]
-            commit = splits[1]
-            path_split = splits[0].split('/')
-            name = path_split[-1]
-            ips.append({'name': name, 'commit': commit, 'path': path })
-        except IndexError:
-            continue
+    for i in ips_list.keys():
+        commit = ips_list[i]['commit']
+        domain = ips_list[i]['domain']
+        path = i
+        name = i.split()[0].split('/')[-1]
+        ips.append({'name': name, 'commit': commit, 'path': path, 'domain': domain })
     return ips
 
 class IPDatabase(object):
-    def __init__(self, ips_list_path="."):
+    def __init__(self, ips_list_path=".", skip_scripts=False):
         super(IPDatabase, self).__init__()
         self.ip_dic = {}
-        ips_list_txt = "%s/ips_list.txt" % (ips_list_path)
-        self.ip_list = load_ips_list(ips_list_txt)
-        for ip in self.ip_list:
-            ip_full_name = ip['name']
-            ip_full_path = "%s/%s/%s/src_files.yml" % (ips_list_path, IP_DIR, ip['path'])
-            self.import_yaml(ip_full_name, ip_full_path, ip['path'])
+        ips_list_yml = "%s/ips_list.yml" % (ips_list_path)
+        self.ip_list = load_ips_list(ips_list_yml)
+        if not skip_scripts:
+            for ip in self.ip_list:
+                ip_full_name = ip['name']
+                ip_full_path = "%s/%s/%s/src_files.yml" % (ips_list_path, IP_DIR, ip['path'])
+                self.import_yaml(ip_full_name, ip_full_path, ip['path'])
 
     def import_yaml(self, ip_name, filename, ip_path):
         if not os.path.exists(os.path.dirname(filename)):
@@ -72,6 +64,84 @@ class IPDatabase(object):
             self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path)
         except KeyError:
             print("Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename))
+
+    def update_ips(self):
+        errors = []
+        ips = self.ip_list
+        git = "git"
+        ip_dir = "fe/ips/"
+        server = "git@iis-git.ee.ethz.ch:pulp-project"
+        # make sure we are in the correct directory to start
+        os.chdir(ip_dir)
+        cwd = os.getcwd()
+
+        for ip in ips:
+            os.chdir(cwd)
+            # check if directory already exists, this hints to the fact that we probably already cloned it
+            if os.path.isdir("./%s" % ip['path']):
+                os.chdir("./%s" % ip['path'])
+
+                # now check if the directory is a git directory
+                if not os.path.isdir(".git"):
+                    print tcolors.ERROR + "ERROR: Found a normal directory instead of a git directory at %s. You may have to delete this folder to make this script work again" % os.getcwd() + tcolors.ENDC
+                    errors.append("%s - %s: Not a git directory" % (ip['name'], ip['path']));
+                    continue
+
+                print tcolors.OK + "\nUpdating %s..." % ip['name'] + tcolors.ENDC
+
+                # fetch everything first so that all commits are available later
+                ret = execute("%s fetch" % (git))
+                if ret != 0:
+                    print tcolors.ERROR + "ERROR: could not fetch IP %s." % (ip['name']) + tcolors.ENDC
+                    errors.append("%s - Could not fetch" % (ip['name']));
+                    continue
+
+                # make sure we have the correct branch/tag for the pull
+                ret = execute("%s checkout %s" % (git, ip['commit']))
+                if ret != 0:
+                    print tcolors.ERROR + "ERROR: could not checkout IP %s at %s." % (ip['name'], ip['commit']) + tcolors.ENDC
+                    errors.append("%s - Could not checkout commit %s" % (ip['name'], ip['commit']));
+                    continue
+
+                # check if we are in detached HEAD mode
+                stdout = execute_out("%s status" % git)
+
+                if not ("HEAD detached" in stdout):
+                    # only do the pull if we are not in detached head mode
+                    ret = execute("%s pull --ff-only" % git)
+                    if ret != 0:
+                        print tcolors.ERROR + "ERROR: could not update %s" % ip['name'] + tcolors.ENDC
+                        errors.append("%s - Could not update" % (ip['name']));
+                        continue
+
+            # Not yet cloned, so we have to do that first
+            else:
+                os.chdir("./")
+
+                print tcolors.OK + "\nCloning %s..." % ip['name'] + tcolors.ENDC
+
+                ret = execute("%s clone %s/%s.git %s" % (git, server, ip['name'], ip['path']))
+                if ret != 0:
+                    print tcolors.ERROR + "ERROR: could not clone, you probably have to remove the %s directory." % ip['name'] + tcolors.ENDC
+                    errors.append("%s - Could not clone" % (ip['name']));
+                    continue
+                os.chdir("./%s" % ip['path'])
+                ret = execute("%s checkout %s" % (git, ip['commit']))
+                if ret != 0:
+                    print tcolors.ERROR + "ERROR: could not checkout IP %s at %s." % (ip['name'], ip['commit']) + tcolors.ENDC
+                    errors.append("%s - Could not checkout commit %s" % (ip['name'], ip['commit']));
+                    continue
+        os.chdir(cwd)
+        print '\n\n'
+        print tcolors.WARNING + "SUMMARY" + tcolors.ENDC
+        if len(errors) == 0:
+            print tcolors.OK + "IPs updated successfully!" + tcolors.ENDC
+        else:
+            for error in errors:
+                print tcolors.ERROR + '    %s' % (error) + tcolors.ENDC
+            print
+            print tcolors.ERROR + "ERRORS during IP update!" + tcolors.ENDC
+            sys.exit(1)
 
     def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts="", target_tech='st28fdsoi'):
         for i in self.ip_dic.keys():

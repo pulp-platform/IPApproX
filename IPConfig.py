@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # KISS script to load configuration files from IPs
 
+from IPApproX_common  import *
 from vsim_defines     import *
 from vivado_defines   import *
 from synopsys_defines import *
 from SubIPConfig      import *
-import re
-
-def prepare(s):
-    return re.sub("[^a-zA-Z0-9_]", "_", s)
 
 class IPConfig(object):
     def __init__(self, ip_name, ip_dic, ip_path):
