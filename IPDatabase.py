@@ -9,6 +9,7 @@ import collections
 from IPConfig import *
 from IPApproX_common import *
 from vivado_defines import *
+from ips_defines import *
 from synopsys_defines import *
 
 IP_DIR = "fe/ips"
@@ -36,6 +37,14 @@ def load_ips_list(filename):
         name = i.split()[0].split('/')[-1]
         ips.append({'name': name, 'commit': commit, 'path': path, 'domain': domain })
     return ips
+
+def store_ips_list(filename, ips):
+    ips_list = {}
+    for i in ips:
+        ips_list[i['path']] = {'commit': i['commit'], 'domain': i['domain']}
+    with open(filename, "wb") as f:
+        f.write(IPS_LIST_PREAMBLE)
+        f.write(yaml.dump(ips_list))
 
 class IPDatabase(object):
     def __init__(self, ips_list_path=".", skip_scripts=False):
@@ -177,6 +186,67 @@ class IPDatabase(object):
             print
             print tcolors.ERROR + "ERRORS during IP update!" + tcolors.ENDC
             sys.exit(1)
+
+    def delete_tag_ips(self, tag_name):
+        cwd = os.getcwd()
+        ips = self.ip_list
+        new_ips = []
+        for ip in ips:
+            os.chdir("./fe/ips/%s" % ip['path'])
+            ret = execute("git tag -d %s" % tag_name)
+            os.chdir(cwd)
+
+    def push_tag_ips(self):
+        cwd = os.getcwd()
+        ips = self.ip_list
+        new_ips = []
+        for ip in ips:
+            os.chdir("./fe/ips/%s" % ip['path'])
+            newest_tag = execute_popen("git describe --tags --abbrev=0", silent=True).communicate()
+            try:
+                newest_tag = newest_tag[0].split()
+                newest_tag = newest_tag[0]
+            except IndexError:
+                pass
+            ret = execute("git push origin tags/%s" % newest_tag)
+            os.chdir(cwd)
+
+    def tag_ips(self, tag_name):
+        cwd = os.getcwd()
+        ips = self.ip_list
+        new_ips = []
+        for ip in ips:
+            os.chdir("./fe/ips/%s" % ip['path'])
+            newest_tag, err = execute_popen("git describe --tags --abbrev=0", silent=True).communicate()
+            unstaged_changes, err = execute_popen("git diff --name-only").communicate()
+            staged_changes, err = execute_popen("git diff --name-only").communicate()
+            if staged_changes.split("\n")[0] != "":
+                print tcolors.WARNING + "WARNING: skipping ip '%s' as it has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually."
+                os.chdir(cwd)
+                continue
+            if unstaged_changes.split("\n")[0] != "":
+                print tcolors.WARNING + "WARNING: skipping ip '%s' as it has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually."
+                os.chdir(cwd)
+                continue
+            if newest_tag != "":
+                output, err = execute_popen("git diff --name-only tags/%s" % newest_tag).communicate()
+            else:
+                output = ""
+            if output.split("\n")[0] != "" or newest_tag=="":
+                ret = execute("git tag %s" % tag_name)
+                if ret != 0:
+                    print tcolors.WARNING + "WARNING: could not tag ip '%s', probably the tag already exists." % (ip['name']) + tcolors.ENDC
+                else:
+                    print "Tagged ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + " with tag %s." % tag_name
+                newest_tag = tag_name
+            try:
+                newest_tag = newest_tag.split()[0]
+            except IndexError:
+                pass
+            new_ips.append({'name': ip['name'], 'path': ip['path'], 'domain': ip['domain'], 'commit': "tags/%s" % newest_tag})
+            os.chdir(cwd)
+
+        store_ips_list("new_ips_list.yml", new_ips)
 
     def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts="", target_tech='st28fdsoi'):
         for i in self.ip_dic.keys():
