@@ -8,9 +8,10 @@ from synopsys_defines import *
 from SubIPConfig      import *
 
 class IPConfig(object):
-    def __init__(self, ip_name, ip_dic, ip_path):
+    def __init__(self, ip_name, ip_dic, ip_path, domain=None):
         super(IPConfig, self).__init__()
 
+        self.domain  = domain
         self.ip_name = ip_name
         self.ip_path = ip_path
         self.sub_ips = {}

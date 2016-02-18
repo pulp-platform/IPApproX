@@ -56,9 +56,9 @@ class IPDatabase(object):
             for ip in self.ip_list:
                 ip_full_name = ip['name']
                 ip_full_path = "%s/%s/%s/src_files.yml" % (ips_list_path, IP_DIR, ip['path'])
-                self.import_yaml(ip_full_name, ip_full_path, ip['path'])
+                self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'])
 
-    def import_yaml(self, ip_name, filename, ip_path):
+    def import_yaml(self, ip_name, filename, ip_path, domain=None):
         if not os.path.exists(os.path.dirname(filename)):
             print(tcolors.ERROR + "ERROR: ip '%s' does not exist." % ip_name + tcolors.ENDC)
             sys.exit(1)
@@ -70,7 +70,7 @@ class IPDatabase(object):
             return
 
         try:
-            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path)
+            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path, domain=domain)
         except KeyError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename) + tcolors.ENDC)
 
@@ -255,12 +255,13 @@ class IPDatabase(object):
             with open(filename, "wb") as f:
                 f.write(vcompile_script)
 
-    def export_synopsys(self, script_path=".", target_tech='st28fdsoi'):
+    def export_synopsys(self, script_path=".", target_tech='st28fdsoi', domain=None):
         for i in self.ip_dic.keys():
-            filename = "%s/analyze_%s.tcl" % (script_path, i)
-            analyze_script = self.ip_dic[i].export_synopsys(target_tech=target_tech)
-            with open(filename, "wb") as f:
-                f.write(analyze_script)
+            if domain==None or domain in self.ip_dic[i].domain:
+                filename = "%s/analyze_%s.tcl" % (script_path, i)
+                analyze_script = self.ip_dic[i].export_synopsys(target_tech=target_tech)
+                with open(filename, "wb") as f:
+                    f.write(analyze_script)
 
     def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", more_opts=""):
         filename = "%s" % (script_path)
