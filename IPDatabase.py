@@ -258,7 +258,7 @@ class IPDatabase(object):
 
     def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts="", target_tech='st28fdsoi'):
         for i in self.ip_dic.keys():
-            filename = "%svcompile_%s.csh" % (script_path, i)
+            filename = "%s/vcompile_%s.csh" % (script_path, i)
             vcompile_script = self.ip_dic[i].export_vsim(abs_path, more_opts, target_tech=target_tech)
             with open(filename, "wb") as f:
                 f.write(vcompile_script)
