@@ -83,6 +83,8 @@ class IPDatabase(object):
         prepend = "  "
         ips = self.ip_list
         cwd = os.getcwd()
+        unstaged_ips = []
+        staged_ips = []
         for ip in ips:
             try:
                 os.chdir("./fe/ips/%s" % ip['path'])
@@ -108,11 +110,41 @@ class IPDatabase(object):
                 if unstaged_out != "":
                     print "Changes not staged for commit in ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + "."
                     print unstaged_out
+                    unstaged_ips.append(ip)
                 if staged_out != "":
                     print "Changes staged for commit in ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + ".\nUse " + tcolors.BLUE + "git reset HEAD" + tcolors.ENDC + " in the ip directory to unstage."
                     print staged_out
+                    staged_ips.append(ip)
             except OSError:
-                print "WARNING: Skipping ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + " as it doesn't exist."
+                print tcolors.WARNING + "WARNING: Skipping ip '%s'" % ip['name'] + " as it doesn't exist." + tcolors.ENDC
+        return (unstaged_ips, staged_ips)
+
+    def remove_ips(self, skip_check=False):
+        ips = self.ip_list
+        cwd = os.getcwd()
+        unstaged_ips, staged_ips = self.diff_ips()
+        os.chdir("fe/ips")
+        if not skip_check and (len(unstaged_ips)+len(staged_ips) > 0):
+            print tcolors.ERROR + "ERROR: Cowardly refusing to remove IPs as there are changes." + tcolors.ENDC
+            print "If you *really* want to remove ips, run remove-ips.py with the --skip-check flag."
+            sys.exit(1)
+        for ip in ips:
+            import shutil
+            for root, dirs, files in os.walk('%s' % ip['path']):
+                for f in files:
+                    os.unlink(os.path.join(root, f))
+                for d in dirs:
+                    shutil.rmtree(os.path.join(root, d))
+            try:
+                os.removedirs("%s" % ip['path'])
+            except OSError:
+                pass
+        print tcolors.OK + "Removed all IPs listed in ips_list.yml." + tcolors.ENDC
+        os.chdir(cwd)
+        try:
+            os.removedirs("fe/ips")
+        except OSError:
+            print tcolors.WARNING + "WARNING: Not removing fe/ips as there are unknown IPs there." + tcolors.ENDC
 
     def update_ips(self):
         errors = []
