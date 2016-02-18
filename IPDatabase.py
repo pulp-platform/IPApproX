@@ -57,6 +57,11 @@ class IPDatabase(object):
                 ip_full_name = ip['name']
                 ip_full_path = "%s/%s/%s/src_files.yml" % (ips_list_path, IP_DIR, ip['path'])
                 self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'])
+            sub_ip_check_list = []
+            for i in self.ip_dic.keys():
+                sub_ip_check_list.extend(self.ip_dic[i].sub_ips.keys())
+            if len(set(sub_ip_check_list)) != len(sub_ip_check_list):
+                print(tcolors.WARNING + "WARNING: two sub-IPs have the same name. This can cause trouble!" + tcolors.ENDC)
 
     def import_yaml(self, ip_name, filename, ip_path, domain=None):
         if not os.path.exists(os.path.dirname(filename)):
