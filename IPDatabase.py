@@ -211,7 +211,7 @@ class IPDatabase(object):
             ret = execute("git push origin tags/%s" % newest_tag)
             os.chdir(cwd)
 
-    def tag_ips(self, tag_name):
+    def tag_ips(self, tag_name, changes_severity='warning'):
         cwd = os.getcwd()
         ips = self.ip_list
         new_ips = []
@@ -221,13 +221,21 @@ class IPDatabase(object):
             unstaged_changes, err = execute_popen("git diff --name-only").communicate()
             staged_changes, err = execute_popen("git diff --name-only").communicate()
             if staged_changes.split("\n")[0] != "":
-                print tcolors.WARNING + "WARNING: skipping ip '%s' as it has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually."
-                os.chdir(cwd)
-                continue
+                if changes_severity == 'warning':
+                    print tcolors.WARNING + "WARNING: skipping ip '%s' as it has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually."
+                    os.chdir(cwd)
+                    continue
+                else:
+                    print tcolors.ERROR + "ERROR: ip '%s' has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to auto-tag."
+                    sys.exit(1)
             if unstaged_changes.split("\n")[0] != "":
-                print tcolors.WARNING + "WARNING: skipping ip '%s' as it has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually."
-                os.chdir(cwd)
-                continue
+                if changes_severity == 'warning':
+                    print tcolors.WARNING + "WARNING: skipping ip '%s' as it has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually."
+                    os.chdir(cwd)
+                    continue
+                else:
+                    print tcolors.ERROR + "ERROR: ip '%s' has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to auto-tag."
+                    sys.exit(1)
             if newest_tag != "":
                 output, err = execute_popen("git diff --name-only tags/%s" % newest_tag).communicate()
             else:
