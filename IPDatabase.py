@@ -51,19 +51,54 @@ class IPDatabase(object):
 
     def import_yaml(self, ip_name, filename, ip_path):
         if not os.path.exists(os.path.dirname(filename)):
-            print("ERROR: ip '%s' does not exist." % ip_name)
+            print(tcolors.ERROR + "ERROR: ip '%s' does not exist." % ip_name + tcolors.ENDC)
             sys.exit(1)
         try:
             with open(filename, "rb") as f:
                 ip_dic = ordered_load(f, yaml.SafeLoader)
         except IOError:
-            print("WARNING: Skipped ip '%s' as it has no src_files.yml file." % (ip_name))
+            print(tcolors.WARNING + "WARNING: Skipped ip '%s' as it has no src_files.yml file." % ip_name + tcolors.ENDC)
             return
 
         try:
             self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path)
         except KeyError:
-            print("Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename))
+            print(tcolors.WARNING + "WARNING: Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename) + tcolors.ENDC)
+
+    def diff_ips(self):
+        prepend = "  "
+        ips = self.ip_list
+        cwd = os.getcwd()
+        for ip in ips:
+            try:
+                os.chdir("./fe/ips/%s" % ip['path'])
+                output, err = execute_popen("git diff --name-only").communicate()
+                unstaged_out = ""
+                if output.split("\n")[0] != "":
+                    for line in output.split("\n"):
+                        l = line.split()
+                        try:
+                            unstaged_out += "%s%s\n" % (prepend, l[0])
+                        except IndexError:
+                            break
+                output, err = execute_popen("git diff --cached --name-only").communicate()
+                staged_out = ""
+                if output.split("\n")[0] != "":
+                    for line in output.split("\n"):
+                        l = line.split()
+                        try:
+                            staged_out += "%s%s\n" % (prepend, l[0])
+                        except IndexError:
+                            break
+                os.chdir(cwd)
+                if unstaged_out != "":
+                    print "Changes not staged for commit in ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + "."
+                    print unstaged_out
+                if staged_out != "":
+                    print "Changes staged for commit in ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + ".\nUse " + tcolors.BLUE + "git reset HEAD" + tcolors.ENDC + " in the ip directory to unstage."
+                    print staged_out
+            except OSError:
+                print "WARNING: Skipping ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + " as it doesn't exist."
 
     def update_ips(self):
         errors = []
@@ -87,19 +122,19 @@ class IPDatabase(object):
                     errors.append("%s - %s: Not a git directory" % (ip['name'], ip['path']));
                     continue
 
-                print tcolors.OK + "\nUpdating %s..." % ip['name'] + tcolors.ENDC
+                print tcolors.OK + "\nUpdating ip '%s'..." % ip['name'] + tcolors.ENDC
 
                 # fetch everything first so that all commits are available later
                 ret = execute("%s fetch" % (git))
                 if ret != 0:
-                    print tcolors.ERROR + "ERROR: could not fetch IP %s." % (ip['name']) + tcolors.ENDC
+                    print tcolors.ERROR + "ERROR: could not fetch ip '%s'." % (ip['name']) + tcolors.ENDC
                     errors.append("%s - Could not fetch" % (ip['name']));
                     continue
 
                 # make sure we have the correct branch/tag for the pull
                 ret = execute("%s checkout %s" % (git, ip['commit']))
                 if ret != 0:
-                    print tcolors.ERROR + "ERROR: could not checkout IP %s at %s." % (ip['name'], ip['commit']) + tcolors.ENDC
+                    print tcolors.ERROR + "ERROR: could not checkout ip '%s' at %s." % (ip['name'], ip['commit']) + tcolors.ENDC
                     errors.append("%s - Could not checkout commit %s" % (ip['name'], ip['commit']));
                     continue
 
@@ -110,7 +145,7 @@ class IPDatabase(object):
                     # only do the pull if we are not in detached head mode
                     ret = execute("%s pull --ff-only" % git)
                     if ret != 0:
-                        print tcolors.ERROR + "ERROR: could not update %s" % ip['name'] + tcolors.ENDC
+                        print tcolors.ERROR + "ERROR: could not update ip '%s'" % ip['name'] + tcolors.ENDC
                         errors.append("%s - Could not update" % (ip['name']));
                         continue
 
@@ -118,17 +153,17 @@ class IPDatabase(object):
             else:
                 os.chdir("./")
 
-                print tcolors.OK + "\nCloning %s..." % ip['name'] + tcolors.ENDC
+                print tcolors.OK + "\nCloning ip '%s'..." % ip['name'] + tcolors.ENDC
 
                 ret = execute("%s clone %s/%s.git %s" % (git, server, ip['name'], ip['path']))
                 if ret != 0:
-                    print tcolors.ERROR + "ERROR: could not clone, you probably have to remove the %s directory." % ip['name'] + tcolors.ENDC
+                    print tcolors.ERROR + "ERROR: could not clone, you probably have to remove the '%s' directory." % ip['name'] + tcolors.ENDC
                     errors.append("%s - Could not clone" % (ip['name']));
                     continue
                 os.chdir("./%s" % ip['path'])
                 ret = execute("%s checkout %s" % (git, ip['commit']))
                 if ret != 0:
-                    print tcolors.ERROR + "ERROR: could not checkout IP %s at %s." % (ip['name'], ip['commit']) + tcolors.ENDC
+                    print tcolors.ERROR + "ERROR: could not checkout ip '%s' at %s." % (ip['name'], ip['commit']) + tcolors.ENDC
                     errors.append("%s - Could not checkout commit %s" % (ip['name'], ip['commit']));
                     continue
         os.chdir(cwd)
