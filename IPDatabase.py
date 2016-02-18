@@ -52,10 +52,6 @@ class IPDatabase(object):
         ips_list_txt = "%s/ips_list.txt" % (ips_list_path)
         self.ip_list = load_ips_list(ips_list_txt)
         for ip in self.ip_list:
-            # if ip['path'] == "":
-            #     ip_full_name = ip['name']
-            # else:
-            #     ip_full_name = "%s_%s" % (ip['path'], ip['name'])
             ip_full_name = ip['name']
             ip_full_path = "%s/%s/%s/src_files.yml" % (ips_list_path, IP_DIR, ip['path'])
             self.import_yaml(ip_full_name, ip_full_path, ip['path'])
@@ -119,3 +115,28 @@ class IPDatabase(object):
             vcompile_libs += VCOMPILE_LIBS_CMD % el
         with open(filename, "wb") as f:
             f.write(vcompile_libs)
+
+    def generate_vivado_add_files(self, filename):
+        l = []
+        vivado_add_files_cmd = ""
+        for i in self.ip_dic.keys():
+            l.extend(self.ip_dic[i].generate_vivado_add_files())
+        for el in l:
+            vivado_add_files_cmd += VIVADO_ADD_FILES_CMD % el.upper()
+        with open(filename, "wb") as f:
+            f.write(vivado_add_files_cmd)
+
+    def generate_vivado_inc_dirs(self, filename):
+        l = []
+        vivado_inc_dirs = VIVADO_INC_DIRS_PREAMBLE
+        for i in self.ip_dic.keys():
+            incdirs = []
+            path = self.ip_dic[i].ip_path
+            for j in self.ip_dic[i].generate_vivado_inc_dirs():
+                incdirs.append("%s/%s" % (path, j))
+            l.extend(incdirs)
+        for el in l:
+            vivado_inc_dirs += VIVADO_INC_DIRS_CMD % el
+        vivado_inc_dirs += VIVADO_INC_DIRS_POSTAMBLE
+        with open(filename, "wb") as f:
+            f.write(vivado_inc_dirs)

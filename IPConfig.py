@@ -43,8 +43,15 @@ class IPConfig(object):
             synplify_script += self.sub_ips[s].export_synplify(abs_path, more_opts)
         return synplify_script
 
-    def generate_list(self):
+    def generate_vivado_add_files(self):
         l = []
         for s in self.sub_ips.keys():
-            l.append(s)
+            if "xilinx" in self.sub_ips[s].targets:
+                l.append(s)
+        return l
+
+    def generate_vivado_inc_dirs(self):
+        l = []
+        for s in self.sub_ips.keys():
+            l.extend(self.sub_ips[s].incdirs)
         return l

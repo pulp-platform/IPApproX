@@ -21,3 +21,13 @@ VIVADO_SUBIP_LIB = "set LIB_%s\n"
 
 VIVADO_POSTAMBLE_SUBIP = """"
 """
+
+VIVADO_ADD_FILES_CMD = "add_files -norecurse -scan_for_includes $SRC_%s\n"
+
+VIVADO_INC_DIRS_PREAMBLE = """set_property include_dirs { 
+    ../../fe/rtl/includes \\
+"""
+
+VIVADO_INC_DIRS_CMD = "    ../../fe/ips/%s \\\n"
+
+VIVADO_INC_DIRS_POSTAMBLE = "} [current_fileset] \n"
