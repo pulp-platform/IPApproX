@@ -121,6 +121,7 @@ class IPDatabase(object):
         ip_dir = "fe/ips/"
         server = "git@iis-git.ee.ethz.ch:pulp-project"
         # make sure we are in the correct directory to start
+        owd = os.getcwd()
         os.chdir(ip_dir)
         cwd = os.getcwd()
 
@@ -191,6 +192,7 @@ class IPDatabase(object):
             print
             print tcolors.ERROR + "ERRORS during IP update!" + tcolors.ENDC
             sys.exit(1)
+        os.chdir(owd)
 
     def delete_tag_ips(self, tag_name):
         cwd = os.getcwd()
