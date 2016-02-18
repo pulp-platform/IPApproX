@@ -36,16 +36,16 @@ class IPConfig(object):
             analyze_script += self.sub_ips[s].export_synopsys(self.ip_path, target_tech=target_tech)
         return analyze_script
         
-    def export_vivado(self, abs_path, more_opts):
+    def export_vivado(self, abs_path):
         vivado_script = ""
         for s in self.sub_ips.keys():
-            vivado_script += self.sub_ips[s].export_vivado(abs_path, more_opts)
+            vivado_script += self.sub_ips[s].export_vivado(abs_path)
         return vivado_script
         
-    def export_synplify(self, abs_path, more_opts):
+    def export_synplify(self, abs_path):
         synplify_script = ""
         for s in self.sub_ips.keys():
-            synplify_script += self.sub_ips[s].export_synplify(abs_path, more_opts)
+            synplify_script += self.sub_ips[s].export_synplify(abs_path)
         return synplify_script
 
     def generate_vivado_add_files(self):

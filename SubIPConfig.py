@@ -80,7 +80,7 @@ class SubIPConfig(object):
                 analyze_cmd += SYNOPSYS_ANALYZE_VHDL_CMD % ("%s/%s" % (path, f))
         return analyze_cmd
         
-    def export_vivado(self, abs_path, more_opts):
+    def export_vivado(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):
             return "\n"
         vivado_cmd = VIVADO_PREAMBLE_SUBIP % (self.sub_ip_name, self.sub_ip_name.upper())
@@ -95,7 +95,7 @@ class SubIPConfig(object):
             vivado_cmd += VIVADO_POSTAMBLE_SUBIP
         return vivado_cmd
         
-    def export_synplify(self, abs_path, more_opts):
+    def export_synplify(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):
             return "\n"
         synplify_cmd = ""

@@ -271,19 +271,20 @@ class IPDatabase(object):
                 with open(filename, "wb") as f:
                     f.write(analyze_script)
 
-    def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", more_opts=""):
+    def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", domain=None):
         filename = "%s" % (script_path)
         vivado_script = VIVADO_PREAMBLE
         for i in self.ip_dic.keys():
-            vivado_script += self.ip_dic[i].export_vivado(abs_path, more_opts)
+            if domain==None or domain in self.ip_dic[i].domain:
+                vivado_script += self.ip_dic[i].export_vivado(abs_path)
         with open(filename, "wb") as f:
             f.write(vivado_script)
 
-    def export_synplify(self, abs_path="$IPS", script_path="./src_files_synplify.tcl", more_opts=""):
+    def export_synplify(self, abs_path="$IPS", script_path="./src_files_synplify.tcl"):
         filename = "%s" % (script_path)
         synplify_script = ""
         for i in self.ip_dic.keys():
-            synplify_script += self.ip_dic[i].export_synplify(abs_path, more_opts)
+            synplify_script += self.ip_dic[i].export_synplify(abs_path)
         with open(filename, "wb") as f:
             f.write(synplify_script)
 
@@ -308,25 +309,27 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vcompile_libs)
 
-    def generate_vivado_add_files(self, filename):
+    def generate_vivado_add_files(self, filename, domain=None):
         l = []
         vivado_add_files_cmd = ""
         for i in self.ip_dic.keys():
-            l.extend(self.ip_dic[i].generate_vivado_add_files())
+            if domain==None or domain in self.ip_dic[i].domain:
+                l.extend(self.ip_dic[i].generate_vivado_add_files())
         for el in l:
             vivado_add_files_cmd += VIVADO_ADD_FILES_CMD % el.upper()
         with open(filename, "wb") as f:
             f.write(vivado_add_files_cmd)
 
-    def generate_vivado_inc_dirs(self, filename):
+    def generate_vivado_inc_dirs(self, filename, domain=None):
         l = []
         vivado_inc_dirs = VIVADO_INC_DIRS_PREAMBLE
         for i in self.ip_dic.keys():
-            incdirs = []
-            path = self.ip_dic[i].ip_path
-            for j in self.ip_dic[i].generate_vivado_inc_dirs():
-                incdirs.append("%s/%s" % (path, j))
-            l.extend(incdirs)
+            if domain==None or domain in self.ip_dic[i].domain:
+                incdirs = []
+                path = self.ip_dic[i].ip_path
+                for j in self.ip_dic[i].generate_vivado_inc_dirs():
+                    incdirs.append("%s/%s" % (path, j))
+                l.extend(incdirs)
         for el in l:
             vivado_inc_dirs += VIVADO_INC_DIRS_CMD % el
         vivado_inc_dirs += VIVADO_INC_DIRS_POSTAMBLE
