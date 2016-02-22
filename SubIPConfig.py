@@ -83,13 +83,13 @@ class SubIPConfig(object):
     def export_vivado(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):
             return "\n"
-        vivado_cmd = VIVADO_PREAMBLE_SUBIP % (self.sub_ip_name, self.sub_ip_name.upper())
+        vivado_cmd = VIVADO_PREAMBLE_SUBIP % (self.sub_ip_name, prepare(self.sub_ip_name.upper()))
         files = self.files
         for f in files:
             vivado_cmd += "    %s/%s/%s \\\n" % (abs_path, self.ip_path, f)
         vivado_cmd += VIVADO_POSTAMBLE_SUBIP
         if len(self.incdirs) > 0:
-            vivado_cmd += VIVADO_PREAMBLE_SUBIP_INCDIRS % (self.sub_ip_name.upper())
+            vivado_cmd += VIVADO_PREAMBLE_SUBIP_INCDIRS % prepare(self.sub_ip_name.upper())
             for i in self.incdirs:
                 vivado_cmd += "    %s/%s/%s \\\n" % (abs_path, self.ip_path, i)
             vivado_cmd += VIVADO_POSTAMBLE_SUBIP

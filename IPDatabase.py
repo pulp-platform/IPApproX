@@ -35,7 +35,11 @@ def load_ips_list(filename):
         domain = ips_list[i]['domain']
         path = i
         name = i.split()[0].split('/')[-1]
-        ips.append({'name': name, 'commit': commit, 'path': path, 'domain': domain })
+        try:
+            alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
+        except KeyError:
+            alternatives = None
+        ips.append({'name': name, 'commit': commit, 'path': path, 'domain': domain, 'alternatives': alternatives })
     return ips
 
 def store_ips_list(filename, ips):
@@ -56,14 +60,14 @@ class IPDatabase(object):
             for ip in self.ip_list:
                 ip_full_name = ip['name']
                 ip_full_path = "%s/%s/%s/src_files.yml" % (ips_list_path, IP_DIR, ip['path'])
-                self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'])
+                self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'], alternatives=ip['alternatives'])
             sub_ip_check_list = []
             for i in self.ip_dic.keys():
                 sub_ip_check_list.extend(self.ip_dic[i].sub_ips.keys())
             if len(set(sub_ip_check_list)) != len(sub_ip_check_list):
                 print(tcolors.WARNING + "WARNING: two sub-IPs have the same name. This can cause trouble!" + tcolors.ENDC)
 
-    def import_yaml(self, ip_name, filename, ip_path, domain=None):
+    def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None):
         if not os.path.exists(os.path.dirname(filename)):
             print(tcolors.ERROR + "ERROR: ip '%s' does not exist." % ip_name + tcolors.ENDC)
             sys.exit(1)
@@ -75,7 +79,7 @@ class IPDatabase(object):
             return
 
         try:
-            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path, domain=domain)
+            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path, domain=domain, alternatives=alternatives)
         except KeyError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename) + tcolors.ENDC)
 
@@ -310,12 +314,13 @@ class IPDatabase(object):
                 with open(filename, "wb") as f:
                     f.write(analyze_script)
 
-    def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", domain=None):
+    def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", domain=None, alternatives=[]):
         filename = "%s" % (script_path)
         vivado_script = VIVADO_PREAMBLE
         for i in self.ip_dic.keys():
-            if domain==None or domain in self.ip_dic[i].domain:
-                vivado_script += self.ip_dic[i].export_vivado(abs_path)
+            if self.ip_dic[i].alternatives==None or set.intersection(set([self.ip_dic[i].ip_name]), set(alternatives), set(self.ip_dic[i].alternatives))!=set([]):
+                if domain==None or domain in self.ip_dic[i].domain:
+                    vivado_script += self.ip_dic[i].export_vivado(abs_path)
         with open(filename, "wb") as f:
             f.write(vivado_script)
 
@@ -348,27 +353,29 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vcompile_libs)
 
-    def generate_vivado_add_files(self, filename, domain=None):
+    def generate_vivado_add_files(self, filename, domain=None, alternatives=[]):
         l = []
         vivado_add_files_cmd = ""
         for i in self.ip_dic.keys():
-            if domain==None or domain in self.ip_dic[i].domain:
-                l.extend(self.ip_dic[i].generate_vivado_add_files())
+            if self.ip_dic[i].alternatives==None or set.intersection(set([self.ip_dic[i].ip_name]), set(alternatives), set(self.ip_dic[i].alternatives))!=set([]):
+                if domain==None or domain in self.ip_dic[i].domain:
+                    l.extend(self.ip_dic[i].generate_vivado_add_files())
         for el in l:
             vivado_add_files_cmd += VIVADO_ADD_FILES_CMD % el.upper()
         with open(filename, "wb") as f:
             f.write(vivado_add_files_cmd)
 
-    def generate_vivado_inc_dirs(self, filename, domain=None):
+    def generate_vivado_inc_dirs(self, filename, domain=None, alternatives=[]):
         l = []
         vivado_inc_dirs = VIVADO_INC_DIRS_PREAMBLE
         for i in self.ip_dic.keys():
-            if domain==None or domain in self.ip_dic[i].domain:
-                incdirs = []
-                path = self.ip_dic[i].ip_path
-                for j in self.ip_dic[i].generate_vivado_inc_dirs():
-                    incdirs.append("%s/%s" % (path, j))
-                l.extend(incdirs)
+            if self.ip_dic[i].alternatives==None or set.intersection(set([self.ip_dic[i].ip_name]), set(alternatives), set(self.ip_dic[i].alternatives))!=set([]):
+                if domain==None or domain in self.ip_dic[i].domain:
+                    incdirs = []
+                    path = self.ip_dic[i].ip_path
+                    for j in self.ip_dic[i].generate_vivado_inc_dirs():
+                        incdirs.append("%s/%s" % (path, j))
+                    l.extend(incdirs)
         for el in l:
             vivado_inc_dirs += VIVADO_INC_DIRS_CMD % el
         vivado_inc_dirs += VIVADO_INC_DIRS_POSTAMBLE

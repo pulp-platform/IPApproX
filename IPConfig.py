@@ -8,10 +8,11 @@ from synopsys_defines import *
 from SubIPConfig      import *
 
 class IPConfig(object):
-    def __init__(self, ip_name, ip_dic, ip_path, domain=None):
+    def __init__(self, ip_name, ip_dic, ip_path, domain=None, alternatives=None):
         super(IPConfig, self).__init__()
 
         self.domain  = domain
+        self.alternatives = alternatives
         self.ip_name = ip_name
         self.ip_path = ip_path
         self.sub_ips = {}
@@ -51,12 +52,13 @@ class IPConfig(object):
     def generate_vivado_add_files(self):
         l = []
         for s in self.sub_ips.keys():
-            if "xilinx" in self.sub_ips[s].targets:
-                l.append(s)
+            if "xilinx" in self.sub_ips[s].targets or "all" in self.sub_ips[s].targets:
+                l.append(prepare(s))
         return l
 
     def generate_vivado_inc_dirs(self):
         l = []
         for s in self.sub_ips.keys():
-            l.extend(self.sub_ips[s].incdirs)
+            if "xilinx" in self.sub_ips[s].targets or "all" in self.sub_ips[s].targets:
+                l.extend(self.sub_ips[s].incdirs)
         return l
