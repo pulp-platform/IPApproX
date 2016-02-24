@@ -2,7 +2,7 @@
 # KISS script to load configuration files from IPs
 
 # YAML workaround
-import sys,os
+import sys,os,stat
 sys.path.append(os.path.abspath("yaml/lib64/python"))
 import yaml
 import collections
@@ -313,6 +313,7 @@ class IPDatabase(object):
                 analyze_script = self.ip_dic[i].export_synopsys(target_tech=target_tech)
                 with open(filename, "wb") as f:
                     f.write(analyze_script)
+                    os.fchmod(f.fileno(), os.fstat(f.fileno()).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", domain=None, alternatives=[]):
         filename = "%s" % (script_path)

@@ -3,7 +3,7 @@
 
 # templates for vcompile.csh scripts
 VSIM_PREAMBLE = """#!/bin/tcsh
-source ${PULP_PATH}/fe/sim/vcompile/colors.csh
+source ${PULP_PATH}/fe/sim/vcompile/setup.csh
 
 ##############################################################################
 # Settings
