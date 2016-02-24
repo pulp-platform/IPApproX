@@ -305,6 +305,7 @@ class IPDatabase(object):
             vcompile_script = self.ip_dic[i].export_vsim(abs_path, more_opts, target_tech=target_tech)
             with open(filename, "wb") as f:
                 f.write(vcompile_script)
+                os.fchmod(f.fileno(), os.fstat(f.fileno()).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     def export_synopsys(self, script_path=".", target_tech='st28fdsoi', domain=None):
         for i in self.ip_dic.keys():
@@ -313,7 +314,6 @@ class IPDatabase(object):
                 analyze_script = self.ip_dic[i].export_synopsys(target_tech=target_tech)
                 with open(filename, "wb") as f:
                     f.write(analyze_script)
-                    os.fchmod(f.fileno(), os.fstat(f.fileno()).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", domain=None, alternatives=[]):
         filename = "%s" % (script_path)
