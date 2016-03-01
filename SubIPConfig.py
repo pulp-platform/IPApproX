@@ -54,6 +54,8 @@ class SubIPConfig(object):
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
 
     def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
+        if target_tech == 'xilinx':
+            return self.__export_vsim_xilinx(abs_path, more_opts)
         if not ("all" in self.targets or "rtl" in self.targets):
             return "\n"
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
@@ -64,6 +66,22 @@ class SubIPConfig(object):
         for f in files:
             if not is_vhdl(f):
                 vlog_cmd += VSIM_VLOG_CMD % ("%s %s" % (more_opts, self.vlog_opts), vlog_includes, "%s/%s" % (abs_path, f))
+            else:
+                vlog_cmd += VSIM_VCOM_CMD % ("%s %s" % (more_opts, self.vcom_opts), "%s/%s" % (abs_path, f))
+        return vlog_cmd
+
+    def __export_vsim_xilinx(self, abs_path, more_opts):
+        if not ("all" in self.targets or "xilinx" in self.targets):
+            return "\n"
+        vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
+        files = self.files
+        vlog_includes = ""
+        vlog_opts = " +define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM"
+        for i in self.incdirs:
+            vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
+        for f in files:
+            if not is_vhdl(f):
+                vlog_cmd += VSIM_VLOG_CMD % ("%s %s %s" % (more_opts, vlog_opts, self.vlog_opts), vlog_includes, "%s/%s" % (abs_path, f))
             else:
                 vlog_cmd += VSIM_VCOM_CMD % ("%s %s" % (more_opts, self.vcom_opts), "%s/%s" % (abs_path, f))
         return vlog_cmd

@@ -344,13 +344,17 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
 
-    def generate_vcompile_libs_csh(self, filename):
+    def generate_vcompile_libs_csh(self, filename, target_tech=None):
         l = []
         for i in self.ip_dic.keys():
             l.append(i)
         vcompile_libs = VCOMPILE_LIBS_PREAMBLE
-        for el in l:
-            vcompile_libs += VCOMPILE_LIBS_CMD % el
+        if target_tech != "xilinx":
+            for el in l:
+                vcompile_libs += VCOMPILE_LIBS_CMD % el
+        else:
+            for el in l:
+                vcompile_libs += VCOMPILE_LIBS_XILINX_CMD % el
         with open(filename, "wb") as f:
             f.write(vcompile_libs)
 

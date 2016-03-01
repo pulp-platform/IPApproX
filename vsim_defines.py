@@ -87,3 +87,4 @@ echo \"${Green}--> Compiling PULP IPs libraries... ${NC}\"
 """
 
 VCOMPILE_LIBS_CMD = "tcsh ${PULP_PATH}/fe/sim/vcompile/ips/vcompile_%s.csh || exit 1\n"
+VCOMPILE_LIBS_XILINX_CMD = "tcsh ${PULP_PATH}/fpga/sim/vcompile/ips/vcompile_%s.csh || exit 1\n"
