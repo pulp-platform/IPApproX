@@ -45,7 +45,10 @@ def load_ips_list(filename):
 def store_ips_list(filename, ips):
     ips_list = {}
     for i in ips:
-        ips_list[i['path']] = {'commit': i['commit'], 'domain': i['domain']}
+        if i['alternatives'] != None:
+            ips_list[i['path']] = {'commit': i['commit'], 'domain': i['domain'], 'alternatives': i['alternatives']}
+        else:
+            ips_list[i['path']] = {'commit': i['commit'], 'domain': i['domain']}
     with open(filename, "wb") as f:
         f.write(IPS_LIST_PREAMBLE)
         f.write(yaml.dump(ips_list))
@@ -294,7 +297,7 @@ class IPDatabase(object):
                 newest_tag = newest_tag.split()[0]
             except IndexError:
                 pass
-            new_ips.append({'name': ip['name'], 'path': ip['path'], 'domain': ip['domain'], 'commit': "tags/%s" % newest_tag})
+            new_ips.append({'name': ip['name'], 'path': ip['path'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'commit': "tags/%s" % newest_tag})
             os.chdir(cwd)
 
         store_ips_list("new_ips_list.yml", new_ips)
