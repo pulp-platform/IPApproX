@@ -12,8 +12,6 @@ from vivado_defines import *
 from ips_defines import *
 from synopsys_defines import *
 
-IP_DIR = "fe/ips"
-
 def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.OrderedDict):
     class OrderedLoader(Loader):
         pass
@@ -32,7 +30,10 @@ def load_ips_list(filename):
     ips = []
     for i in ips_list.keys():
         commit = ips_list[i]['commit']
-        domain = ips_list[i]['domain']
+        try:
+            domain = ips_list[i]['domain']
+        except KeyError:
+            domain = None
         path = i
         name = i.split()[0].split('/')[-1]
         try:
@@ -51,15 +52,20 @@ def store_ips_list(filename, ips):
         f.write(yaml.dump(ips_list))
 
 class IPDatabase(object):
-    def __init__(self, ips_list_path=".", skip_scripts=False):
+    ips_dir  = "./fe/ips"
+    vsim_dir = "./fe/sim"
+
+    def __init__(self, ips_list_path=".", ips_dir="./fe/ips", vsim_dir="./fe/sim", skip_scripts=False):
         super(IPDatabase, self).__init__()
+        self.ips_dir = ips_dir
+        self.vsim_dir = vsim_dir
         self.ip_dic = {}
         ips_list_yml = "%s/ips_list.yml" % (ips_list_path)
         self.ip_list = load_ips_list(ips_list_yml)
         if not skip_scripts:
             for ip in self.ip_list:
                 ip_full_name = ip['name']
-                ip_full_path = "%s/%s/%s/src_files.yml" % (ips_list_path, IP_DIR, ip['path'])
+                ip_full_path = "%s/%s/%s/src_files.yml" % (ips_list_path, ips_dir, ip['path'])
                 self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'], alternatives=ip['alternatives'])
             sub_ip_check_list = []
             for i in self.ip_dic.keys():
@@ -69,7 +75,7 @@ class IPDatabase(object):
 
     def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None):
         if not os.path.exists(os.path.dirname(filename)):
-            print(tcolors.ERROR + "ERROR: ip '%s' does not exist." % ip_name + tcolors.ENDC)
+            print(tcolors.ERROR + "ERROR: ip '%s' has not src_files.yml file. File path: %s" % (ip_name, filename) + tcolors.ENDC)
             sys.exit(1)
         try:
             with open(filename, "rb") as f:
@@ -79,7 +85,7 @@ class IPDatabase(object):
             return
 
         try:
-            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path, domain=domain, alternatives=alternatives)
+            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path, self.vsim_dir, domain=domain, alternatives=alternatives)
         except KeyError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename) + tcolors.ENDC)
 
@@ -91,7 +97,7 @@ class IPDatabase(object):
         staged_ips = []
         for ip in ips:
             try:
-                os.chdir("./fe/ips/%s" % ip['path'])
+                os.chdir("%s/%s" % (ips_dir, ip['path']))
                 output, err = execute_popen("git diff --name-only").communicate()
                 unstaged_out = ""
                 if output.split("\n")[0] != "":
@@ -127,7 +133,7 @@ class IPDatabase(object):
         ips = self.ip_list
         cwd = os.getcwd()
         unstaged_ips, staged_ips = self.diff_ips()
-        os.chdir("fe/ips")
+        os.chdir(self.ips_dir)
         if not skip_check and (len(unstaged_ips)+len(staged_ips) > 0):
             print tcolors.ERROR + "ERROR: Cowardly refusing to remove IPs as there are changes." + tcolors.ENDC
             print "If you *really* want to remove ips, run remove-ips.py with the --skip-check flag."
@@ -146,19 +152,18 @@ class IPDatabase(object):
         print tcolors.OK + "Removed all IPs listed in ips_list.yml." + tcolors.ENDC
         os.chdir(cwd)
         try:
-            os.removedirs("fe/ips")
+            os.removedirs(self.ips_dir)
         except OSError:
-            print tcolors.WARNING + "WARNING: Not removing fe/ips as there are unknown IPs there." + tcolors.ENDC
+            print tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC
 
     def update_ips(self):
         errors = []
         ips = self.ip_list
         git = "git"
-        ip_dir = "fe/ips/"
         server = "git@iis-git.ee.ethz.ch:pulp-project"
         # make sure we are in the correct directory to start
         owd = os.getcwd()
-        os.chdir(ip_dir)
+        os.chdir(self.ips_dir)
         cwd = os.getcwd()
 
         for ip in ips:
@@ -235,7 +240,7 @@ class IPDatabase(object):
         ips = self.ip_list
         new_ips = []
         for ip in ips:
-            os.chdir("./fe/ips/%s" % ip['path'])
+            os.chdir("%s/%s" % (self.ips_dir, ip['path']))
             ret = execute("git tag -d %s" % tag_name)
             os.chdir(cwd)
 
@@ -244,7 +249,7 @@ class IPDatabase(object):
         ips = self.ip_list
         new_ips = []
         for ip in ips:
-            os.chdir("./fe/ips/%s" % ip['path'])
+            os.chdir("%s/%s" % (self.ips_dir, ip['path']))
             newest_tag = execute_popen("git describe --tags --abbrev=0", silent=True).communicate()
             try:
                 newest_tag = newest_tag[0].split()
@@ -259,7 +264,7 @@ class IPDatabase(object):
         ips = self.ip_list
         new_ips = []
         for ip in ips:
-            os.chdir("./fe/ips/%s" % ip['path'])
+            os.chdir("%s/%s" % (self.ips_dir, ip['path']))
             newest_tag, err = execute_popen("git describe --tags --abbrev=0", silent=True).communicate()
             unstaged_changes, err = execute_popen("git diff --name-only").communicate()
             staged_changes, err = execute_popen("git diff --name-only").communicate()
@@ -351,7 +356,7 @@ class IPDatabase(object):
         vcompile_libs = VCOMPILE_LIBS_PREAMBLE
         if target_tech != "xilinx":
             for el in l:
-                vcompile_libs += VCOMPILE_LIBS_CMD % el
+                vcompile_libs += VCOMPILE_LIBS_CMD % (self.vsim_dir, el)
         else:
             for el in l:
                 vcompile_libs += VCOMPILE_LIBS_XILINX_CMD % el
