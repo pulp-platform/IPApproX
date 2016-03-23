@@ -1,3 +1,14 @@
+# 
+# ips_defines.py
+# Francesco Conti <f.conti@unibo.it>
+# 
+# Copyright (C) 2015 ETH Zurich, University of Bologna
+# All rights reserved.
+# 
+# This software may be modified and distributed under the terms
+# of the BSD license.  See the LICENSE file for details.
+#
+
 IPS_LIST_PREAMBLE = """#
 # List of IPs and relative branch/commit-hash/tag.
 # Uses the YAML syntax.
