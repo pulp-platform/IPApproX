@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-# 
+#
 # SubIPConfig.py
 # Francesco Conti <f.conti@unibo.it>
-# 
+#
 # Copyright (C) 2015 ETH Zurich, University of Bologna
 # All rights reserved.
-# 
+#
 # This software may be modified and distributed under the terms
 # of the BSD license.  See the LICENSE file for details.
 #
@@ -106,7 +106,7 @@ class SubIPConfig(object):
             else:
                 analyze_cmd += SYNOPSYS_ANALYZE_VHDL_CMD % ("%s/%s" % (path, f))
         return analyze_cmd
-        
+
     def export_vivado(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):
             return "\n"
@@ -121,7 +121,7 @@ class SubIPConfig(object):
                 vivado_cmd += "    %s/%s/%s \\\n" % (abs_path, self.ip_path, i)
             vivado_cmd += VIVADO_POSTAMBLE_SUBIP
         return vivado_cmd
-        
+
     def export_synplify(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):
             return "\n"

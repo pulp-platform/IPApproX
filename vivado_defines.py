@@ -11,8 +11,7 @@
 #
 
 VIVADO_PREAMBLE = """if ![info exists PULP_HSA_SIM] {
-    set RTL ../../fe/rtl
-    set IPS ../../fe/ips
+    set IPS ../../%s
     set FPGA_IPS ../ips
     set FPGA_RTL ../rtl
 }
@@ -33,10 +32,10 @@ VIVADO_POSTAMBLE_SUBIP = """"
 
 VIVADO_ADD_FILES_CMD = "add_files -norecurse -scan_for_includes $SRC_%s\n"
 
-VIVADO_INC_DIRS_PREAMBLE = """set_property include_dirs { 
-    ../../fe/rtl/includes \\
+VIVADO_INC_DIRS_PREAMBLE = """set_property include_dirs {
+    ../../%s/includes \\
 """
 
-VIVADO_INC_DIRS_CMD = "    ../../fe/ips/%s \\\n"
+VIVADO_INC_DIRS_CMD = "    ../../%s/%s \\\n"
 
 VIVADO_INC_DIRS_POSTAMBLE = "} [current_fileset] \n"

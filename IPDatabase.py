@@ -64,12 +64,14 @@ def store_ips_list(filename, ips):
         f.write(yaml.dump(ips_list))
 
 class IPDatabase(object):
+    rtl_dir  = "./fe/rtl"
     ips_dir  = "./fe/ips"
     vsim_dir = "./fe/sim"
 
-    def __init__(self, ips_list_path=".", ips_dir="./fe/ips", vsim_dir="./fe/sim", skip_scripts=False):
+    def __init__(self, ips_list_path=".", ips_dir="./fe/ips", rtl_dir="./fe/rtl", vsim_dir="./fe/sim", skip_scripts=False):
         super(IPDatabase, self).__init__()
         self.ips_dir = ips_dir
+        self.rtl_dir = rtl_dir
         self.vsim_dir = vsim_dir
         self.ip_dic = {}
         ips_list_yml = "%s/ips_list.yml" % (ips_list_path)
@@ -97,7 +99,7 @@ class IPDatabase(object):
             return
 
         try:
-            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path, self.vsim_dir, domain=domain, alternatives=alternatives)
+            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path, self.ips_dir, self.vsim_dir, domain=domain, alternatives=alternatives)
         except KeyError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename) + tcolors.ENDC)
 
@@ -334,7 +336,7 @@ class IPDatabase(object):
 
     def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", domain=None, alternatives=[]):
         filename = "%s" % (script_path)
-        vivado_script = VIVADO_PREAMBLE
+        vivado_script = VIVADO_PREAMBLE % (self.ips_dir)
         for i in self.ip_dic.keys():
             if self.ip_dic[i].alternatives==None or set.intersection(set([self.ip_dic[i].ip_name]), set(alternatives), set(self.ip_dic[i].alternatives))!=set([]):
                 if domain==None or domain in self.ip_dic[i].domain:
@@ -389,7 +391,7 @@ class IPDatabase(object):
 
     def generate_vivado_inc_dirs(self, filename, domain=None, alternatives=[]):
         l = []
-        vivado_inc_dirs = VIVADO_INC_DIRS_PREAMBLE
+        vivado_inc_dirs = VIVADO_INC_DIRS_PREAMBLE % (self.rtl_dir)
         for i in self.ip_dic.keys():
             if self.ip_dic[i].alternatives==None or set.intersection(set([self.ip_dic[i].ip_name]), set(alternatives), set(self.ip_dic[i].alternatives))!=set([]):
                 if domain==None or domain in self.ip_dic[i].domain:
@@ -399,7 +401,7 @@ class IPDatabase(object):
                         incdirs.append("%s/%s" % (path, j))
                     l.extend(incdirs)
         for el in l:
-            vivado_inc_dirs += VIVADO_INC_DIRS_CMD % el
+            vivado_inc_dirs += VIVADO_INC_DIRS_CMD % (self.ips_dir, el)
         vivado_inc_dirs += VIVADO_INC_DIRS_POSTAMBLE
         with open(filename, "wb") as f:
             f.write(vivado_inc_dirs)

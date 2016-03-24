@@ -17,13 +17,14 @@ from synopsys_defines import *
 from SubIPConfig      import *
 
 class IPConfig(object):
-    def __init__(self, ip_name, ip_dic, ip_path, vsim_dir, domain=None, alternatives=None):
+    def __init__(self, ip_name, ip_dic, ip_path, ips_dir, vsim_dir, domain=None, alternatives=None):
         super(IPConfig, self).__init__()
 
         self.domain  = domain
         self.alternatives = alternatives
         self.ip_name = ip_name
         self.ip_path = ip_path
+        self.ips_dir = ips_dir
         self.vsim_dir = vsim_dir
         self.sub_ips = {}
 
