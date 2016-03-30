@@ -170,7 +170,7 @@ class IPDatabase(object):
         except OSError:
             print tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC
 
-    def update_ips(self, server = "git@iis-git.ee.ethz.ch:pulp-project"):
+    def update_ips(self, remote = "git@iis-git.ee.ethz.ch:pulp-project"):
         errors = []
         ips = self.ip_list
         git = "git"
@@ -224,7 +224,7 @@ class IPDatabase(object):
 
                 print tcolors.OK + "\nCloning ip '%s'..." % ip['name'] + tcolors.ENDC
 
-                ret = execute("%s clone %s/%s.git %s" % (git, server, ip['name'], ip['path']))
+                ret = execute("%s clone %s/%s.git %s" % (git, remote, ip['name'], ip['path']))
                 if ret != 0:
                     print tcolors.ERROR + "ERROR: could not clone, you probably have to remove the '%s' directory." % ip['name'] + tcolors.ENDC
                     errors.append("%s - Could not clone" % (ip['name']));
