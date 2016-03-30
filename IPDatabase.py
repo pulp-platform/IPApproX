@@ -170,11 +170,10 @@ class IPDatabase(object):
         except OSError:
             print tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC
 
-    def update_ips(self):
+    def update_ips(self, server = "git@iis-git.ee.ethz.ch:pulp-project"):
         errors = []
         ips = self.ip_list
         git = "git"
-        server = "git@iis-git.ee.ethz.ch:pulp-project"
         # make sure we are in the correct directory to start
         owd = os.getcwd()
         os.chdir(self.ips_dir)
