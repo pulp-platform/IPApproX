@@ -111,7 +111,7 @@ class IPDatabase(object):
         staged_ips = []
         for ip in ips:
             try:
-                os.chdir("%s/%s" % (ips_dir, ip['path']))
+                os.chdir("%s/%s" % (self.ips_dir, ip['path']))
                 output, err = execute_popen("git diff --name-only").communicate()
                 unstaged_out = ""
                 if output.split("\n")[0] != "":
