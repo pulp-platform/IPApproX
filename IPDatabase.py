@@ -86,6 +86,10 @@ class IPDatabase(object):
                 sub_ip_check_list.extend(self.ip_dic[i].sub_ips.keys())
             if len(set(sub_ip_check_list)) != len(sub_ip_check_list):
                 print(tcolors.WARNING + "WARNING: two sub-IPs have the same name. This can cause trouble!" + tcolors.ENDC)
+                import collections
+                blacklist = [item for item, count in collections.Counter(sub_ip_check_list).items() if count > 1]
+                for el in blacklist:
+                    print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
 
     def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None):
         if not os.path.exists(os.path.dirname(filename)):
