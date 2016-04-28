@@ -43,22 +43,26 @@ def load_ips_list(filename):
             domain = ips_list[i]['domain']
         except KeyError:
             domain = None
+        try:
+            group = ips_list[i]['group']
+        except KeyError:
+            group = None
         path = i
         name = i.split()[0].split('/')[-1]
         try:
             alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
         except KeyError:
             alternatives = None
-        ips.append({'name': name, 'commit': commit, 'path': path, 'domain': domain, 'alternatives': alternatives })
+        ips.append({'name': name, 'commit': commit, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
     return ips
 
 def store_ips_list(filename, ips):
     ips_list = {}
     for i in ips:
         if i['alternatives'] != None:
-            ips_list[i['path']] = {'commit': i['commit'], 'domain': i['domain'], 'alternatives': i['alternatives']}
+            ips_list[i['path']] = {'commit': i['commit'], 'group': i['group'], 'domain': i['domain'], 'alternatives': i['alternatives']}
         else:
-            ips_list[i['path']] = {'commit': i['commit'], 'domain': i['domain']}
+            ips_list[i['path']] = {'commit': i['commit'], 'group': i['group'], 'domain': i['domain']}
     with open(filename, "wb") as f:
         f.write(IPS_LIST_PREAMBLE)
         f.write(yaml.dump(ips_list))
@@ -183,6 +187,11 @@ class IPDatabase(object):
         os.chdir(self.ips_dir)
         cwd = os.getcwd()
 
+        server = None
+        group = None
+        # try to strip group from remote
+        [server, group] = remote.rsplit(":", 1)
+
         for ip in ips:
             os.chdir(cwd)
             # check if directory already exists, this hints to the fact that we probably already cloned it
@@ -228,7 +237,14 @@ class IPDatabase(object):
 
                 print tcolors.OK + "\nCloning ip '%s'..." % ip['name'] + tcolors.ENDC
 
-                ret = execute("%s clone %s/%s.git %s" % (git, remote, ip['name'], ip['path']))
+                if group and ip['group']:
+                    ip['remote'] = "%s:%s" % (server, ip['group'])
+                else:
+                    ip['remote'] = remote
+
+                print ip['remote']
+
+                ret = execute("%s clone %s/%s.git %s" % (git, ip['remote'], ip['name'], ip['path']))
                 if ret != 0:
                     print tcolors.ERROR + "ERROR: could not clone, you probably have to remove the '%s' directory." % ip['name'] + tcolors.ENDC
                     errors.append("%s - Could not clone" % (ip['name']));
@@ -316,7 +332,7 @@ class IPDatabase(object):
                 newest_tag = newest_tag.split()[0]
             except IndexError:
                 pass
-            new_ips.append({'name': ip['name'], 'path': ip['path'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'commit': "tags/%s" % newest_tag})
+            new_ips.append({'name': ip['name'], 'path': ip['path'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'group': ip['group'], 'commit': "tags/%s" % newest_tag})
             os.chdir(cwd)
 
         store_ips_list("new_ips_list.yml", new_ips)
