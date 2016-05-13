@@ -277,22 +277,35 @@ class IPDatabase(object):
             ret = execute("git tag -d %s" % tag_name)
             os.chdir(cwd)
 
-    def push_tag_ips(self):
+    def push_tag_ips(self, tag_name=None):
         cwd = os.getcwd()
         ips = self.ip_list
         new_ips = []
         for ip in ips:
             os.chdir("%s/%s" % (self.ips_dir, ip['path']))
-            newest_tag = execute_popen("git describe --tags --abbrev=0", silent=True).communicate()
-            try:
-                newest_tag = newest_tag[0].split()
-                newest_tag = newest_tag[0]
-            except IndexError:
-                pass
+            if tag_name == None:
+                newest_tag = execute_popen("git describe --tags --abbrev=0", silent=True).communicate()
+                try:
+                    newest_tag = newest_tag[0].split()
+                    newest_tag = newest_tag[0]
+                except IndexError:
+                    pass
+            else:
+                newest_tag = tag_name
             ret = execute("git push origin tags/%s" % newest_tag)
             os.chdir(cwd)
 
-    def tag_ips(self, tag_name, changes_severity='warning'):
+    def push_ips(self, remote_name, remote):
+        cwd = os.getcwd()
+        ips = self.ip_list
+        new_ips = []
+        for ip in ips:
+            os.chdir("%s/%s" % (self.ips_dir, ip['path']))
+            ret = execute("git remote add %s %s/%s.git" % (remote_name, remote, ip['name']))
+            ret = execute("git push %s master" % remote_name)
+            os.chdir(cwd)
+
+    def tag_ips(self, tag_name, changes_severity='warning', tag_always=False):
         cwd = os.getcwd()
         ips = self.ip_list
         new_ips = []
@@ -321,7 +334,7 @@ class IPDatabase(object):
                 output, err = execute_popen("git diff --name-only tags/%s" % newest_tag).communicate()
             else:
                 output = ""
-            if output.split("\n")[0] != "" or newest_tag=="":
+            if output.split("\n")[0] != "" or newest_tag=="" or tag_always:
                 ret = execute("git tag %s" % tag_name)
                 if ret != 0:
                     print tcolors.WARNING + "WARNING: could not tag ip '%s', probably the tag already exists." % (ip['name']) + tcolors.ENDC
