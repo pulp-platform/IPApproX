@@ -10,10 +10,10 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from IPApproX_common  import *
-from vsim_defines     import *
-from vivado_defines   import *
-from synopsys_defines import *
+from .IPApproX_common  import *
+from .vsim_defines     import *
+from .vivado_defines   import *
+from .synopsys_defines import *
 import sys
 
 # returns true if source file is VHDL
@@ -141,14 +141,14 @@ class SubIPConfig(object):
     def __check_dic(self):
         dic = self.sub_ip_dic
         if set(MANDATORY_KEYS).intersection(set(dic.keys())) == set([]):
-            print "ERROR: there are no files for ip '%s', sub-ip '%s'. Check its src_files.yml file." % (self.ip_name, self.sub_ip_name)
+            print("ERROR: there are no files for ip '%s', sub-ip '%s'. Check its src_files.yml file." % (self.ip_name, self.sub_ip_name))
             sys.exit(1)
         not_allowed = set(dic.keys()) - set(MANDATORY_KEYS) - set(ALLOWED_KEYS)
         if not_allowed != set([]):
-            print "ERROR: there are unallowed keys for ip '%s', sub-ip '%s':" % (self.ip_name, self.sub_ip_name)
+            print("ERROR: there are unallowed keys for ip '%s', sub-ip '%s':" % (self.ip_name, self.sub_ip_name))
             for el in list(not_allowed):
-                print "    %s" % el
-            print "Check the src_files.yml file."
+                print("    %s" % el)
+            print("Check the src_files.yml file.")
             sys.exit(1)
 
     def __get_files(self):
@@ -161,11 +161,11 @@ class SubIPConfig(object):
             targets = ["all"]
         not_allowed = set(targets) - (set(ALLOWED_TARGETS))
         if not_allowed != set([]):
-            print "ERROR: targets not allowed for ip '%s', sub-ip '%s':" % (self.ip_name, self.sub_ip_name)
-            print not_allowed
+            print("ERROR: targets not allowed for ip '%s', sub-ip '%s':" % (self.ip_name, self.sub_ip_name))
+            print(not_allowed)
             for el in list(not_allowed):
-                print "    %s" % el
-            print "Check the src_files.yml file."
+                print("    %s" % el)
+            print("Check the src_files.yml file.")
             sys.exit(1)
         return targets
 

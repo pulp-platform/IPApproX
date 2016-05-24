@@ -10,6 +10,6 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from SubIPConfig import *
-from IPConfig import *
-from IPDatabase import *
+from .SubIPConfig import *
+from .IPConfig import *
+from .IPDatabase import *

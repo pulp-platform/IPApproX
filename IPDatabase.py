@@ -15,11 +15,11 @@ import sys,os,stat
 sys.path.append(os.path.abspath("yaml/lib64/python"))
 import yaml
 import collections
-from IPConfig import *
-from IPApproX_common import *
-from vivado_defines import *
-from ips_defines import *
-from synopsys_defines import *
+from .IPConfig import *
+from .IPApproX_common import *
+from .vivado_defines import *
+from .ips_defines import *
+from .synopsys_defines import *
 
 def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.OrderedDict):
     class OrderedLoader(Loader):
@@ -140,15 +140,15 @@ class IPDatabase(object):
                             break
                 os.chdir(cwd)
                 if unstaged_out != "":
-                    print "Changes not staged for commit in ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + "."
-                    print unstaged_out
+                    print("Changes not staged for commit in ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + ".")
+                    print(unstaged_out)
                     unstaged_ips.append(ip)
                 if staged_out != "":
-                    print "Changes staged for commit in ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + ".\nUse " + tcolors.BLUE + "git reset HEAD" + tcolors.ENDC + " in the ip directory to unstage."
-                    print staged_out
+                    print("Changes staged for commit in ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + ".\nUse " + tcolors.BLUE + "git reset HEAD" + tcolors.ENDC + " in the ip directory to unstage.")
+                    print(staged_out)
                     staged_ips.append(ip)
             except OSError:
-                print tcolors.WARNING + "WARNING: Skipping ip '%s'" % ip['name'] + " as it doesn't exist." + tcolors.ENDC
+                print(tcolors.WARNING + "WARNING: Skipping ip '%s'" % ip['name'] + " as it doesn't exist." + tcolors.ENDC)
         return (unstaged_ips, staged_ips)
 
     def remove_ips(self, skip_check=False):
@@ -157,8 +157,8 @@ class IPDatabase(object):
         unstaged_ips, staged_ips = self.diff_ips()
         os.chdir(self.ips_dir)
         if not skip_check and (len(unstaged_ips)+len(staged_ips) > 0):
-            print tcolors.ERROR + "ERROR: Cowardly refusing to remove IPs as there are changes." + tcolors.ENDC
-            print "If you *really* want to remove ips, run remove-ips.py with the --skip-check flag."
+            print(tcolors.ERROR + "ERROR: Cowardly refusing to remove IPs as there are changes." + tcolors.ENDC)
+            print("If you *really* want to remove ips, run remove-ips.py with the --skip-check flag.")
             sys.exit(1)
         for ip in ips:
             import shutil
@@ -171,12 +171,12 @@ class IPDatabase(object):
                 os.removedirs("%s" % ip['path'])
             except OSError:
                 pass
-        print tcolors.OK + "Removed all IPs listed in ips_list.yml." + tcolors.ENDC
+        print(tcolors.OK + "Removed all IPs listed in ips_list.yml." + tcolors.ENDC)
         os.chdir(cwd)
         try:
             os.removedirs(self.ips_dir)
         except OSError:
-            print tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC
+            print(tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC)
 
     def update_ips(self, remote = "git@iis-git.ee.ethz.ch:pulp-project"):
         errors = []
@@ -200,23 +200,23 @@ class IPDatabase(object):
 
                 # now check if the directory is a git directory
                 if not os.path.isdir(".git"):
-                    print tcolors.ERROR + "ERROR: Found a normal directory instead of a git directory at %s. You may have to delete this folder to make this script work again" % os.getcwd() + tcolors.ENDC
+                    print(tcolors.ERROR + "ERROR: Found a normal directory instead of a git directory at %s. You may have to delete this folder to make this script work again" % os.getcwd() + tcolors.ENDC)
                     errors.append("%s - %s: Not a git directory" % (ip['name'], ip['path']));
                     continue
 
-                print tcolors.OK + "\nUpdating ip '%s'..." % ip['name'] + tcolors.ENDC
+                print(tcolors.OK + "\nUpdating ip '%s'..." % ip['name'] + tcolors.ENDC)
 
                 # fetch everything first so that all commits are available later
                 ret = execute("%s fetch" % (git))
                 if ret != 0:
-                    print tcolors.ERROR + "ERROR: could not fetch ip '%s'." % (ip['name']) + tcolors.ENDC
+                    print(tcolors.ERROR + "ERROR: could not fetch ip '%s'." % (ip['name']) + tcolors.ENDC)
                     errors.append("%s - Could not fetch" % (ip['name']));
                     continue
 
                 # make sure we have the correct branch/tag for the pull
                 ret = execute("%s checkout %s" % (git, ip['commit']))
                 if ret != 0:
-                    print tcolors.ERROR + "ERROR: could not checkout ip '%s' at %s." % (ip['name'], ip['commit']) + tcolors.ENDC
+                    print(tcolors.ERROR + "ERROR: could not checkout ip '%s' at %s." % (ip['name'], ip['commit']) + tcolors.ENDC)
                     errors.append("%s - Could not checkout commit %s" % (ip['name'], ip['commit']));
                     continue
 
@@ -227,7 +227,7 @@ class IPDatabase(object):
                     # only do the pull if we are not in detached head mode
                     ret = execute("%s pull --ff-only" % git)
                     if ret != 0:
-                        print tcolors.ERROR + "ERROR: could not update ip '%s'" % ip['name'] + tcolors.ENDC
+                        print(tcolors.ERROR + "ERROR: could not update ip '%s'" % ip['name'] + tcolors.ENDC)
                         errors.append("%s - Could not update" % (ip['name']));
                         continue
 
@@ -235,36 +235,36 @@ class IPDatabase(object):
             else:
                 os.chdir("./")
 
-                print tcolors.OK + "\nCloning ip '%s'..." % ip['name'] + tcolors.ENDC
+                print(tcolors.OK + "\nCloning ip '%s'..." % ip['name'] + tcolors.ENDC)
 
                 if group and ip['group']:
                     ip['remote'] = "%s:%s" % (server, ip['group'])
                 else:
                     ip['remote'] = remote
 
-                print ip['remote']
+                print(ip['remote'])
 
                 ret = execute("%s clone %s/%s.git %s" % (git, ip['remote'], ip['name'], ip['path']))
                 if ret != 0:
-                    print tcolors.ERROR + "ERROR: could not clone, you probably have to remove the '%s' directory." % ip['name'] + tcolors.ENDC
+                    print(tcolors.ERROR + "ERROR: could not clone, you probably have to remove the '%s' directory." % ip['name'] + tcolors.ENDC)
                     errors.append("%s - Could not clone" % (ip['name']));
                     continue
                 os.chdir("./%s" % ip['path'])
                 ret = execute("%s checkout %s" % (git, ip['commit']))
                 if ret != 0:
-                    print tcolors.ERROR + "ERROR: could not checkout ip '%s' at %s." % (ip['name'], ip['commit']) + tcolors.ENDC
+                    print(tcolors.ERROR + "ERROR: could not checkout ip '%s' at %s." % (ip['name'], ip['commit']) + tcolors.ENDC)
                     errors.append("%s - Could not checkout commit %s" % (ip['name'], ip['commit']));
                     continue
         os.chdir(cwd)
-        print '\n\n'
-        print tcolors.WARNING + "SUMMARY" + tcolors.ENDC
+        print('\n\n')
+        print(tcolors.WARNING + "SUMMARY" + tcolors.ENDC)
         if len(errors) == 0:
-            print tcolors.OK + "IPs updated successfully!" + tcolors.ENDC
+            print(tcolors.OK + "IPs updated successfully!" + tcolors.ENDC)
         else:
             for error in errors:
-                print tcolors.ERROR + '    %s' % (error) + tcolors.ENDC
-            print
-            print tcolors.ERROR + "ERRORS during IP update!" + tcolors.ENDC
+                print(tcolors.ERROR + '    %s' % (error) + tcolors.ENDC)
+            print()
+            print(tcolors.ERROR + "ERRORS during IP update!" + tcolors.ENDC)
             sys.exit(1)
         os.chdir(owd)
 
@@ -316,19 +316,19 @@ class IPDatabase(object):
             staged_changes, err = execute_popen("git diff --name-only").communicate()
             if staged_changes.split("\n")[0] != "":
                 if changes_severity == 'warning':
-                    print tcolors.WARNING + "WARNING: skipping ip '%s' as it has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually."
+                    print(tcolors.WARNING + "WARNING: skipping ip '%s' as it has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually.")
                     os.chdir(cwd)
                     continue
                 else:
-                    print tcolors.ERROR + "ERROR: ip '%s' has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to auto-tag."
+                    print(tcolors.ERROR + "ERROR: ip '%s' has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to auto-tag.")
                     sys.exit(1)
             if unstaged_changes.split("\n")[0] != "":
                 if changes_severity == 'warning':
-                    print tcolors.WARNING + "WARNING: skipping ip '%s' as it has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually."
+                    print(tcolors.WARNING + "WARNING: skipping ip '%s' as it has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually.")
                     os.chdir(cwd)
                     continue
                 else:
-                    print tcolors.ERROR + "ERROR: ip '%s' has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to auto-tag."
+                    print(tcolors.ERROR + "ERROR: ip '%s' has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to auto-tag.")
                     sys.exit(1)
             if newest_tag != "":
                 output, err = execute_popen("git diff --name-only tags/%s" % newest_tag).communicate()
@@ -337,9 +337,9 @@ class IPDatabase(object):
             if output.split("\n")[0] != "" or newest_tag=="" or tag_always:
                 ret = execute("git tag %s" % tag_name)
                 if ret != 0:
-                    print tcolors.WARNING + "WARNING: could not tag ip '%s', probably the tag already exists." % (ip['name']) + tcolors.ENDC
+                    print(tcolors.WARNING + "WARNING: could not tag ip '%s', probably the tag already exists." % (ip['name']) + tcolors.ENDC)
                 else:
-                    print "Tagged ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + " with tag %s." % tag_name
+                    print("Tagged ip " + tcolors.WARNING + "'%s'" % ip['name'] + tcolors.ENDC + " with tag %s." % tag_name)
                 newest_tag = tag_name
             try:
                 newest_tag = newest_tag.split()[0]

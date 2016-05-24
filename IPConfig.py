@@ -10,11 +10,11 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from IPApproX_common  import *
-from vsim_defines     import *
-from vivado_defines   import *
-from synopsys_defines import *
-from SubIPConfig      import *
+from .IPApproX_common  import *
+from .vsim_defines     import *
+from .vivado_defines   import *
+from .synopsys_defines import *
+from .SubIPConfig      import *
 
 class IPConfig(object):
     def __init__(self, ip_name, ip_dic, ip_path, ips_dir, vsim_dir, domain=None, alternatives=None):
