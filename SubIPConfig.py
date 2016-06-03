@@ -87,8 +87,10 @@ class SubIPConfig(object):
         vlog_rule = ""
         if len(vlog_files) > 0:
             vlog_rule += MK_BUILDCMD_SVLOG % ("%s %s" % (more_opts, self.vlog_opts), self.sub_ip_name.upper(), self.sub_ip_name.upper())
+            vlog_rule += "\n"
         if len(vhdl_files) > 0:
             vlog_rule += MK_BUILDCMD_VHDL % ("%s" % (more_opts), self.sub_ip_name.upper())
+            vlog_rule += "\n"
         vlog_cmd += MK_SUBIPRULE % (self.sub_ip_name, self.sub_ip_name.upper(), self.sub_ip_name.upper(), self.sub_ip_name, vlog_rule)
         vlog_cmd += "\n"
 
