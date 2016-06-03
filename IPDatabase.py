@@ -356,7 +356,6 @@ class IPDatabase(object):
             makefile = self.ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech)
             with open(filename, "wb") as f:
                 f.write(makefile)
-                os.fchmod(f.fileno(), os.fstat(f.fileno()).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts="", target_tech='st28fdsoi'):
         for i in self.ip_dic.keys():
