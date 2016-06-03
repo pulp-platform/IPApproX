@@ -12,6 +12,7 @@
 
 from .IPApproX_common  import *
 from .vsim_defines     import *
+from .makefile_defines import *
 from .vivado_defines   import *
 from .synopsys_defines import *
 import sys
@@ -61,6 +62,37 @@ class SubIPConfig(object):
         self.tech      = self.__get_tech()      # if True, do not generate analyze scripts for this ip :)
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
+
+    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi'):
+        if target_tech == 'xilinx':
+            return self.__export_make_xilinx(abs_path, more_opts) # not implemented yet
+        if not ("all" in self.targets or "rtl" in self.targets):
+            return "\n"
+        vlog_cmd = ""
+        files = self.files
+        vlog_includes = ""
+        for i in self.incdirs:
+            vlog_includes += "+%s/%s" % (abs_path, i)
+        vhdl_files = ""
+        vlog_files = ""
+        for f in files:
+            if not is_vhdl(f):
+                vlog_files += "\\\n\t%s/%s" % (abs_path, f)
+            else:
+                vhdl_files += "\\\n\t%s/%s" % (abs_path, f)
+        if len(vlog_includes) > 0:
+            vlog_cmd += MK_SUBIPINC % (self.sub_ip_name, self.sub_ip_name.upper(), "+incdir" + vlog_includes)
+        vlog_cmd += MK_SUBIPSRC % (self.sub_ip_name.upper(), vlog_files, self.sub_ip_name.upper(), vhdl_files)
+        vlog_cmd += "\n"
+        vlog_rule = ""
+        if len(vlog_files) > 0:
+            vlog_rule += MK_BUILDCMD_SVLOG % ("%s %s" % (more_opts, self.vlog_opts), self.sub_ip_name.upper(), self.sub_ip_name.upper())
+        if len(vhdl_files) > 0:
+            vlog_rule += MK_BUILDCMD_VHDL % ("%s" % (more_opts), self.sub_ip_name.upper())
+        vlog_cmd += MK_SUBIPRULE % (self.sub_ip_name, self.sub_ip_name.upper(), self.sub_ip_name.upper(), self.sub_ip_name, vlog_rule)
+        vlog_cmd += "\n"
+
+        return vlog_cmd
 
     def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
         if target_tech == 'xilinx':

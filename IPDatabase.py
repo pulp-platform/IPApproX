@@ -350,6 +350,14 @@ class IPDatabase(object):
 
         store_ips_list("new_ips_list.yml", new_ips)
 
+    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", target_tech='st28fdsoi'):
+        for i in self.ip_dic.keys():
+            filename = "%s/%s.mk" % (script_path, i)
+            makefile = self.ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech)
+            with open(filename, "wb") as f:
+                f.write(makefile)
+                os.fchmod(f.fileno(), os.fstat(f.fileno()).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+
     def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts="", target_tech='st28fdsoi'):
         for i in self.ip_dic.keys():
             filename = "%s/vcompile_%s.csh" % (script_path, i)
@@ -394,6 +402,37 @@ class IPDatabase(object):
         vsim_tcl += VSIM_TCL_POSTAMBLE
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
+
+    def generate_makefile(self, filename, target_tech=None):
+        l = []
+        for i in self.ip_dic.keys():
+            l.append(i)
+        vcompile_libs = MK_LIBS_PREAMBLE
+        if target_tech != "xilinx":
+            for el in l:
+                vcompile_libs += MK_LIBS_CMD % (self.vsim_dir, el, "build")
+        # else:
+        #     for el in l:
+        #         vcompile_libs += MK_LIBS_XILINX_CMD % el
+        vcompile_libs += "\n"
+        vcompile_libs += MK_LIBS_LIB
+        if target_tech != "xilinx":
+            for el in l:
+                vcompile_libs += MK_LIBS_CMD % (self.vsim_dir, el, "lib")
+        # else:
+        #     for el in l:
+        #         vcompile_libs += MK_LIBS_XILINX_CMD % el
+        vcompile_libs += "\n"
+        vcompile_libs += MK_LIBS_CLEAN
+        if target_tech != "xilinx":
+            for el in l:
+                vcompile_libs += MK_LIBS_CMD % (self.vsim_dir, el, "clean")
+        # else:
+        #     for el in l:
+        #         vcompile_libs += MK_LIBS_XILINX_CMD % el
+        vcompile_libs += "\n"
+        with open(filename, "wb") as f:
+            f.write(vcompile_libs)
 
     def generate_vcompile_libs_csh(self, filename, target_tech=None):
         l = []

@@ -12,6 +12,7 @@
 
 from .IPApproX_common  import *
 from .vsim_defines     import *
+from .makefile_defines import *
 from .vivado_defines   import *
 from .synopsys_defines import *
 from .SubIPConfig      import *
@@ -34,6 +35,16 @@ class IPConfig(object):
         else:
             for k in ip_dic.keys():
                 self.sub_ips[k] = SubIPConfig(ip_name, k, ip_dic[k], ip_path)
+
+    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi'):
+        makefile = MK_PREAMBLE % (prepare(self.ip_name), self.ip_path)
+        for s in self.sub_ips.keys():
+            if ("all" in self.sub_ips[s].targets or "rtl" in self.sub_ips[s].targets):
+                makefile += MK_IPRULE_CMD % s
+        makefile += MK_POSTAMBLE
+        for s in self.sub_ips.keys():
+            makefile += self.sub_ips[s].export_make(abs_path, more_opts, target_tech=target_tech)
+        return makefile
 
     def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
         vsim_script = VSIM_PREAMBLE % (self.vsim_dir, prepare(self.ip_name), self.ip_path)
