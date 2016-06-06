@@ -20,18 +20,24 @@ MK_PREAMBLE = """#
 #
 
 IP=%s
-IP_PATH=$(IPS_PATH)/%s
+IP_PATH=%s/%s
 LIB_NAME=$(IP)_lib
 
 include vcompile/build.mk
 
-vcompile-$(IP): $(LIB_PATH)"""
+.PHONY: vcompile-$(IP) %s
 
-MK_POSTAMBLE = """\n\t$(ip_echo)
+vcompile-$(IP): $(LIB_PATH)/_vmake
+
+$(LIB_PATH)/_vmake : %s
+	@touch $(LIB_PATH)/_vmake
+"""
+
+MK_POSTAMBLE = """
 
 """
 
-MK_IPRULE_CMD = "\\\n\tvcompile-subip-%s"
+#MK_IPRULE_CMD = "\n\t@make -f vcompile/ips/%s.mk %s"
 
 MK_SUBIPSRC = """SRC_SVLOG_%s=%s
 SRC_VHDL_%s=%s
@@ -41,9 +47,12 @@ MK_SUBIPINC = """# %s component
 INCDIR_%s=%s
 """
 
-MK_SUBIPRULE = """vcompile-subip-%s: $(SRC_SVLOG_%s) $(SRC_VHDL_%s)
+MK_SUBIPRULE = """vcompile-subip-%s: $(LIB_PATH)/%s.vmake
+
+$(LIB_PATH)/%s.vmake: $(SRC_SVLOG_%s) $(SRC_VHDL_%s)
 	$(call subip_echo,%s)
 	%s
+	@touch $(LIB_PATH)/%s.vmake
 """
 
 MK_BUILDCMD_SVLOG = "$(SVLOG_CC) -work $(LIB_PATH) %s $(INCDIR_%s) $(SRC_SVLOG_%s)"
@@ -61,9 +70,12 @@ MK_LIBS_PREAMBLE = """#
 
 PULP_PATH?=..
 
+.PHONY: build clean lib
+
 build:"""
 
 MK_LIBS_CLEAN = "\nclean:"
 MK_LIBS_LIB = "\nlib:"
 
 MK_LIBS_CMD = "\n\t@make --no-print-directory -f $(PULP_PATH)/%s/vcompile/ips/%s.mk %s"
+MK_LIBS_CMD_RTL = "\n\t@make --no-print-directory -f $(PULP_PATH)/%s/vcompile/rtl/%s.mk %s"
