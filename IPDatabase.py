@@ -21,11 +21,6 @@ from .vivado_defines import *
 from .ips_defines import *
 from .synopsys_defines import *
 
-ALLOWED_SOURCES=[
-  "ips",
-  "rtl"
-]
-
 def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.OrderedDict):
     class OrderedLoader(Loader):
         pass
@@ -37,16 +32,13 @@ def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.Order
         construct_mapping)
     return yaml.load(stream, OrderedLoader)
 
-def load_ips_list(filename, skip_commit=False):
+def load_ips_list(filename):
     # get a list of all IPs that we are interested in from ips_list.yml
     with open(filename, "rb") as f:
         ips_list = ordered_load(f, yaml.SafeLoader)
     ips = []
     for i in ips_list.keys():
-        if not skip_commit:
-            commit = ips_list[i]['commit']
-        else:
-            commit = None
+        commit = ips_list[i]['commit']
         try:
             domain = ips_list[i]['domain']
         except KeyError:
@@ -80,22 +72,19 @@ class IPDatabase(object):
     ips_dir  = "./fe/ips"
     vsim_dir = "./fe/sim"
 
-    def __init__(self, list_path=".", ips_dir="./fe/ips", rtl_dir="./fe/rtl", vsim_dir="./fe/sim", skip_scripts=False):
+    def __init__(self, ips_list_path=".", ips_dir="./fe/ips", rtl_dir="./fe/rtl", vsim_dir="./fe/sim", skip_scripts=False):
         super(IPDatabase, self).__init__()
         self.ips_dir = ips_dir
         self.rtl_dir = rtl_dir
         self.vsim_dir = vsim_dir
         self.ip_dic = {}
-        self.rtl_dic = {}
-        ips_list_yml = "%s/ips_list.yml" % (list_path)
-        rtl_list_yml = "%s/rtl_list.yml" % (list_path)
+        ips_list_yml = "%s/ips_list.yml" % (ips_list_path)
         self.ip_list = load_ips_list(ips_list_yml)
-        self.rtl_list = load_ips_list(rtl_list_yml, skip_commit=True)
         if not skip_scripts:
             for ip in self.ip_list:
                 ip_full_name = ip['name']
-                ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, ips_dir, ip['path'])
-                self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'], alternatives=ip['alternatives'], ips_dic=self.ip_dic)
+                ip_full_path = "%s/%s/%s/src_files.yml" % (ips_list_path, ips_dir, ip['path'])
+                self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'], alternatives=ip['alternatives'])
             sub_ip_check_list = []
             for i in self.ip_dic.keys():
                 sub_ip_check_list.extend(self.ip_dic[i].sub_ips.keys())
@@ -105,38 +94,20 @@ class IPDatabase(object):
                 blacklist = [item for item, count in collections.Counter(sub_ip_check_list).items() if count > 1]
                 for el in blacklist:
                     print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
-        if not skip_scripts:
-            for ip in self.rtl_list:
-                ip_full_name = ip['name']
-                ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, rtl_dir, ip['path'])
-                self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'], alternatives=ip['alternatives'], ips_dic=self.rtl_dic, ips_dir=rtl_dir)
-            sub_ip_check_list = []
-            for i in self.rtl_dic.keys():
-                sub_ip_check_list.extend(self.rtl_dic[i].sub_ips.keys())
-            if len(set(sub_ip_check_list)) != len(sub_ip_check_list):
-                print(tcolors.WARNING + "WARNING: two sub-IPs have the same name. This can cause trouble!" + tcolors.ENDC)
-                import collections
-                blacklist = [item for item, count in collections.Counter(sub_ip_check_list).items() if count > 1]
-                for el in blacklist:
-                    print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
 
-    def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None, ips_dic=None, ips_dir=None):
-        if ips_dic is None:
-            ips_dic = self.ip_dic
-        if ips_dir is None:
-            ips_dir = self.ips_dir
+    def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None):
         if not os.path.exists(os.path.dirname(filename)):
-            print(tcolors.ERROR + "ERROR: ip '%s' IP path %s does not exist." % (ip_name, filename) + tcolors.ENDC)
+            print(tcolors.ERROR + "ERROR: ip '%s' has not src_files.yml file. File path: %s" % (ip_name, filename) + tcolors.ENDC)
             sys.exit(1)
         try:
             with open(filename, "rb") as f:
-                ips_yaml_dic = ordered_load(f, yaml.SafeLoader)
+                ip_dic = ordered_load(f, yaml.SafeLoader)
         except IOError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' as it has no src_files.yml file." % ip_name + tcolors.ENDC)
             return
 
         try:
-            ips_dic[ip_name] = IPConfig(ip_name, ips_yaml_dic, ip_path, ips_dir, self.vsim_dir, domain=domain, alternatives=alternatives)
+            self.ip_dic[ip_name] = IPConfig(ip_name, ip_dic, ip_path, self.ips_dir, self.vsim_dir, domain=domain, alternatives=alternatives)
         except KeyError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename) + tcolors.ENDC)
 
@@ -379,17 +350,10 @@ class IPDatabase(object):
 
         store_ips_list("new_ips_list.yml", new_ips)
 
-    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech='st28fdsoi'):
-        if source not in ALLOWED_SOURCES:
-            print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
-            sys.exit(1)
-        if source=='ips':
-            ip_dic = self.ip_dic
-        elif source=='rtl':
-            ip_dic = self.rtl_dic
-        for i in ip_dic.keys():
+    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", target_tech='st28fdsoi'):
+        for i in self.ip_dic.keys():
             filename = "%s/%s.mk" % (script_path, i)
-            makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source)
+            makefile = self.ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech)
             with open(filename, "wb") as f:
                 f.write(makefile)
 
@@ -427,47 +391,33 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(synplify_script)
 
-    def generate_vsim_tcl(self, filename, source='ips'):
-        if source not in ALLOWED_SOURCES:
-            print(tcolors.ERROR + "ERROR: generate_vsim_tcl() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
-            sys.exit(1)
+    def generate_vsim_tcl(self, filename):
         l = []
-        ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
-        for i in ip_dic.keys():
+        for i in self.ip_dic.keys():
             l.append(i)
-        vsim_tcl = VSIM_TCL_PREAMBLE % (source.upper())
+        vsim_tcl = VSIM_TCL_PREAMBLE
         for el in l:
             vsim_tcl += VSIM_TCL_CMD % prepare(el)
         vsim_tcl += VSIM_TCL_POSTAMBLE
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
 
-    def generate_makefile(self, filename, target_tech=None, source='ips'):
-        if source not in ALLOWED_SOURCES:
-            print(tcolors.ERROR + "ERROR: generate_makefile() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
-            sys.exit(1)
+    def generate_makefile(self, filename, target_tech=None):
         l = []
-        if source == 'ips':
-            mk_libs_cmd = MK_LIBS_CMD
-            for i in self.ip_dic.keys():
-                l.append(i)
-        elif source == 'rtl':
-            mk_libs_cmd = MK_LIBS_CMD_RTL
-            for i in self.rtl_dic.keys():
-                l.append(i)
+        for i in self.ip_dic.keys():
+            l.append(i)
         vcompile_libs = MK_LIBS_PREAMBLE
         if target_tech != "xilinx":
             for el in l:
-                vcompile_libs += mk_libs_cmd % (self.vsim_dir, el, "build")
+                vcompile_libs += MK_LIBS_CMD % (self.vsim_dir, el, "build")
         # else:
         #     for el in l:
         #         vcompile_libs += MK_LIBS_XILINX_CMD % el
-
         vcompile_libs += "\n"
         vcompile_libs += MK_LIBS_LIB
         if target_tech != "xilinx":
             for el in l:
-                vcompile_libs += mk_libs_cmd % (self.vsim_dir, el, "lib")
+                vcompile_libs += MK_LIBS_CMD % (self.vsim_dir, el, "lib")
         # else:
         #     for el in l:
         #         vcompile_libs += MK_LIBS_XILINX_CMD % el
@@ -475,7 +425,7 @@ class IPDatabase(object):
         vcompile_libs += MK_LIBS_CLEAN
         if target_tech != "xilinx":
             for el in l:
-                vcompile_libs += mk_libs_cmd % (self.vsim_dir, el, "clean")
+                vcompile_libs += MK_LIBS_CMD % (self.vsim_dir, el, "clean")
         # else:
         #     for el in l:
         #         vcompile_libs += MK_LIBS_XILINX_CMD % el

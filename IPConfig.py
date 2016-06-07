@@ -36,15 +36,11 @@ class IPConfig(object):
             for k in ip_dic.keys():
                 self.sub_ips[k] = SubIPConfig(ip_name, k, ip_dic[k], ip_path)
 
-    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', source='ips'):
-        ip_path_env = "$(IPS_PATH)" if source=='ips' else "$(RTL_PATH)"
-        commands = ""
-        phony = ""
+    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi'):
+        makefile = MK_PREAMBLE % (prepare(self.ip_name), self.ip_path)
         for s in self.sub_ips.keys():
-            if ("all" in self.sub_ips[s].targets or "rtl" in self.sub_ips[s].targets or target_tech in self.sub_ips[s].targets):
-                commands += "$(LIB_PATH)/%s.vmake " % s
-                phony += "vcompile-subip-%s " %s
-        makefile = MK_PREAMBLE % (prepare(self.ip_name), ip_path_env, self.ip_path, phony, commands) 
+            if ("all" in self.sub_ips[s].targets or "rtl" in self.sub_ips[s].targets):
+                makefile += MK_IPRULE_CMD % s
         makefile += MK_POSTAMBLE
         for s in self.sub_ips.keys():
             makefile += self.sub_ips[s].export_make(abs_path, more_opts, target_tech=target_tech)
