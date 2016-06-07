@@ -148,6 +148,7 @@ class IPDatabase(object):
         staged_ips = []
         for ip in ips:
             try:
+                # print "Diffing " + tcolors.WARNING + "%s" % ip['name'] + tcolors.ENDC + "..." 
                 os.chdir("%s/%s" % (self.ips_dir, ip['path']))
                 output, err = execute_popen("git diff --name-only").communicate()
                 unstaged_out = ""

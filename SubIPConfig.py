@@ -42,7 +42,6 @@ MANDATORY_KEYS = [
 ALLOWED_TARGETS = [
     'all',
     'xilinx',
-    'rtl',
     'st28fdsoi',
     'umc65',
     'gf28'
@@ -51,7 +50,8 @@ ALLOWED_TARGETS = [
 # list of allowed flags
 ALLOWED_FLAGS = [
     'skip_simulation',
-    'skip_synthesis'
+    'skip_synthesis',
+    'skip_tcsh'
 ]
 
 class SubIPConfig(object):
@@ -65,8 +65,8 @@ class SubIPConfig(object):
 
         self.__check_dic()
         self.files     = self.__get_files()     # list of source files in the sub-IP
-        self.targets   = self.__get_targets()   # target (all, rtl, xilinx, st28fdsoi, umc65, gf28 at the moment)
-        self.flags     = self.__get_flags()     # flags (skip_simulation, skip_synthesis)
+        self.targets   = self.__get_targets()   # target (all, xilinx, st28fdsoi, umc65, gf28 at the moment)
+        self.flags     = self.__get_flags()     # flags (skip_simulation, skip_synthesis, skip_tcsh)
         self.incdirs   = self.__get_incdirs()   # verilog include directory
         self.defines   = self.__get_defines()   # additional defines
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
@@ -114,6 +114,8 @@ class SubIPConfig(object):
         if target_tech == 'xilinx':
             return self.__export_vsim_xilinx(abs_path, more_opts)
         if "skip_simulation" in self.flags:
+            return "\n"
+        if "skip_tcsh" in self.flags:
             return "\n"
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
         files = self.files
