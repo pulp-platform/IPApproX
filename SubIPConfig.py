@@ -54,6 +54,13 @@ ALLOWED_FLAGS = [
     'skip_tcsh'
 ]
 
+# legacy IPs blacklist (for backwards compatibility with tcsh flow)
+LEGACY_TCSH_BLACKLIST = [
+    'common_cells',
+    'cea',
+    'tech'
+]
+
 class SubIPConfig(object):
     def __init__(self, ip_name, sub_ip_name, sub_ip_dic, ip_path):
         super(SubIPConfig, self).__init__()
@@ -116,6 +123,8 @@ class SubIPConfig(object):
         if "skip_simulation" in self.flags:
             return "\n"
         if "skip_tcsh" in self.flags:
+            return "\n"
+        if self.ip_name in LEGACY_TCSH_BLACKLIST:
             return "\n"
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
         files = self.files

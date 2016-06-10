@@ -90,7 +90,10 @@ class IPDatabase(object):
         ips_list_yml = "%s/ips_list.yml" % (list_path)
         rtl_list_yml = "%s/rtl_list.yml" % (list_path)
         self.ip_list = load_ips_list(ips_list_yml)
-        self.rtl_list = load_ips_list(rtl_list_yml, skip_commit=True)
+        try:
+            self.rtl_list = load_ips_list(rtl_list_yml, skip_commit=True)
+        except IOError:
+            self.rtl_list = None
         if not skip_scripts:
             for ip in self.ip_list:
                 ip_full_name = ip['name']
@@ -105,7 +108,7 @@ class IPDatabase(object):
                 blacklist = [item for item, count in collections.Counter(sub_ip_check_list).items() if count > 1]
                 for el in blacklist:
                     print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
-        if not skip_scripts:
+        if not skip_scripts and self.rtl_list is not None:
             for ip in self.rtl_list:
                 ip_full_name = ip['name']
                 ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, rtl_dir, ip['path'])
@@ -436,7 +439,7 @@ class IPDatabase(object):
         ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
         for i in ip_dic.keys():
             l.append(i)
-        vsim_tcl = VSIM_TCL_PREAMBLE % (source.upper())
+        vsim_tcl = VSIM_TCL_PREAMBLE % ('IP' if source=='ips' else source.upper())
         for el in l:
             vsim_tcl += VSIM_TCL_CMD % prepare(el)
         vsim_tcl += VSIM_TCL_POSTAMBLE
