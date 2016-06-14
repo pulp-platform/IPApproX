@@ -20,6 +20,7 @@ from .IPApproX_common import *
 from .vivado_defines import *
 from .ips_defines import *
 from .synopsys_defines import *
+from .verilator_defines import *
 
 def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.OrderedDict):
     class OrderedLoader(Loader):
@@ -390,6 +391,16 @@ class IPDatabase(object):
             synplify_script += self.ip_dic[i].export_synplify(abs_path)
         with open(filename, "wb") as f:
             f.write(synplify_script)
+
+    def export_verilator(self, abs_path="${IPS_PATH}", script_path="./", more_opts=""):
+            filename = "%s" % (script_path)
+            verilator_script = ""
+            for i in self.ip_dic.keys():
+                verilator_script += self.ip_dic[i].export_verilator(abs_path)
+            verilator_script = VERILATOR_PREAMBLE % verilator_script
+            verilator_script += VERILATOR_COMMAND
+            with open(filename, "wb") as f:
+                f.write(verilator_script)
 
     def generate_vsim_tcl(self, filename):
         l = []
