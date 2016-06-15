@@ -11,12 +11,14 @@
 #
 
 VERILATOR_PREAMBLE = """#!/bin/tcsh
-set IPS_PATH="../../ips"
-set VERILATOR_FILEPATH="%s" """
+
+"""
+
+VERILATOR_INCLUDES = """set VERILATOR_INCLUDES="%s" """
 
 VERILATOR_COMMAND = """
 
-exec verilator +1800-2012ext+ -cc $VERILATOR_FILEPATH
+verilator +1800-2012ext+ -cc %s $VERILATOR_INCLUDES
 
 """
 

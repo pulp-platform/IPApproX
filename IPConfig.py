@@ -71,11 +71,15 @@ class IPConfig(object):
             synplify_script += self.sub_ips[s].export_synplify(abs_path)
         return synplify_script
 
-    def export_verilator(self, abs_path):
-        verilator_script = ""
+    def generate_verilator_inc_dirs(self, abs_path):
+        verilator_incdirs = ""
         for s in self.sub_ips.keys():
-            verilator_script += self.sub_ips[s].export_verilator(abs_path)
-        return verilator_script
+            if "verilator" in self.sub_ips[s].targets or "all" in self.sub_ips[s].targets:
+                verilator_incdirs += " -I" + abs_path + "/" + self.sub_ips[s].ip_path
+                for incdir in self.sub_ips[s].incdirs:
+                    if self.sub_ips[s].incdirs:
+                        verilator_incdirs += " -I" + abs_path + "/" + self.sub_ips[s].ip_path + "/" + incdir
+        return verilator_incdirs
 
     def generate_vivado_add_files(self):
         l = []

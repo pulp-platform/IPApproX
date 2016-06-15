@@ -392,15 +392,18 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(synplify_script)
 
-    def export_verilator(self, abs_path="${IPS_PATH}", script_path="./", more_opts=""):
+    def export_verilator(self, abs_path="${TOP_PATH}/ips", script_path="./", more_opts=""):
             filename = "%s" % (script_path)
-            verilator_script = ""
+            verilator_script = VERILATOR_PREAMBLE
+            # generate include dirs
+            verilator_includes = ""
             for i in self.ip_dic.keys():
-                verilator_script += self.ip_dic[i].export_verilator(abs_path)
-            verilator_script = VERILATOR_PREAMBLE % verilator_script
-            verilator_script += VERILATOR_COMMAND
+                verilator_includes += self.ip_dic[i].generate_verilator_inc_dirs(abs_path) + " "
+            verilator_script += VERILATOR_INCLUDES % verilator_includes
+            verilator_script += VERILATOR_COMMAND % more_opts
             with open(filename, "wb") as f:
                 f.write(verilator_script)
+                os.fchmod(f.fileno(), os.fstat(f.fileno()).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     def generate_vsim_tcl(self, filename):
         l = []

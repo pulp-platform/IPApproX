@@ -41,6 +41,7 @@ ALLOWED_TARGETS = [
     'all',
     'xilinx',
     'rtl',
+    'verilator',
     'st28fdsoi',
     'umc65',
     'gf28'
