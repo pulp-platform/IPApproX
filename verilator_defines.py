@@ -18,7 +18,7 @@ VERILATOR_INCLUDES = """set VERILATOR_INCLUDES="%s" """
 
 VERILATOR_COMMAND = """
 
-verilator +1800-2012ext+ -cc %s $VERILATOR_INCLUDES
+verilator +1800-2012ext+ -CFLAGS -std=c++0x -cc --Mdir verilator_libs -Wno-fatal %s $VERILATOR_INCLUDES
 
 """
 
