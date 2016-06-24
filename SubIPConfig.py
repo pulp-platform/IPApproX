@@ -30,7 +30,8 @@ ALLOWED_KEYS = [
     'vlog_opts',
     'vcom_opts',
     'tech',
-    'targets'
+    'targets',
+    'flags'
 ]
 MANDATORY_KEYS = [
     'files'
@@ -44,6 +45,12 @@ ALLOWED_TARGETS = [
     'st28fdsoi',
     'umc65',
     'gf28'
+]
+
+LEGACY_IPS = [
+    'common_cells',
+    'cea',
+    'tech'
 ]
 
 class SubIPConfig(object):
@@ -100,6 +107,9 @@ class SubIPConfig(object):
         if target_tech == 'xilinx':
             return self.__export_vsim_xilinx(abs_path, more_opts)
         if not ("all" in self.targets or "rtl" in self.targets):
+            return "\n"
+        if self.ip_name in LEGACY_IPS:
+            print "Skipping %s.%s as it is not supported by the TCSH-based build flow." % (self.ip_name, self.sub_ip_name)
             return "\n"
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
         files = self.files
@@ -173,6 +183,8 @@ class SubIPConfig(object):
     ### management of the Yaml dictionary
 
     def __check_dic(self):
+        if self.ip_name in LEGACY_IPS:
+            return
         dic = self.sub_ip_dic
         if set(MANDATORY_KEYS).intersection(set(dic.keys())) == set([]):
             print("ERROR: there are no files for ip '%s', sub-ip '%s'. Check its src_files.yml file." % (self.ip_name, self.sub_ip_name))

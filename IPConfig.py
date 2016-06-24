@@ -17,6 +17,12 @@ from .vivado_defines   import *
 from .synopsys_defines import *
 from .SubIPConfig      import *
 
+LEGACY_IPS = [
+    'common_cells',
+    'cea',
+    'tech'
+]
+
 class IPConfig(object):
     def __init__(self, ip_name, ip_dic, ip_path, ips_dir, vsim_dir, domain=None, alternatives=None):
         super(IPConfig, self).__init__()
@@ -47,6 +53,8 @@ class IPConfig(object):
         return makefile
 
     def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
+        if self.ip_name in LEGACY_IPS:
+            return ""
         vsim_script = VSIM_PREAMBLE % (self.vsim_dir, prepare(self.ip_name), self.ip_path)
         for s in self.sub_ips.keys():
             vsim_script += self.sub_ips[s].export_vsim(abs_path, more_opts, target_tech=target_tech)

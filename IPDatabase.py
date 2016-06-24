@@ -21,6 +21,12 @@ from .vivado_defines import *
 from .ips_defines import *
 from .synopsys_defines import *
 
+LEGACY_IPS = [
+    'common_cells',
+    'cea',
+    'tech'
+]
+
 def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.OrderedDict):
     class OrderedLoader(Loader):
         pass
@@ -397,7 +403,8 @@ class IPDatabase(object):
             l.append(i)
         vsim_tcl = VSIM_TCL_PREAMBLE
         for el in l:
-            vsim_tcl += VSIM_TCL_CMD % prepare(el)
+            if not self.ip_dic[el].ip_name in LEGACY_IPS:
+                vsim_tcl += VSIM_TCL_CMD % prepare(el)
         vsim_tcl += VSIM_TCL_POSTAMBLE
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
