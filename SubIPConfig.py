@@ -41,6 +41,7 @@ MANDATORY_KEYS = [
 # list of allowed targets
 ALLOWED_TARGETS = [
     'all',
+    'rtl',
     'xilinx',
     'st28fdsoi',
     'umc65',
