@@ -80,11 +80,12 @@ class IPDatabase(object):
     ips_dir  = "./fe/ips"
     vsim_dir = "./fe/sim"
 
-    def __init__(self, list_path=".", ips_dir="./fe/ips", rtl_dir="./fe/rtl", vsim_dir="./fe/sim", skip_scripts=False):
+    def __init__(self, list_path=".", ips_dir="./fe/ips", rtl_dir="./fe/rtl", vsim_dir="./fe/sim", fpgasim_dir="./fpga/sim", skip_scripts=False):
         super(IPDatabase, self).__init__()
         self.ips_dir = ips_dir
         self.rtl_dir = rtl_dir
         self.vsim_dir = vsim_dir
+        self.fpgasim_dir = fpgasim_dir
         self.ip_dic = {}
         self.rtl_dic = {}
         ips_list_yml = "%s/ips_list.yml" % (list_path)
@@ -463,26 +464,26 @@ class IPDatabase(object):
         if target_tech != "xilinx":
             for el in l:
                 vcompile_libs += mk_libs_cmd % (self.vsim_dir, el, "build")
-        # else:
-        #     for el in l:
-        #         vcompile_libs += MK_LIBS_XILINX_CMD % el
+        else:
+            for el in l:
+                vcompile_libs += mk_libs_cmd % (self.fpgasim_dir, el, "build")
 
         vcompile_libs += "\n"
         vcompile_libs += MK_LIBS_LIB
         if target_tech != "xilinx":
             for el in l:
                 vcompile_libs += mk_libs_cmd % (self.vsim_dir, el, "lib")
-        # else:
-        #     for el in l:
-        #         vcompile_libs += MK_LIBS_XILINX_CMD % el
+        else:
+            for el in l:
+                vcompile_libs += mk_libs_cmd % (self.fpgasim_dir, el, "lib")
         vcompile_libs += "\n"
         vcompile_libs += MK_LIBS_CLEAN
         if target_tech != "xilinx":
             for el in l:
                 vcompile_libs += mk_libs_cmd % (self.vsim_dir, el, "clean")
-        # else:
-        #     for el in l:
-        #         vcompile_libs += MK_LIBS_XILINX_CMD % el
+        else:
+            for el in l:
+                vcompile_libs += mk_libs_cmd % (self.fpgasim_dir, el, "clean")
         vcompile_libs += "\n"
         with open(filename, "wb") as f:
             f.write(vcompile_libs)

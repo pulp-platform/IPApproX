@@ -81,8 +81,6 @@ class SubIPConfig(object):
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
 
     def export_make(self, abs_path, more_opts, target_tech='st28fdsoi'):
-        if target_tech == 'xilinx':
-            return self.__export_make_xilinx(abs_path, more_opts) # not implemented yet
         if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
             return "\n"
         if "skip_simulation" in self.flags:
@@ -105,7 +103,10 @@ class SubIPConfig(object):
         vlog_cmd += "\n"
         vlog_rule = ""
         if len(vlog_files) > 0:
-            defines = ""
+            if target_tech=='xilinx':
+                defines = "+define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM"
+            else:
+                defines = ""
             for d in self.defines:
                 defines = "%s +define+%s" % (defines, d)
             vlog_rule += MK_BUILDCMD_SVLOG % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
