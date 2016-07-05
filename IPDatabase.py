@@ -14,7 +14,10 @@
 import sys,os,stat
 sys.path.append(os.path.abspath("yaml/lib64/python"))
 import yaml
-import collections
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 from .IPConfig import *
 from .IPApproX_common import *
 from .vivado_defines import *
@@ -27,7 +30,7 @@ LEGACY_IPS = [
     'tech'
 ]
 
-def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.OrderedDict):
+def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
     class OrderedLoader(Loader):
         pass
     def construct_mapping(loader, node):
