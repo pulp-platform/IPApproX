@@ -68,7 +68,7 @@ MK_LIBS_PREAMBLE = """#
 # of the BSD license.  See the LICENSE file for details.
 #
 
-mkfile_path := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+mkfile_path := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 
 .PHONY: build clean lib
 

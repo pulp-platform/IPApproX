@@ -45,6 +45,7 @@ ALLOWED_TARGETS = [
     'xilinx',
     'st28fdsoi',
     'umc65',
+    'tsmc55',
     'gf28'
 ]
 
