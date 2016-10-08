@@ -68,7 +68,7 @@ MK_LIBS_PREAMBLE = """#
 # of the BSD license.  See the LICENSE file for details.
 #
 
-PULP_PATH?=..
+mkfile_path := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 .PHONY: build clean lib
 
@@ -77,5 +77,5 @@ build:"""
 MK_LIBS_CLEAN = "\nclean:"
 MK_LIBS_LIB = "\nlib:"
 
-MK_LIBS_CMD = "\n\t@make --no-print-directory -f $(PULP_PATH)/%s/vcompile/ips/%s.mk %s"
-MK_LIBS_CMD_RTL = "\n\t@make --no-print-directory -f $(PULP_PATH)/%s/vcompile/rtl/%s.mk %s"
+MK_LIBS_CMD = "\n\t@make --no-print-directory -f $(mkfile_path)/ips/%s.mk %s"
+MK_LIBS_CMD_RTL = "\n\t@make --no-print-directory -f $(mkfile_path)/rtl/%s.mk %s"

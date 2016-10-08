@@ -463,27 +463,27 @@ class IPDatabase(object):
         vcompile_libs = MK_LIBS_PREAMBLE
         if target_tech != "xilinx":
             for el in l:
-                vcompile_libs += mk_libs_cmd % (self.vsim_dir, el, "build")
+                vcompile_libs += mk_libs_cmd % (el, "build")
         else:
             for el in l:
-                vcompile_libs += mk_libs_cmd % (self.fpgasim_dir, el, "build")
+                vcompile_libs += mk_libs_cmd % (el, "build")
 
         vcompile_libs += "\n"
         vcompile_libs += MK_LIBS_LIB
         if target_tech != "xilinx":
             for el in l:
-                vcompile_libs += mk_libs_cmd % (self.vsim_dir, el, "lib")
+                vcompile_libs += mk_libs_cmd % (el, "lib")
         else:
             for el in l:
-                vcompile_libs += mk_libs_cmd % (self.fpgasim_dir, el, "lib")
+                vcompile_libs += mk_libs_cmd % (el, "lib")
         vcompile_libs += "\n"
         vcompile_libs += MK_LIBS_CLEAN
         if target_tech != "xilinx":
             for el in l:
-                vcompile_libs += mk_libs_cmd % (self.vsim_dir, el, "clean")
+                vcompile_libs += mk_libs_cmd % (el, "clean")
         else:
             for el in l:
-                vcompile_libs += mk_libs_cmd % (self.fpgasim_dir, el, "clean")
+                vcompile_libs += mk_libs_cmd % (el, "clean")
         vcompile_libs += "\n"
         with open(filename, "wb") as f:
             f.write(vcompile_libs)
