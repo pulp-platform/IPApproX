@@ -42,8 +42,9 @@ class IPConfig(object):
         phony = ""
         for s in self.sub_ips.keys():
             if ("all" in self.sub_ips[s].targets or "rtl" in self.sub_ips[s].targets or target_tech in self.sub_ips[s].targets):
-                commands += "$(LIB_PATH)/%s.vmake " % s
-                phony += "vcompile-subip-%s " %s
+                if ("skip_simulation" not in self.sub_ips[s].flags):
+                    commands += "$(LIB_PATH)/%s.vmake " % s
+                    phony += "vcompile-subip-%s " %s
         makefile = MK_PREAMBLE % (prepare(self.ip_name), ip_path_env, self.ip_path, phony, commands) 
         makefile += MK_POSTAMBLE
         for s in self.sub_ips.keys():
@@ -57,10 +58,10 @@ class IPConfig(object):
         vsim_script += VSIM_POSTAMBLE
         return vsim_script
 
-    def export_synopsys(self, target_tech='st28fdsoi'):
+    def export_synopsys(self, target_tech='st28fdsoi', source='ips'):
         analyze_script = SYNOPSYS_ANALYZE_PREAMBLE % (self.ip_name)
         for s in self.sub_ips.keys():
-            analyze_script += self.sub_ips[s].export_synopsys(self.ip_path, target_tech=target_tech)
+            analyze_script += self.sub_ips[s].export_synopsys(self.ip_path, target_tech=target_tech, source=source)
         return analyze_script
 
     def export_vivado(self, abs_path):

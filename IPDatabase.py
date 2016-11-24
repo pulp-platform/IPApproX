@@ -406,11 +406,18 @@ class IPDatabase(object):
                 f.write(vcompile_script)
                 os.fchmod(f.fileno(), os.fstat(f.fileno()).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    def export_synopsys(self, script_path=".", target_tech='st28fdsoi', domain=None):
-        for i in self.ip_dic.keys():
-            if domain==None or domain in self.ip_dic[i].domain:
-                filename = "%s/analyze_%s.tcl" % (script_path, i)
-                analyze_script = self.ip_dic[i].export_synopsys(target_tech=target_tech)
+    def export_synopsys(self, script_path=".", target_tech='st28fdsoi', source='ips', domain=None):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        if source=='ips':
+            ip_dic = self.ip_dic
+        elif source=='rtl':
+            ip_dic = self.rtl_dic
+        for i in ip_dic.keys():
+            if domain==None or domain in ip_dic[i].domain:
+                filename = "%s/%s.tcl" % (script_path, i)
+                analyze_script = ip_dic[i].export_synopsys(target_tech=target_tech, source=source)
                 with open(filename, "wb") as f:
                     f.write(analyze_script)
 
@@ -446,6 +453,19 @@ class IPDatabase(object):
         vsim_tcl += VSIM_TCL_POSTAMBLE
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
+
+    def generate_synopsys_list(self, filename, source='ips', analyze_path='analyze'):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: generate_synopsys_list() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        l = []
+        ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
+        synopsys_list = ""
+        for i in ip_dic.keys():
+            synopsys_list += "source %s/%s.tcl\n" % (analyze_path,i)
+
+        with open(filename, "wb") as f:
+            f.write(synopsys_list)
 
     def generate_makefile(self, filename, target_tech=None, source='ips'):
         if source not in ALLOWED_SOURCES:
