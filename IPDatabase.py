@@ -212,7 +212,7 @@ class IPDatabase(object):
         except OSError:
             print(tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC)
 
-    def update_ips(self, remote = "git@iis-git.ee.ethz.ch:pulp-project"):
+    def update_ips(self, remote = "git@iis-git.ee.ethz.ch:pulp-project", origin='origin'):
         errors = []
         ips = self.ip_list
         git = "git"
@@ -254,12 +254,10 @@ class IPDatabase(object):
                     errors.append("%s - Could not checkout commit %s" % (ip['name'], ip['commit']));
                     continue
 
-                # check if we are in detached HEAD mode
-                stdout = execute_out("%s status" % git)
-
-                if not ("HEAD detached" in stdout):
-                    # only do the pull if we are not in detached head mode
-                    ret = execute("%s pull --ff-only" % git)
+                # only do the pull if we are not in detached head mode
+                stdout = execute_out("%s rev-parse --abbrev-ref HEAD" % (git))
+                if stdout[:4] != "HEAD":
+                    ret = execute("%s pull --ff-only %s %s" % (git, origin, ip['commit']))
                     if ret != 0:
                         print(tcolors.ERROR + "ERROR: could not update ip '%s'" % ip['name'] + tcolors.ENDC)
                         errors.append("%s - Could not update" % (ip['name']));
