@@ -11,6 +11,7 @@
 #
 
 VIVADO_PREAMBLE = """if ![info exists PULP_HSA_SIM] {
+    set RTL ../../%s
     set IPS ../../%s
     set FPGA_IPS ../ips
     set FPGA_RTL ../rtl

@@ -419,13 +419,20 @@ class IPDatabase(object):
                 with open(filename, "wb") as f:
                     f.write(analyze_script)
 
-    def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", domain=None, alternatives=[]):
+    def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", source='ips', domain=None, alternatives=[]):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        if source=='ips':
+            ip_dic = self.ip_dic
+        elif source=='rtl':
+            ip_dic = self.rtl_dic
         filename = "%s" % (script_path)
-        vivado_script = VIVADO_PREAMBLE % (self.ips_dir)
-        for i in self.ip_dic.keys():
-            if self.ip_dic[i].alternatives==None or set.intersection(set([self.ip_dic[i].ip_name]), set(alternatives), set(self.ip_dic[i].alternatives))!=set([]):
-                if domain==None or domain in self.ip_dic[i].domain:
-                    vivado_script += self.ip_dic[i].export_vivado(abs_path)
+        vivado_script = VIVADO_PREAMBLE % (self.rtl_dir, self.ips_dir)
+        for i in ip_dic.keys():
+            if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
+                if domain==None or domain in ip_dic[i].domain:
+                    vivado_script += ip_dic[i].export_vivado(abs_path)
         with open(filename, "wb") as f:
             f.write(vivado_script)
 
@@ -520,27 +527,41 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vcompile_libs)
 
-    def generate_vivado_add_files(self, filename, domain=None, alternatives=[]):
+    def generate_vivado_add_files(self, filename, domain=None, source='ips', alternatives=[]):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: generate_vivado_add_files() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        if source=='ips':
+            ip_dic = self.ip_dic
+        elif source=='rtl':
+            ip_dic = self.rtl_dic
         l = []
         vivado_add_files_cmd = ""
-        for i in self.ip_dic.keys():
-            if self.ip_dic[i].alternatives==None or set.intersection(set([self.ip_dic[i].ip_name]), set(alternatives), set(self.ip_dic[i].alternatives))!=set([]):
-                if domain==None or domain in self.ip_dic[i].domain:
-                    l.extend(self.ip_dic[i].generate_vivado_add_files())
+        for i in ip_dic.keys():
+            if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
+                if domain==None or domain in ip_dic[i].domain:
+                    l.extend(ip_dic[i].generate_vivado_add_files())
         for el in l:
             vivado_add_files_cmd += VIVADO_ADD_FILES_CMD % el.upper()
         with open(filename, "wb") as f:
             f.write(vivado_add_files_cmd)
 
-    def generate_vivado_inc_dirs(self, filename, domain=None, alternatives=[]):
+    def generate_vivado_inc_dirs(self, filename, domain=None, source='ips', alternatives=[]):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: generate_vivado_inc_dirs() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        if source=='ips':
+            ip_dic = self.ip_dic
+        elif source=='rtl':
+            ip_dic = self.rtl_dic
         l = []
         vivado_inc_dirs = VIVADO_INC_DIRS_PREAMBLE % (self.rtl_dir)
-        for i in self.ip_dic.keys():
-            if self.ip_dic[i].alternatives==None or set.intersection(set([self.ip_dic[i].ip_name]), set(alternatives), set(self.ip_dic[i].alternatives))!=set([]):
-                if domain==None or domain in self.ip_dic[i].domain:
+        for i in ip_dic.keys():
+            if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
+                if domain==None or domain in ip_dic[i].domain:
                     incdirs = []
-                    path = self.ip_dic[i].ip_path
-                    for j in self.ip_dic[i].generate_vivado_inc_dirs():
+                    path = ip_dic[i].ip_path
+                    for j in ip_dic[i].generate_vivado_inc_dirs():
                         incdirs.append("%s/%s" % (path, j))
                     l.extend(incdirs)
         for el in l:
