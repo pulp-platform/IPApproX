@@ -33,10 +33,12 @@ VIVADO_POSTAMBLE_SUBIP = """"
 
 VIVADO_ADD_FILES_CMD = "add_files -norecurse -scan_for_includes $SRC_%s\n"
 
-VIVADO_INC_DIRS_PREAMBLE = """set_property include_dirs {
+VIVADO_INC_DIRS_PREAMBLE = """set INCLUDE_DIRS {
     ../../%s/includes \\
 """
 
 VIVADO_INC_DIRS_CMD = "    ../../%s/%s \\\n"
 
-VIVADO_INC_DIRS_POSTAMBLE = "} [current_fileset] \n"
+VIVADO_INC_DIRS_POSTAMBLE = """	${INCLUDE_DIRS}\\
+}
+"""
