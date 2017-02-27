@@ -46,7 +46,8 @@ ALLOWED_TARGETS = [
     'st28fdsoi',
     'umc65',
     'tsmc55',
-    'gf28'
+    'gf28',
+    'smic130'
 ]
 
 # list of allowed flags
