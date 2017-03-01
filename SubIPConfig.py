@@ -117,6 +117,8 @@ class SubIPConfig(object):
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
         files = self.files
         vlog_includes = ""
+        for i in self.incdirs:
+            vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
         defines = ""
         for d in self.defines:
             defines = "%s +define+%s" % (defines, d)
