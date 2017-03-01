@@ -50,9 +50,7 @@ ALLOWED_TARGETS = [
 ]
 
 LEGACY_IPS = [
-    'common_cells',
-    'cea',
-    'tech'
+    'cea'
 ]
 
 class SubIPConfig(object):

@@ -18,9 +18,7 @@ from .synopsys_defines import *
 from .SubIPConfig      import *
 
 LEGACY_IPS = [
-    'common_cells',
-    'cea',
-    'tech'
+    'cea'
 ]
 
 class IPConfig(object):
