@@ -25,9 +25,7 @@ from .ips_defines import *
 from .synopsys_defines import *
 
 LEGACY_IPS = [
-    'common_cells',
-    'cea',
-    'tech'
+    'cea'
 ]
 
 def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
