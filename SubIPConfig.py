@@ -54,7 +54,8 @@ ALLOWED_TARGETS = [
 ALLOWED_FLAGS = [
     'skip_simulation',
     'skip_synthesis',
-    'skip_tcsh'
+    'skip_tcsh',
+    'only_local'
 ]
 
 # legacy IPs blacklist (for backwards compatibility with tcsh flow)
@@ -68,10 +69,11 @@ class SubIPConfig(object):
     def __init__(self, ip_name, sub_ip_name, sub_ip_dic, ip_path):
         super(SubIPConfig, self).__init__()
 
-        self.ip_name     = ip_name
-        self.ip_path     = ip_path
-        self.sub_ip_name = sub_ip_name
-        self.sub_ip_dic  = sub_ip_dic
+        self.ip_name         = ip_name
+        self.ip_path         = ip_path
+        self.sub_ip_name     = sub_ip_name
+        self.sub_ip_name_alt = prepare(sub_ip_name)
+        self.sub_ip_dic      = sub_ip_dic
 
         self.__check_dic()
         self.files     = self.__get_files()     # list of source files in the sub-IP
@@ -82,8 +84,10 @@ class SubIPConfig(object):
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
 
-    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi'):
+    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', local=False):
         if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
+            return "\n"
+        if "only_local" in self.flags and not local:
             return "\n"
         if "skip_simulation" in self.flags:
             return "\n"
@@ -121,9 +125,11 @@ class SubIPConfig(object):
 
         return vlog_cmd
 
-    def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
+    def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi', local=False):
         if target_tech == 'xilinx':
             return self.__export_vsim_xilinx(abs_path, more_opts)
+        if "only_local" in self.flags and local:
+            return "\n"
         if "skip_simulation" in self.flags:
             return "\n"
         if "skip_tcsh" in self.flags:

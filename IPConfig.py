@@ -36,7 +36,7 @@ class IPConfig(object):
             for k in ip_dic.keys():
                 self.sub_ips[k] = SubIPConfig(ip_name, k, ip_dic[k], ip_path)
 
-    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', source='ips'):
+    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', source='ips', local=False):
         ip_path_env = "$(IPS_PATH)" if source=='ips' else "$(RTL_PATH)"
         commands = ""
         phony = ""
@@ -48,13 +48,13 @@ class IPConfig(object):
         makefile = MK_PREAMBLE % (prepare(self.ip_name), ip_path_env, self.ip_path, phony, commands) 
         makefile += MK_POSTAMBLE
         for s in self.sub_ips.keys():
-            makefile += self.sub_ips[s].export_make(abs_path, more_opts, target_tech=target_tech)
+            makefile += self.sub_ips[s].export_make(abs_path, more_opts, target_tech=target_tech, local=local)
         return makefile
 
-    def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
+    def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi', local=False):
         vsim_script = VSIM_PREAMBLE % (self.vsim_dir, prepare(self.ip_name), self.ip_path)
         for s in self.sub_ips.keys():
-            vsim_script += self.sub_ips[s].export_vsim(abs_path, more_opts, target_tech=target_tech)
+            vsim_script += self.sub_ips[s].export_vsim(abs_path, more_opts, target_tech=target_tech, local=local)
         vsim_script += VSIM_POSTAMBLE
         return vsim_script
 

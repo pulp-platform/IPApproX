@@ -55,7 +55,10 @@ def load_ips_list(filename, skip_commit=False):
             group = ips_list[i]['group']
         except KeyError:
             group = None
-        path = i
+        try:
+            path = ips_list[i]['path']
+        except KeyError:
+            path = i
         name = i.split()[0].split('/')[-1]
         try:
             alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
@@ -385,7 +388,7 @@ class IPDatabase(object):
 
         store_ips_list("new_ips_list.yml", new_ips)
 
-    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech='st28fdsoi'):
+    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech='st28fdsoi', local=False):
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -395,14 +398,14 @@ class IPDatabase(object):
             ip_dic = self.rtl_dic
         for i in ip_dic.keys():
             filename = "%s/%s.mk" % (script_path, i)
-            makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source)
+            makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source, local=local)
             with open(filename, "wb") as f:
                 f.write(makefile)
 
-    def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts="", target_tech='st28fdsoi'):
+    def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts="", target_tech='st28fdsoi', local=False):
         for i in self.ip_dic.keys():
             filename = "%s/vcompile_%s.csh" % (script_path, i)
-            vcompile_script = self.ip_dic[i].export_vsim(abs_path, more_opts, target_tech=target_tech)
+            vcompile_script = self.ip_dic[i].export_vsim(abs_path, more_opts, target_tech=target_tech, local=local)
             with open(filename, "wb") as f:
                 f.write(vcompile_script)
                 os.fchmod(f.fileno(), os.fstat(f.fileno()).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
