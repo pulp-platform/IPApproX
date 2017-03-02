@@ -90,7 +90,10 @@ class IPDatabase(object):
         self.rtl_dic = {}
         ips_list_yml = "%s/ips_list.yml" % (list_path)
         rtl_list_yml = "%s/rtl_list.yml" % (list_path)
-        self.ip_list = load_ips_list(ips_list_yml)
+        try:
+            self.ip_list = load_ips_list(ips_list_yml)
+        except IOError:
+            self.ip_list = []
         try:
             self.rtl_list = load_ips_list(rtl_list_yml, skip_commit=True)
         except IOError:
