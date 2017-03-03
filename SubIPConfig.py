@@ -42,6 +42,7 @@ MANDATORY_KEYS = [
 ALLOWED_TARGETS = [
     'all',
     'rtl',
+    'lint',
     'xilinx',
     'st28fdsoi',
     'umc65',
@@ -84,8 +85,13 @@ class SubIPConfig(object):
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
 
-    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', local=False):
+    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', local=False, linting=False):
+        building = True
         if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
+            building = False
+        if 'lint' not in self.targets or "skip_synthesis" in self.flags or not linting:
+            linting = False
+        if not building and not linting:
             return "\n"
         if "only_local" in self.flags and not local:
             return "\n"
@@ -95,7 +101,7 @@ class SubIPConfig(object):
         files = self.files
         vlog_includes = ""
         for i in self.incdirs:
-            vlog_includes += "+%s/%s" % (abs_path, i)
+            vlog_includes += "\\\n\t+incdir+%s/%s" % (abs_path, i)
         vhdl_files = ""
         vlog_files = ""
         for f in files:
@@ -104,7 +110,7 @@ class SubIPConfig(object):
             else:
                 vhdl_files += "\\\n\t%s/%s" % (abs_path, f)
         if len(vlog_includes) > 0:
-            vlog_cmd += MK_SUBIPINC % (self.sub_ip_name, self.sub_ip_name.upper(), "+incdir" + vlog_includes)
+            vlog_cmd += MK_SUBIPINC % (self.sub_ip_name, self.sub_ip_name.upper(), vlog_includes)
         vlog_cmd += MK_SUBIPSRC % (self.sub_ip_name.upper(), vlog_files, self.sub_ip_name.upper(), vhdl_files)
         vlog_cmd += "\n"
         vlog_rule = ""
@@ -115,8 +121,12 @@ class SubIPConfig(object):
                 defines = ""
             for d in self.defines:
                 defines = "%s +define+%s" % (defines, d)
-            vlog_rule += MK_BUILDCMD_SVLOG % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
-            vlog_rule += "\n\t"
+            if linting:
+                vlog_rule += MK_BUILDCMD_SVLOG_LINT % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
+                vlog_rule += "\n\t"
+            if building:
+                vlog_rule += MK_BUILDCMD_SVLOG % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
+                vlog_rule += "\n\t"
         if len(vhdl_files) > 0:
             vlog_rule += MK_BUILDCMD_VHDL % ("%s" % (more_opts), self.sub_ip_name.upper())
             vlog_rule += "\n"

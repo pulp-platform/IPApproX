@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# vsim_defines.py
+# makefile_defines.py
 # Francesco Conti <f.conti@unibo.it>
 #
 # Copyright (C) 2015 ETH Zurich, University of Bologna
@@ -55,6 +55,8 @@ $(LIB_PATH)/%s.vmake: $(SRC_SVLOG_%s) $(SRC_VHDL_%s)
 	@touch $(LIB_PATH)/%s.vmake
 """
 
+MK_BUILDCMD_SVLOG_LINT = "$(SVLOG_LINT) %s $(INCDIR_%s) $(SRC_SVLOG_%s)"
+MK_BUILDCMD_VLOG_LINT = "$(VLOG_LINT) %s $(INCDIR_%s) $(SRC_%s)"
 MK_BUILDCMD_SVLOG = "$(SVLOG_CC) -work $(LIB_PATH) %s $(INCDIR_%s) $(SRC_SVLOG_%s)"
 MK_BUILDCMD_VLOG  = "$(VLOG_CC) -work $(LIB_PATH) %s $(INCDIR_%s) $(SRC_%s)"
 MK_BUILDCMD_VHDL  = "$(VHDL_CC) -work $(LIB_PATH) %s $(SRC_VHDL_%s)"
