@@ -30,6 +30,7 @@ ALLOWED_KEYS = [
     'vlog_opts',
     'vcom_opts',
     'targets',
+    'tech',
     'flags',
     'defines',
     'dir'
@@ -274,6 +275,13 @@ class SubIPConfig(object):
         except KeyError:
             incdirs = []
         return incdirs
+
+    def __get_tech(self):
+        try:
+            tech = self.sub_ip_dic['tech']
+        except KeyError:
+            tech = False
+        return tech
 
     def __get_vlog_opts(self):
         try:
