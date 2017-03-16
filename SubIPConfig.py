@@ -43,6 +43,7 @@ ALLOWED_TARGETS = [
     'all',
     'xilinx',
     'rtl',
+    'verilator',
     'st28fdsoi',
     'umc65',
     'gf28',
@@ -183,6 +184,18 @@ class SubIPConfig(object):
             else:
                 synplify_cmd += "add_file -vhdl %s/%s/%s\n" % (abs_path, self.ip_path, f)
         return synplify_cmd
+
+    def export_verilator(self, abs_path):
+        verilator_cmd = ""
+        if not ("all" in self.targets or "verilator" in self.targets):
+            return ""
+        files = self.files
+        if len(files) == 0:
+            files.extend(self.files)
+        for f in files:
+            if not is_vhdl(f):
+                verilator_cmd += "%s/%s/%s \\\n" % (abs_path, self.ip_path, f)
+        return verilator_cmd
 
     ### management of the Yaml dictionary
 

@@ -23,6 +23,7 @@ from .IPApproX_common import *
 from .vivado_defines import *
 from .ips_defines import *
 from .synopsys_defines import *
+from .verilator_defines import *
 
 LEGACY_IPS = [
     'cea'
@@ -427,6 +428,19 @@ class IPDatabase(object):
             synplify_script += self.ip_dic[i].export_synplify(abs_path)
         with open(filename, "wb") as f:
             f.write(synplify_script)
+
+    def export_verilator(self, abs_path="${TOP_PATH}/ips", script_path="./", more_opts=""):
+            filename = "%s" % (script_path)
+            verilator_script = VERILATOR_PREAMBLE
+            # generate include dirs
+            verilator_includes = ""
+            for i in self.ip_dic.keys():
+                verilator_includes += self.ip_dic[i].generate_verilator_inc_dirs(abs_path) + " "
+            verilator_script += VERILATOR_INCLUDES % verilator_includes
+            verilator_script += VERILATOR_COMMAND % more_opts
+            with open(filename, "wb") as f:
+                f.write(verilator_script)
+                os.fchmod(f.fileno(), os.fstat(f.fileno()).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     def generate_vsim_tcl(self, filename):
         l = []
