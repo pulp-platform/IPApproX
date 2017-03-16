@@ -43,6 +43,7 @@ MANDATORY_KEYS = [
 ALLOWED_TARGETS = [
     'all',
     'rtl',
+    'verilator',
     'xilinx',
     'st28fdsoi',
     'umc65',
