@@ -30,7 +30,9 @@ ALLOWED_KEYS = [
     'vlog_opts',
     'vcom_opts',
     'tech',
-    'targets'
+    'targets',
+    'flags',
+    'defines'
 ]
 MANDATORY_KEYS = [
     'files'
@@ -44,7 +46,12 @@ ALLOWED_TARGETS = [
     'verilator',
     'st28fdsoi',
     'umc65',
-    'gf28'
+    'gf28',
+    'tsmc55'
+]
+
+LEGACY_IPS = [
+    'cea'
 ]
 
 class SubIPConfig(object):
@@ -63,6 +70,7 @@ class SubIPConfig(object):
         self.tech      = self.__get_tech()      # if True, do not generate analyze scripts for this ip :)
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
+        self.defines   = self.__get_defines()   # additional defines
 
     def export_make(self, abs_path, more_opts, target_tech='st28fdsoi'):
         if target_tech == 'xilinx':
@@ -102,14 +110,20 @@ class SubIPConfig(object):
             return self.__export_vsim_xilinx(abs_path, more_opts)
         if not ("all" in self.targets or "rtl" in self.targets):
             return "\n"
+        if self.ip_name in LEGACY_IPS:
+            print "Skipping %s.%s as it is not supported by the TCSH-based build flow." % (self.ip_name, self.sub_ip_name)
+            return "\n"
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
         files = self.files
         vlog_includes = ""
         for i in self.incdirs:
             vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
+        defines = ""
+        for d in self.defines:
+            defines = "%s +define+%s" % (defines, d)
         for f in files:
             if not is_vhdl(f):
-                vlog_cmd += VSIM_VLOG_CMD % ("%s %s" % (more_opts, self.vlog_opts), vlog_includes, "%s/%s" % (abs_path, f))
+                vlog_cmd += VSIM_VLOG_CMD % ("%s %s %s" % (more_opts, self.vlog_opts, defines), vlog_includes, "%s/%s" % (abs_path, f))
             else:
                 vlog_cmd += VSIM_VCOM_CMD % ("%s %s" % (more_opts, self.vcom_opts), "%s/%s" % (abs_path, f))
         return vlog_cmd
@@ -186,6 +200,8 @@ class SubIPConfig(object):
     ### management of the Yaml dictionary
 
     def __check_dic(self):
+        if self.ip_name in LEGACY_IPS:
+            return
         dic = self.sub_ip_dic
         if set(MANDATORY_KEYS).intersection(set(dic.keys())) == set([]):
             print("ERROR: there are no files for ip '%s', sub-ip '%s'. Check its src_files.yml file." % (self.ip_name, self.sub_ip_name))
@@ -200,6 +216,13 @@ class SubIPConfig(object):
 
     def __get_files(self):
         return self.sub_ip_dic['files']
+
+    def __get_defines(self):
+        try:
+            defines = self.sub_ip_dic['defines']
+        except KeyError:
+            defines = []
+        return defines
 
     def __get_targets(self):
         try:
