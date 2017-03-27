@@ -108,7 +108,7 @@ class SubIPConfig(object):
         vlog_rule = ""
         if len(vlog_files) > 0:
             if target_tech=='xilinx':
-                defines = "+define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM"
+                defines = "+define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM -suppress 2583"
             else:
                 defines = ""
             for d in self.defines:
@@ -155,7 +155,7 @@ class SubIPConfig(object):
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
         files = self.files
         vlog_includes = ""
-        vlog_opts = " +define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM"
+        vlog_opts = " +define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM -suppress 2583"
         for i in self.incdirs:
             vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
         for f in files:
