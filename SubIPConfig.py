@@ -110,7 +110,7 @@ class SubIPConfig(object):
             if target_tech=='xilinx':
                 defines = "+define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM -suppress 2583"
             else:
-                defines = ""
+                defines = "-suppress 2583"
             for d in self.defines:
                 defines = "%s +define+%s" % (defines, d)
             vlog_rule += MK_BUILDCMD_SVLOG % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
