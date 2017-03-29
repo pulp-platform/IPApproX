@@ -61,9 +61,9 @@ ALLOWED_FLAGS = [
 
 # legacy IPs blacklist (for backwards compatibility with tcsh flow)
 LEGACY_TCSH_BLACKLIST = [
-    'common_cells',
-    'cea',
-    'tech'
+    #+ 'common_cells',
+    #+ 'cea',
+    #+ 'tech'
 ]
 
 class SubIPConfig(object):
@@ -124,6 +124,8 @@ class SubIPConfig(object):
         return vlog_cmd
 
     def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
+        if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
+            return "\n"
         if target_tech == 'xilinx':
             return self.__export_vsim_xilinx(abs_path, more_opts)
         if "skip_simulation" in self.flags:
@@ -137,7 +139,7 @@ class SubIPConfig(object):
         vlog_includes = ""
         for i in self.incdirs:
             vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
-        defines = ""
+        defines = "-suppress 2583"
         for d in self.defines:
             defines = "%s +define+%s" % (defines, d)
         for f in files:
