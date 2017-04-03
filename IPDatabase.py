@@ -14,7 +14,12 @@
 import sys,os,stat
 sys.path.append(os.path.abspath("yaml/lib64/python"))
 import yaml
-import collections
+if sys.version_info[0]==2 and sys.version_info[1]>=7:
+    from collections import OrderedDict
+elif sys.version_info[0]>2:
+    from collections import OrderedDict
+else:
+    from ordereddict import OrderedDict
 from .IPConfig import *
 from .IPApproX_common import *
 from .vivado_defines import *
@@ -26,7 +31,7 @@ ALLOWED_SOURCES=[
   "rtl"
 ]
 
-def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.OrderedDict):
+def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
     class OrderedLoader(Loader):
         pass
     def construct_mapping(loader, node):
