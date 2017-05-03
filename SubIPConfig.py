@@ -15,6 +15,7 @@ from .vsim_defines     import *
 from .makefile_defines import *
 from .vivado_defines   import *
 from .synopsys_defines import *
+from .cadence_defines  import *
 import sys
 
 # returns true if source file is VHDL
@@ -183,6 +184,27 @@ class SubIPConfig(object):
             else:
                 analyze_cmd += SYNOPSYS_ANALYZE_VHDL_CMD % (source.upper(), "%s/%s" % (path, f))
         return analyze_cmd
+
+
+
+    def export_cadence(self, path, target_tech='st28fdsoi', source='ips'):
+        if not ("all" in self.targets or target_tech in self.targets):
+            return "\n"
+        if "skip_synthesis" in self.flags:
+            return "\n"
+        analyze_cmd = CADENCE_ANALYZE_PREAMBLE_SUBIP % (self.sub_ip_name)
+        defines = ""
+        for d in self.defines:
+            defines = "%s -define %s" % (defines, d)
+        files = self.files
+        for f in files:
+            if not is_vhdl(f):
+                analyze_cmd += CADENCE_ANALYZE_SV_CMD % (defines, source.upper(), "%s/%s" % (path, f))
+            else:
+                analyze_cmd += CADENCE_ANALYZE_VHDL_CMD % (source.upper(), "%s/%s" % (path, f))
+        return analyze_cmd
+
+
 
     def export_vivado(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):

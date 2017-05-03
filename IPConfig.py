@@ -15,6 +15,7 @@ from .vsim_defines     import *
 from .makefile_defines import *
 from .vivado_defines   import *
 from .synopsys_defines import *
+from .cadence_defines  import *
 from .SubIPConfig      import *
 
 class IPConfig(object):
@@ -63,6 +64,13 @@ class IPConfig(object):
         for s in self.sub_ips.keys():
             analyze_script += self.sub_ips[s].export_synopsys(self.ip_path, target_tech=target_tech, source=source)
         return analyze_script
+
+    def export_cadence(self, target_tech='st28fdsoi', source='ips'):
+        analyze_script = CADENCE_ANALYZE_PREAMBLE % (self.ip_name)
+        for s in self.sub_ips.keys():
+            analyze_script += self.sub_ips[s].export_cadence(self.ip_path, target_tech=target_tech, source=source)
+        return analyze_script
+
 
     def export_vivado(self, abs_path):
         vivado_script = ""

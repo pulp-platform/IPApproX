@@ -20,3 +20,8 @@ SYNOPSYS_ANALYZE_SV_CMD   = "analyze -format sverilog %s -work work ${%s_PATH}/%
 SYNOPSYS_ANALYZE_V_CMD    = "analyze -format verilog  %s -work work ${%s_PATH}/%s\n"
 SYNOPSYS_ANALYZE_VHDL_CMD = "analyze -format vhdl        -work work ${%s_PATH}/%s\n"
 
+
+
+SYNOPSYS_ADD_IPS_FILES_CMD = "source scripts/analyze/ips/%s\n"
+SYNOPSYS_ADD_RTL_FILES_CMD = "source scripts/analyze/rtl/%s\n"
+

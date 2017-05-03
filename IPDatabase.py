@@ -25,6 +25,7 @@ from .IPApproX_common import *
 from .vivado_defines import *
 from .ips_defines import *
 from .synopsys_defines import *
+from .cadence_defines import *
 
 ALLOWED_SOURCES=[
   "ips",
@@ -427,6 +428,24 @@ class IPDatabase(object):
                 with open(filename, "wb") as f:
                     f.write(analyze_script)
 
+
+
+    def export_cadence(self, script_path=".", target_tech='tsmc55', source='ips', domain=None):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        if source=='ips':
+            ip_dic = self.ip_dic
+        elif source=='rtl':
+            ip_dic = self.rtl_dic
+        for i in ip_dic.keys():
+            if domain==None or domain in ip_dic[i].domain:
+                filename = "%s/%s.tcl" % (script_path, i)
+                analyze_script = ip_dic[i].export_cadence(target_tech=target_tech, source=source)
+                with open(filename, "wb") as f:
+                    f.write(analyze_script)
+
+
     def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", source='ips', domain=None, alternatives=[]):
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
@@ -467,7 +486,27 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
 
-    def generate_synopsys_list(self, filename, source='ips', analyze_path='analyze'):
+    # def generate_vivado_add_files(self, filename, domain=None, source='ips', alternatives=[]):
+    #     if source not in ALLOWED_SOURCES:
+    #         print(tcolors.ERROR + "ERROR: generate_vivado_add_files() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+    #         sys.exit(1)
+    #     if source=='ips':
+    #         ip_dic = self.ip_dic
+    #     elif source=='rtl':
+    #         ip_dic = self.rtl_dic
+    #     l = []
+    #     vivado_add_files_cmd = ""
+    #     for i in ip_dic.keys():
+    #         if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
+    #             if domain==None or domain in ip_dic[i].domain:
+    #                 l.extend(ip_dic[i].generate_vivado_add_files())
+    #     for el in l:
+    #         vivado_add_files_cmd += VIVADO_ADD_FILES_CMD % el.upper()
+    #     with open(filename, "wb") as f:
+    #         f.write(vivado_add_files_cmd)
+
+
+    def generate_synopsys_list(self, filename, source='ips', analyze_path='analyze', domain=None):
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: generate_synopsys_list() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -475,10 +514,16 @@ class IPDatabase(object):
         ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
         synopsys_list = ""
         for i in ip_dic.keys():
-            synopsys_list += "source %s/%s.tcl\n" % (analyze_path,i)
+            if domain==None or domain in ip_dic[i].domain:
+                synopsys_list += "source %s/%s.tcl\n" % (analyze_path,i)
 
         with open(filename, "wb") as f:
             f.write(synopsys_list)
+
+
+
+
+
 
     def generate_makefile(self, filename, target_tech=None, source='ips'):
         if source not in ALLOWED_SOURCES:
@@ -553,6 +598,7 @@ class IPDatabase(object):
             vivado_add_files_cmd += VIVADO_ADD_FILES_CMD % el.upper()
         with open(filename, "wb") as f:
             f.write(vivado_add_files_cmd)
+
 
     def generate_vivado_inc_dirs(self, filename, domain=None, source='ips', alternatives=[]):
         if source not in ALLOWED_SOURCES:
