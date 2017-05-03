@@ -485,7 +485,7 @@ class IPDatabase(object):
         vsim_tcl += VSIM_TCL_POSTAMBLE
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
-
+    # prova
     # def generate_vivado_add_files(self, filename, domain=None, source='ips', alternatives=[]):
     #     if source not in ALLOWED_SOURCES:
     #         print(tcolors.ERROR + "ERROR: generate_vivado_add_files() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
