@@ -391,7 +391,7 @@ class IPDatabase(object):
 
         store_ips_list("new_ips_list.yml", new_ips)
 
-    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech='st28fdsoi'):
+    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech='st28fdsoi', simulator='vsim'):
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -401,7 +401,7 @@ class IPDatabase(object):
             ip_dic = self.rtl_dic
         for i in ip_dic.keys():
             filename = "%s/%s.mk" % (script_path, i)
-            makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source)
+            makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source, simulator=simulator)
             with open(filename, "wb") as f:
                 f.write(makefile)
 

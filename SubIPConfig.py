@@ -10,12 +10,14 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from .IPApproX_common  import *
-from .vsim_defines     import *
-from .makefile_defines import *
-from .vivado_defines   import *
-from .synopsys_defines import *
-from .cadence_defines  import *
+from .IPApproX_common        import *
+from .vsim_defines           import *
+from .makefile_defines       import *
+from .makefile_defines_ncsim import *
+from .vivado_defines         import *
+from .synopsys_defines       import *
+from .cadence_defines        import *
+from .SubIPConfig            import *
 import sys
 
 # returns true if source file is VHDL
@@ -85,7 +87,15 @@ class SubIPConfig(object):
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
 
-    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi'):
+    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', simulator='vsim'):
+        if simulator is "vsim":
+            mk_subiprule = MK_SUBIPRULE
+            mk_buildcmd_svlog = MK_BUILDCMD_SVLOG
+            mk_buildcmd_vhdl = MK_BUILDCMD_VHDL
+        elif simulator is "ncsim":
+            mk_subiprule = MKN_SUBIPRULE
+            mk_buildcmd_svlog = MKN_BUILDCMD_SVLOG
+            mk_buildcmd_vhdl = MKN_BUILDCMD_VHDL
         if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
             return "\n"
         if "skip_simulation" in self.flags:
@@ -110,16 +120,18 @@ class SubIPConfig(object):
         if len(vlog_files) > 0:
             if target_tech=='xilinx':
                 defines = "+define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM -suppress 2583"
-            else:
+            elif simulator is 'vsim':
                 defines = "-suppress 2583"
+            else:
+                defines = ""
             for d in self.defines:
                 defines = "%s +define+%s" % (defines, d)
-            vlog_rule += MK_BUILDCMD_SVLOG % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
+            vlog_rule += mk_buildcmd_svlog % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
             vlog_rule += "\n\t"
         if len(vhdl_files) > 0:
-            vlog_rule += MK_BUILDCMD_VHDL % ("%s" % (more_opts), self.sub_ip_name.upper())
+            vlog_rule += mk_buildcmd_vhdl % ("%s" % (more_opts), self.sub_ip_name.upper())
             vlog_rule += "\n"
-        vlog_cmd += MK_SUBIPRULE % (self.sub_ip_name, self.sub_ip_name, self.sub_ip_name, self.sub_ip_name.upper(), self.sub_ip_name.upper(), self.sub_ip_name, vlog_rule, self.sub_ip_name)
+        vlog_cmd += mk_subiprule % (self.sub_ip_name, self.sub_ip_name, self.sub_ip_name, self.sub_ip_name.upper(), self.sub_ip_name.upper(), self.sub_ip_name, vlog_rule, self.sub_ip_name)
         vlog_cmd += "\n"
 
         return vlog_cmd

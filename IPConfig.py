@@ -10,13 +10,14 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from .IPApproX_common  import *
-from .vsim_defines     import *
-from .makefile_defines import *
-from .vivado_defines   import *
-from .synopsys_defines import *
-from .cadence_defines  import *
-from .SubIPConfig      import *
+from .IPApproX_common        import *
+from .vsim_defines           import *
+from .makefile_defines       import *
+from .makefile_defines_ncsim import *
+from .vivado_defines         import *
+from .synopsys_defines       import *
+from .cadence_defines        import *
+from .SubIPConfig            import *
 
 class IPConfig(object):
     def __init__(self, ip_name, ip_dic, ip_path, ips_dir, vsim_dir, domain=None, alternatives=None):
@@ -37,19 +38,28 @@ class IPConfig(object):
             for k in ip_dic.keys():
                 self.sub_ips[k] = SubIPConfig(ip_name, k, ip_dic[k], ip_path)
 
-    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', source='ips'):
+    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', source='ips', simulator='vsim'):
+        if simulator is "vsim":
+            mk_preamble = MK_PREAMBLE
+            vmake = "vmake"
+        elif simulator is "ncsim":
+            mk_preamble = MKN_PREAMBLE
+            vmake = "nmake"
         ip_path_env = "$(IPS_PATH)" if source=='ips' else "$(RTL_PATH)"
         commands = ""
         phony = ""
         for s in self.sub_ips.keys():
             if ("all" in self.sub_ips[s].targets or "rtl" in self.sub_ips[s].targets or target_tech in self.sub_ips[s].targets):
                 if ("skip_simulation" not in self.sub_ips[s].flags):
-                    commands += "$(LIB_PATH)/%s.vmake " % s
-                    phony += "vcompile-subip-%s " %s
-        makefile = MK_PREAMBLE % (prepare(self.ip_name), ip_path_env, self.ip_path, phony, commands) 
+                    commands += "$(LIB_PATH)/%s.%s " % (s, vmake)
+                    if simulator == 'vsim':
+                        phony += "vcompile-subip-%s " %s
+                    elif simulator == 'ncsim':
+                        phony += "ncompile-subip-%s " %s
+        makefile = mk_preamble % (prepare(self.ip_name), ip_path_env, self.ip_path, phony, commands) 
         makefile += MK_POSTAMBLE
         for s in self.sub_ips.keys():
-            makefile += self.sub_ips[s].export_make(abs_path, more_opts, target_tech=target_tech)
+            makefile += self.sub_ips[s].export_make(abs_path, more_opts, target_tech=target_tech, simulator=simulator)
         return makefile
 
     def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
