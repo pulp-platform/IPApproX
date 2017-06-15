@@ -485,6 +485,21 @@ class IPDatabase(object):
         vsim_tcl += VSIM_TCL_POSTAMBLE
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
+
+    def generate_ncelab(self, filename, source='ips'):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: generate_vsim_tcl() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        l = []
+        ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
+        for i in ip_dic.keys():
+            l.append(i)
+        vsim_tcl = VSIM_TCL_PREAMBLE % ('IP' if source=='ips' else source.upper())
+        for el in l:
+            vsim_tcl += VSIM_TCL_CMD % prepare(el)
+        vsim_tcl += VSIM_TCL_POSTAMBLE
+        with open(filename, "wb") as f:
+            f.write(vsim_tcl)
     # prova
     # def generate_vivado_add_files(self, filename, domain=None, source='ips', alternatives=[]):
     #     if source not in ALLOWED_SOURCES:
