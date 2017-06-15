@@ -486,40 +486,19 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
 
-    def generate_ncelab(self, filename, source='ips'):
+    def generate_ncelab_list(self, filename, source='ips'):
         if source not in ALLOWED_SOURCES:
-            print(tcolors.ERROR + "ERROR: generate_vsim_tcl() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            print(tcolors.ERROR + "ERROR: generate_ncelab_list() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
         l = []
         ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
         for i in ip_dic.keys():
             l.append(i)
-        vsim_tcl = VSIM_TCL_PREAMBLE % ('IP' if source=='ips' else source.upper())
+        ncelab_list = NCELAB_LIST_PREAMBLE % (source.upper())
         for el in l:
-            vsim_tcl += VSIM_TCL_CMD % prepare(el)
-        vsim_tcl += VSIM_TCL_POSTAMBLE
+            ncelab_list += NCELAB_LIST_CMD % prepare(el)
         with open(filename, "wb") as f:
-            f.write(vsim_tcl)
-    # prova
-    # def generate_vivado_add_files(self, filename, domain=None, source='ips', alternatives=[]):
-    #     if source not in ALLOWED_SOURCES:
-    #         print(tcolors.ERROR + "ERROR: generate_vivado_add_files() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
-    #         sys.exit(1)
-    #     if source=='ips':
-    #         ip_dic = self.ip_dic
-    #     elif source=='rtl':
-    #         ip_dic = self.rtl_dic
-    #     l = []
-    #     vivado_add_files_cmd = ""
-    #     for i in ip_dic.keys():
-    #         if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
-    #             if domain==None or domain in ip_dic[i].domain:
-    #                 l.extend(ip_dic[i].generate_vivado_add_files())
-    #     for el in l:
-    #         vivado_add_files_cmd += VIVADO_ADD_FILES_CMD % el.upper()
-    #     with open(filename, "wb") as f:
-    #         f.write(vivado_add_files_cmd)
-
+            f.write(ncelab_list)
 
     def generate_synopsys_list(self, filename, source='ips', analyze_path='analyze', domain=None):
         if source not in ALLOWED_SOURCES:
