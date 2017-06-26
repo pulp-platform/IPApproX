@@ -397,8 +397,8 @@ class IPDatabase(object):
         new_ips = []
         for ip in ips:
             os.chdir("%s/%s" % (self.ips_dir, ip['path']))
-            commit, err = execute_popen("git checkout master", silent=True).communicate()
-            commit, err = execute_popen("git pull", silent=True).communicate()
+            #commit, err = execute_popen("git checkout master", silent=True).communicate()
+            #commit, err = execute_popen("git pull", silent=True).communicate()
             commit, err = execute_popen("git log -n 1 --format=format:%H", silent=True).communicate()
             unstaged_changes, err = execute_popen("git diff --name-only").communicate()
             staged_changes, err = execute_popen("git diff --name-only").communicate()
