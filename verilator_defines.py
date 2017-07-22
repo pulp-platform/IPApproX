@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# __init__.py
+# vivado_defines.py
 # Francesco Conti <f.conti@unibo.it>
 #
 # Copyright (C) 2015 ETH Zurich, University of Bologna
@@ -10,7 +10,15 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from .ordereddict import *
-from .SubIPConfig import *
-from .IPConfig import *
-from .IPDatabase import *
+VERILATOR_PREAMBLE = """#!/bin/tcsh
+
+"""
+
+VERILATOR_INCLUDES = """set VERILATOR_INCLUDES="%s" """
+
+VERILATOR_COMMAND = """
+
+verilator +1800-2012ext+ --trace -CFLAGS -std=c++0x -cc --Mdir verilator_libs -Wno-fatal %s $VERILATOR_INCLUDES
+
+"""
+

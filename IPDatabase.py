@@ -26,6 +26,7 @@ from .vivado_defines import *
 from .ips_defines import *
 from .synopsys_defines import *
 from .cadence_defines import *
+from .verilator_defines import *
 
 ALLOWED_SOURCES=[
   "ips",
