@@ -10,11 +10,14 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from .IPApproX_common  import *
-from .vsim_defines     import *
-from .makefile_defines import *
-from .vivado_defines   import *
-from .synopsys_defines import *
+from .IPApproX_common        import *
+from .vsim_defines           import *
+from .makefile_defines       import *
+from .makefile_defines_ncsim import *
+from .vivado_defines         import *
+from .synopsys_defines       import *
+from .cadence_defines        import *
+from .SubIPConfig            import *
 import sys
 
 # returns true if source file is VHDL
@@ -30,6 +33,7 @@ ALLOWED_KEYS = [
     'vlog_opts',
     'vcom_opts',
     'targets',
+    'tech',
     'flags',
     'defines',
     'dir'
@@ -42,12 +46,13 @@ MANDATORY_KEYS = [
 ALLOWED_TARGETS = [
     'all',
     'rtl',
-    'lint',
+    'verilator',
     'xilinx',
     'st28fdsoi',
     'umc65',
     'tsmc55',
     'gf28',
+    'gf22',
     'smic130'
 ]
 
@@ -61,9 +66,9 @@ ALLOWED_FLAGS = [
 
 # legacy IPs blacklist (for backwards compatibility with tcsh flow)
 LEGACY_TCSH_BLACKLIST = [
-    'common_cells',
-    'cea',
-    'tech'
+    #+ 'common_cells',
+    #+ 'cea',
+    #+ 'tech'
 ]
 
 class SubIPConfig(object):
@@ -85,7 +90,15 @@ class SubIPConfig(object):
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
 
-    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', local=False, linting=False):
+    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', local=False, simulator='vsim'):
+        if simulator is "vsim":
+            mk_subiprule = MK_SUBIPRULE
+            mk_buildcmd_svlog = MK_BUILDCMD_SVLOG
+            mk_buildcmd_vhdl = MK_BUILDCMD_VHDL
+        elif simulator is "ncsim":
+            mk_subiprule = MKN_SUBIPRULE
+            mk_buildcmd_svlog = MKN_BUILDCMD_SVLOG
+            mk_buildcmd_vhdl = MKN_BUILDCMD_VHDL
         building = True
         if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
             building = False
@@ -101,7 +114,7 @@ class SubIPConfig(object):
         files = self.files
         vlog_includes = ""
         for i in self.incdirs:
-            vlog_includes += "\\\n\t+incdir+%s/%s" % (abs_path, i)
+            vlog_includes += "+%s/%s" % (abs_path, i)
         vhdl_files = ""
         vlog_files = ""
         for f in files:
@@ -110,36 +123,34 @@ class SubIPConfig(object):
             else:
                 vhdl_files += "\\\n\t%s/%s" % (abs_path, f)
         if len(vlog_includes) > 0:
-            vlog_cmd += MK_SUBIPINC % (self.sub_ip_name, self.sub_ip_name.upper(), vlog_includes)
+            vlog_cmd += MK_SUBIPINC % (self.sub_ip_name, self.sub_ip_name.upper(), "+incdir" + vlog_includes)
         vlog_cmd += MK_SUBIPSRC % (self.sub_ip_name.upper(), vlog_files, self.sub_ip_name.upper(), vhdl_files)
         vlog_cmd += "\n"
         vlog_rule = ""
         if len(vlog_files) > 0:
             if target_tech=='xilinx':
-                defines = "+define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM"
+                defines = "+define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM -suppress 2583"
+            elif simulator is 'vsim':
+                defines = "-suppress 2583"
             else:
                 defines = ""
             for d in self.defines:
                 defines = "%s +define+%s" % (defines, d)
-            if linting:
-                vlog_rule += MK_BUILDCMD_SVLOG_LINT % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
-                vlog_rule += "\n\t"
-            if building:
-                vlog_rule += MK_BUILDCMD_SVLOG % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
-                vlog_rule += "\n\t"
+            vlog_rule += mk_buildcmd_svlog % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
+            vlog_rule += "\n\t"
         if len(vhdl_files) > 0:
-            vlog_rule += MK_BUILDCMD_VHDL % ("%s" % (more_opts), self.sub_ip_name.upper())
+            vlog_rule += mk_buildcmd_vhdl % ("%s" % (more_opts), self.sub_ip_name.upper())
             vlog_rule += "\n"
-        vlog_cmd += MK_SUBIPRULE % (self.sub_ip_name, self.sub_ip_name, self.sub_ip_name, self.sub_ip_name.upper(), self.sub_ip_name.upper(), self.sub_ip_name, vlog_rule, self.sub_ip_name)
+        vlog_cmd += mk_subiprule % (self.sub_ip_name, self.sub_ip_name, self.sub_ip_name, self.sub_ip_name.upper(), self.sub_ip_name.upper(), self.sub_ip_name, vlog_rule, self.sub_ip_name)
         vlog_cmd += "\n"
 
         return vlog_cmd
 
     def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi', local=False):
+        if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
+            return "\n"
         if target_tech == 'xilinx':
             return self.__export_vsim_xilinx(abs_path, more_opts)
-        if "only_local" in self.flags and local:
-            return "\n"
         if "skip_simulation" in self.flags:
             return "\n"
         if "skip_tcsh" in self.flags:
@@ -151,7 +162,7 @@ class SubIPConfig(object):
         vlog_includes = ""
         for i in self.incdirs:
             vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
-        defines = ""
+        defines = "-suppress 2583"
         for d in self.defines:
             defines = "%s +define+%s" % (defines, d)
         for f in files:
@@ -169,7 +180,7 @@ class SubIPConfig(object):
         vlog_cmd = VSIM_PREAMBLE_SUBIP % (self.sub_ip_name)
         files = self.files
         vlog_includes = ""
-        vlog_opts = " +define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM"
+        vlog_opts = " +define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM -suppress 2583"
         for i in self.incdirs:
             vlog_includes += "%s%s/%s" % (VSIM_VLOG_INCDIR_CMD, abs_path, i)
         for f in files:
@@ -195,6 +206,27 @@ class SubIPConfig(object):
             else:
                 analyze_cmd += SYNOPSYS_ANALYZE_VHDL_CMD % (source.upper(), "%s/%s" % (path, f))
         return analyze_cmd
+
+
+
+    def export_cadence(self, path, target_tech='st28fdsoi', source='ips'):
+        if not ("all" in self.targets or target_tech in self.targets):
+            return "\n"
+        if "skip_synthesis" in self.flags:
+            return "\n"
+        analyze_cmd = CADENCE_ANALYZE_PREAMBLE_SUBIP % (self.sub_ip_name)
+        defines = ""
+        for d in self.defines:
+            defines = "%s -define %s" % (defines, d)
+        files = self.files
+        for f in files:
+            if not is_vhdl(f):
+                analyze_cmd += CADENCE_ANALYZE_SV_CMD % (defines, source.upper(), "%s/%s" % (path, f))
+            else:
+                analyze_cmd += CADENCE_ANALYZE_VHDL_CMD % (source.upper(), "%s/%s" % (path, f))
+        return analyze_cmd
+
+
 
     def export_vivado(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):
@@ -290,6 +322,13 @@ class SubIPConfig(object):
         except KeyError:
             incdirs = []
         return incdirs
+
+    def __get_tech(self):
+        try:
+            tech = self.sub_ip_dic['tech']
+        except KeyError:
+            tech = False
+        return tech
 
     def __get_vlog_opts(self):
         try:

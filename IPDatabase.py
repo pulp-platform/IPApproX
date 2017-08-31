@@ -14,19 +14,25 @@
 import sys,os,stat
 sys.path.append(os.path.abspath("yaml/lib64/python"))
 import yaml
-import collections
+if sys.version_info[0]==2 and sys.version_info[1]>=7:
+    from collections import OrderedDict
+elif sys.version_info[0]>2:
+    from collections import OrderedDict
+else:
+    from ordereddict import OrderedDict
 from .IPConfig import *
 from .IPApproX_common import *
 from .vivado_defines import *
 from .ips_defines import *
 from .synopsys_defines import *
+from .cadence_defines import *
 
 ALLOWED_SOURCES=[
   "ips",
   "rtl"
 ]
 
-def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=collections.OrderedDict):
+def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
     class OrderedLoader(Loader):
         pass
     def construct_mapping(loader, node):
@@ -387,8 +393,40 @@ class IPDatabase(object):
             os.chdir(cwd)
 
         store_ips_list("new_ips_list.yml", new_ips)
+        
+    def get_latest_ips(self, changes_severity='warning', tag_always=False):
+        cwd = os.getcwd()
+        ips = self.ip_list
+        new_ips = []
+        for ip in ips:
+            os.chdir("%s/%s" % (self.ips_dir, ip['path']))
+            #commit, err = execute_popen("git checkout master", silent=True).communicate()
+            #commit, err = execute_popen("git pull", silent=True).communicate()
+            commit, err = execute_popen("git log -n 1 --format=format:%H", silent=True).communicate()
+            unstaged_changes, err = execute_popen("git diff --name-only").communicate()
+            staged_changes, err = execute_popen("git diff --name-only").communicate()
+            if staged_changes.split("\n")[0] != "":
+                if changes_severity == 'warning':
+                    print(tcolors.WARNING + "WARNING: skipping ip '%s' as it has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve and commit manually.")
+                    os.chdir(cwd)
+                    continue
+                else:
+                    print(tcolors.ERROR + "ERROR: ip '%s' has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to get latest version.")
+                    sys.exit(1)
+            if unstaged_changes.split("\n")[0] != "":
+                if changes_severity == 'warning':
+                    print(tcolors.WARNING + "WARNING: skipping ip '%s' as it has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve and commit manually.")
+                    os.chdir(cwd)
+                    continue
+                else:
+                    print(tcolors.ERROR + "ERROR: ip '%s' has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to get latest version.")
+                    sys.exit(1)
+            new_ips.append({'name': ip['name'], 'path': ip['path'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'group': ip['group'], 'commit': "%s" % commit})
+            os.chdir(cwd)
 
-    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech='st28fdsoi', local=False, linting=False):
+        store_ips_list("new_ips_list.yml", new_ips)
+
+    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech='st28fdsoi', local=False, simulator='vsim'):
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -398,7 +436,7 @@ class IPDatabase(object):
             ip_dic = self.rtl_dic
         for i in ip_dic.keys():
             filename = "%s/%s.mk" % (script_path, i)
-            makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source, local=local, linting=linting)
+            makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source, local=local, simulator=simulator)
             with open(filename, "wb") as f:
                 f.write(makefile)
 
@@ -424,6 +462,24 @@ class IPDatabase(object):
                 analyze_script = ip_dic[i].export_synopsys(target_tech=target_tech, source=source)
                 with open(filename, "wb") as f:
                     f.write(analyze_script)
+
+
+
+    def export_cadence(self, script_path=".", target_tech='tsmc55', source='ips', domain=None):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        if source=='ips':
+            ip_dic = self.ip_dic
+        elif source=='rtl':
+            ip_dic = self.rtl_dic
+        for i in ip_dic.keys():
+            if domain==None or domain in ip_dic[i].domain:
+                filename = "%s/%s.tcl" % (script_path, i)
+                analyze_script = ip_dic[i].export_cadence(target_tech=target_tech, source=source)
+                with open(filename, "wb") as f:
+                    f.write(analyze_script)
+
 
     def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", source='ips', domain=None, alternatives=[]):
         if source not in ALLOWED_SOURCES:
@@ -465,7 +521,21 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vsim_tcl)
 
-    def generate_synopsys_list(self, filename, source='ips', analyze_path='analyze'):
+    def generate_ncelab_list(self, filename, source='ips'):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: generate_ncelab_list() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        l = []
+        ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
+        for i in ip_dic.keys():
+            l.append(i)
+        ncelab_list = NCELAB_LIST_PREAMBLE % (source.upper())
+        for el in l:
+            ncelab_list += NCELAB_LIST_CMD % prepare(el)
+        with open(filename, "wb") as f:
+            f.write(ncelab_list)
+
+    def generate_synopsys_list(self, filename, source='ips', analyze_path='analyze', domain=None):
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: generate_synopsys_list() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -473,7 +543,8 @@ class IPDatabase(object):
         ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
         synopsys_list = ""
         for i in ip_dic.keys():
-            synopsys_list += "source %s/%s.tcl\n" % (analyze_path,i)
+            if domain==None or domain in ip_dic[i].domain:
+                synopsys_list += "source %s/%s.tcl\n" % (analyze_path,i)
 
         with open(filename, "wb") as f:
             f.write(synopsys_list)
