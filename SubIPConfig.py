@@ -151,6 +151,8 @@ class SubIPConfig(object):
             return "\n"
         if target_tech == 'xilinx':
             return self.__export_vsim_xilinx(abs_path, more_opts)
+        if "only_local" in self.flags and local:
+            return "\n"
         if "skip_simulation" in self.flags:
             return "\n"
         if "skip_tcsh" in self.flags:
