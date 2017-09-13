@@ -47,7 +47,9 @@ ALLOWED_TARGETS = [
     'st28fdsoi',
     'umc65',
     'gf28',
-    'tsmc55'
+    'tsmc55',
+    'tsmc40',
+    'gf22',
 ]
 
 LEGACY_IPS = [
