@@ -26,6 +26,7 @@ from .vivado_defines import *
 from .ips_defines import *
 from .synopsys_defines import *
 from .cadence_defines import *
+from .verilator_defines import *
 
 ALLOWED_SOURCES=[
   "ips",
@@ -241,7 +242,7 @@ class IPDatabase(object):
         except OSError:
             print(tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC)
 
-    def update_ips(self, remote = "git@iis-git.ee.ethz.ch:pulp-project", origin='origin'):
+    def update_ips(self, server="git@iis-git.ee.ethz.ch", group="pulp-open", origin='origin'):
         errors = []
         ips = self.ip_list
         git = "git"
@@ -253,7 +254,7 @@ class IPDatabase(object):
         server = None
         group = None
         # try to strip group from remote
-        [server, group] = remote.rsplit(":", 1)
+        remote = "%s:%s" % (server, group)
 
         for ip in ips:
             os.chdir(cwd)
