@@ -97,6 +97,7 @@ class IPDatabase(object):
         self.fpgasim_dir = fpgasim_dir
         self.ip_dic = {}
         self.rtl_dic = {}
+        self.ip_tree = None
         ips_list_yml = "%s/ips_list.yml" % (list_path)
         rtl_list_yml = "%s/rtl_list.yml" % (list_path)
         try:
@@ -135,6 +136,22 @@ class IPDatabase(object):
                 blacklist = [item for item, count in collections.Counter(sub_ip_check_list).items() if count > 1]
                 for el in blacklist:
                     print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
+
+    def generate_deps_tree(self):
+        # create ip_tree root
+        ip_tree = {
+            'node'     : None,
+            'children' : []
+        }
+        # add all directly referenced IPs to the tree
+        for ip in self.ip_dic:
+            children = ip.get_deps_tree()
+            ip_tree['children'].append({
+                'node'     : ip,
+                'children' : children
+            })
+        # save the ip_tree
+        self.ip_tree = ip_tree
 
     def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None, ips_dic=None, ips_dir=None):
         if ips_dic is None:

@@ -107,3 +107,9 @@ class IPConfig(object):
             if (("xilinx" in self.sub_ips[s].targets or "all" in  self.sub_ips[s].targets) and ("skip_synthesis" not in self.sub_ips[s].flags)):
                 l.extend(self.sub_ips[s].incdirs)
         return l
+
+    def get_deps_tree(self):
+        path = self.ip_path + "/ips_list.yml"
+        ipdb = IPDatabase(self, list_path=".", ips_dir=None, rtl_dir=None, vsim_dir=None, fpgasim_dir=None, skip_scripts=False)
+        ipdb.generate_deps_tree()
+        return ipdb.ip_tree['children']
