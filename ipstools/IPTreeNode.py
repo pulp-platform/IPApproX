@@ -3,7 +3,7 @@
 # IPTreeNode.py
 # Francesco Conti <f.conti@unibo.it>
 #
-# Copyright (C) 2017 ETH Zurich, University of Bologna
+# Copyright (C) 2015-2017 ETH Zurich, University of Bologna
 # All rights reserved.
 #
 # This software may be modified and distributed under the terms
@@ -34,7 +34,7 @@ class IPTreeNode(object):
     :type  father: dict                 
 
     :param verbose:             If true, prints all information on the dependencies that are being fetched.
-    :type  father: bool 
+    :type  verbose: bool
 
     This class represents a node in the IP hierarchy tree. It is used to construct
     the list of all dependencies so that it is possible to resolve conflicts.                       

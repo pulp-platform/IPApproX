@@ -13,6 +13,9 @@ Welcome to ipstools's documentation!
 .. automodule:: IPTreeNode
    :members:
 
+.. automodule:: IPDatabase
+   :members:
+
 Indices and tables
 ==================
 

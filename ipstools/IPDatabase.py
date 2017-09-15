@@ -3,7 +3,7 @@
 # IPDatabase.py
 # Francesco Conti <f.conti@unibo.it>
 #
-# Copyright (C) 2015 ETH Zurich, University of Bologna
+# Copyright (C) 2015-2017 ETH Zurich, University of Bologna
 # All rights reserved.
 #
 # This software may be modified and distributed under the terms
@@ -29,6 +29,56 @@ ALLOWED_SOURCES=[
 ]
 
 class IPDatabase(object):
+    """Main interaction class for accessing the IP database.
+
+        server="git@iis-git.ee.ethz.ch",
+        default_group='pulp-open',
+        default_commit='master',
+        verbose=False
+
+    :param list_path:                   Path where the main `ips_list.yml` and `rtl_list.yml` files are found.
+    :type  list_path: str
+
+    :param ips_dir:                     Path where the IPs are to be deployed.
+    :type  ips_dir: str
+
+    :param rtl_dir:                     Path where the local RTL files are deployed.
+    :type  rtl_dir: str
+
+    :param vsim_dir:                    Path where the simulation platform is set up.
+    :type  vsim_dir: str
+
+    :param fpgasim_dir:                 Path where the FPGA simulation platform is set up.
+    :type  fpgasim_dir: str
+
+    :param skip_scripts:                If True, do not set up ipstools for script generation.
+    :type  skip_scripts: bool
+
+    :param build_deps_tree:             If True, set up the hierarchical IP flow by building dependency trees.
+    :type  build_deps_tree: bool
+
+    :param resolve_deps_conflicts:      If True, resolve dependency conflicts in hierarchical IP flow.
+    :type  resolve_deps_conflicts: bool
+
+    :param server:                      Git remote repository to be used.
+    :type  server: str
+
+    :param default_group:               (Default) group to consider in the Git remote repository.
+    :type  default_group: str
+
+    :param default_commit:              (Default) branch / tag / commit hash to consider in the Git remote repository.
+    :type  default_commit: str
+
+    :param verbose:                     If true, prints all information on the dependencies that are being fetched.
+    :type  verbose: bool
+
+    This class is used for interacting with the IP database for:
+      1. resolving the IP hierarchy, including dependency conflicts
+      2. downloading the necessary IP set
+      3. generating scripts for a number of backends
+
+    """
+
     rtl_dir  = "./fe/rtl"
     ips_dir  = "./fe/ips"
     vsim_dir = "./fe/sim"
