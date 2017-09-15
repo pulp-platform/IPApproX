@@ -10,87 +10,40 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-# YAML workaround
-import sys,os,stat
-sys.path.append(os.path.abspath("yaml/lib64/python"))
-import yaml
-if sys.version_info[0]==2 and sys.version_info[1]>=7:
-    from collections import OrderedDict
-elif sys.version_info[0]>2:
-    from collections import OrderedDict
-else:
-    from ordereddict import OrderedDict
-from .IPConfig import *
 from .IPApproX_common import *
+from .IPTreeNode import *
 from .vivado_defines import *
 from .ips_defines import *
 from .synopsys_defines import *
 from .cadence_defines import *
 from .verilator_defines import *
+import IPConfig
 
 ALLOWED_SOURCES=[
   "ips",
   "rtl"
 ]
 
-def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
-    class OrderedLoader(Loader):
-        pass
-    def construct_mapping(loader, node):
-        loader.flatten_mapping(node)
-        return object_pairs_hook(loader.construct_pairs(node))
-    OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-        construct_mapping)
-    return yaml.load(stream, OrderedLoader)
-
-def load_ips_list(filename, skip_commit=False):
-    # get a list of all IPs that we are interested in from ips_list.yml
-    with open(filename, "rb") as f:
-        ips_list = ordered_load(f, yaml.SafeLoader)
-    ips = []
-    for i in ips_list.keys():
-        if not skip_commit:
-            commit = ips_list[i]['commit']
-        else:
-            commit = None
-        try:
-            domain = ips_list[i]['domain']
-        except KeyError:
-            domain = None
-        try:
-            group = ips_list[i]['group']
-        except KeyError:
-            group = None
-        try:
-            path = ips_list[i]['path']
-        except KeyError:
-            path = i
-        name = i.split()[0].split('/')[-1]
-        try:
-            alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
-        except KeyError:
-            alternatives = None
-        ips.append({'name': name, 'commit': commit, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
-    return ips
-
-def store_ips_list(filename, ips):
-    ips_list = {}
-    for i in ips:
-        if i['alternatives'] != None:
-            ips_list[i['path']] = {'commit': i['commit'], 'group': i['group'], 'domain': i['domain'], 'alternatives': i['alternatives']}
-        else:
-            ips_list[i['path']] = {'commit': i['commit'], 'group': i['group'], 'domain': i['domain']}
-    with open(filename, "wb") as f:
-        f.write(IPS_LIST_PREAMBLE)
-        f.write(yaml.dump(ips_list))
-
 class IPDatabase(object):
     rtl_dir  = "./fe/rtl"
     ips_dir  = "./fe/ips"
     vsim_dir = "./fe/sim"
 
-    def __init__(self, list_path=".", ips_dir="./fe/ips", rtl_dir="./fe/rtl", vsim_dir="./fe/sim", fpgasim_dir="./fpga/sim", skip_scripts=False):
+    def __init__(
+        self,
+        list_path=".",
+        ips_dir="./fe/ips",
+        rtl_dir="./fe/rtl",
+        vsim_dir="./fe/sim",
+        fpgasim_dir="./fpga/sim",
+        skip_scripts=False,
+        build_deps_tree=False,
+        resolve_deps_conflicts=False,
+        server="git@iis-git.ee.ethz.ch",
+        default_group='pulp-open',
+        default_commit='master',
+        verbose=False
+    ):
         super(IPDatabase, self).__init__()
         self.ips_dir = ips_dir
         self.rtl_dir = rtl_dir
@@ -98,7 +51,6 @@ class IPDatabase(object):
         self.fpgasim_dir = fpgasim_dir
         self.ip_dic = {}
         self.rtl_dic = {}
-        self.ip_tree = None
         ips_list_yml = "%s/ips_list.yml" % (list_path)
         rtl_list_yml = "%s/rtl_list.yml" % (list_path)
         try:
@@ -109,6 +61,12 @@ class IPDatabase(object):
             self.rtl_list = load_ips_list(rtl_list_yml, skip_commit=True)
         except IOError:
             self.rtl_list = None
+        if build_deps_tree:
+            self.generate_deps_tree(server=server, default_group=default_group, default_commit=default_commit, verbose=verbose)
+        else:
+            self.ip_tree = None
+        if resolve_deps_conflicts:
+            self.ips_list = self.resolve_deps_conflicts(verbose=verbose)
         if not skip_scripts:
             for ip in self.ip_list:
                 ip_full_name = ip['name']
@@ -138,21 +96,55 @@ class IPDatabase(object):
                 for el in blacklist:
                     print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
 
-    def generate_deps_tree(self):
-        # create ip_tree root
-        ip_tree = {
-            'node'     : None,
-            'children' : []
-        }
+    def generate_deps_tree(self, server="git@iis-git.ee.ethz.ch", default_group='pulp-open', default_commit='master', verbose=False):
+        children = []
         # add all directly referenced IPs to the tree
-        for ip in self.ip_dic:
-            children = ip.get_deps_tree()
-            ip_tree['children'].append({
-                'node'     : ip,
-                'children' : children
-            })
-        # save the ip_tree
-        self.ip_tree = ip_tree
+        print("Retrieving ips_list.yml dependency list for all IPs (may take some time)...")
+        for ip in self.ip_list:
+            children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
+        root = IPTreeNode(None, children=children)
+        self.ip_tree = root
+        print(tcolors.OK + "Generated IP dependency tree." + tcolors.ENDC)
+
+    def resolve_deps_conflicts(self, verbose=False):
+        conflicts = self.ip_tree.get_conflicts()
+        selected = {}
+        for c in conflicts.keys():
+            if len(conflicts[c]) == 1:
+                selected[c] = conflicts[c][0]
+                continue
+            print(tcolors.WARNING + "Conflict for IP %s" % c + tcolors.ENDC)
+            for i,el in enumerate(conflicts[c]):
+                if el.father is None:
+                    if verbose:
+                        print("  %d. %s:%s/%s @ %s (retrieved from local root repository)" % (
+                            i+1, el.itself['server'], el.itself['group'], c, el.itself['commit']))
+                    else:
+                        print("  %d. %s/%s @ %s (retrieved from local root repository)" % (
+                            i+1, el.itself['group'], c, el.itself['commit']))
+                else:
+                    if verbose:
+                        print("  %d. %s:%s/%s @ %s (retrieved from %s:%s/%s @ %s)" % (
+                            i+1, el.itself['server'], el.itself['group'], c, el.itself['commit'],
+                            el.father['server'], el.father['group'], el.father['name'], el.father['commit']))
+                    else:
+                        print("  %d. %s/%s @ %s (retrieved from %s/%s @ %s)" % (
+                            i+1, el.itself['group'], c, el.itself['commit'],
+                            el.father['group'], el.father['name'], el.father['commit']))
+            flag = False
+            while not flag:
+                std_in = raw_input("Select the desired alternative (1-%d): " % (len(conflicts[c])))
+                if not std_in.isdigit():
+                    print(tcolors.WARNING + "Alternative selected is not a number." + tcolors.ENDC)
+                elif int(std_in) < 1 or int(std_in) > len(conflicts[c]):
+                    print(tcolors.WARNING + "Alternative selected is not within 1-%d." % (len(conflicts[c])) + tcolors.ENDC)
+                else:
+                    flag = True
+                    selected[c] = conflicts[c][int(std_in)-1]
+        new_ips_list = []
+        for s in selected.values():
+            new_ips_list.append(s.node)
+        return new_ips_list
 
     def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None, ips_dic=None, ips_dir=None):
         if ips_dic is None:
@@ -170,7 +162,7 @@ class IPDatabase(object):
             return
 
         try:
-            ips_dic[ip_name] = IPConfig(ip_name, ips_yaml_dic, ip_path, ips_dir, self.vsim_dir, domain=domain, alternatives=alternatives)
+            ips_dic[ip_name] = IPConfig.IPConfig(ip_name, ips_yaml_dic, ip_path, ips_dir, self.vsim_dir, domain=domain, alternatives=alternatives)
         except KeyError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename) + tcolors.ENDC)
 
