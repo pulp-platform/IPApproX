@@ -10,13 +10,17 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from .IPApproX_common import *
-from .IPTreeNode import *
-from .vivado_defines import *
-from .ips_defines import *
-from .synopsys_defines import *
-from .cadence_defines import *
-from .verilator_defines import *
+from IPApproX_common import *
+from IPTreeNode import *
+from vsim_defines import *
+from cadence_defines import *
+from vivado_defines import *
+from ips_defines import *
+from synopsys_defines import *
+from cadence_defines import *
+from verilator_defines import *
+from makefile_defines import *
+from makefile_defines_ncsim import *
 import IPConfig
 
 ALLOWED_SOURCES=[
