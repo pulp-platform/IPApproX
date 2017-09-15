@@ -33,7 +33,6 @@ ALLOWED_KEYS = [
     'vlog_opts',
     'vcom_opts',
     'targets',
-    'tech',
     'flags',
     'defines',
     'dir'
@@ -317,6 +316,13 @@ class SubIPConfig(object):
                 print("    %s" % el)
             print("Check the src_files.yml file.")
             sys.exit(1)
+        # 'rtl' and 'all' are considered the same now
+        save = None
+        for i,t in enumerate(targets):
+            if t == 'rtl':
+                save = i
+        if save is not None:
+            targets[save] = 'all'
         return targets
 
     def __get_incdirs(self):

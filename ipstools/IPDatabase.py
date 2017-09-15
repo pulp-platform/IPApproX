@@ -10,18 +10,14 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from IPApproX_common import *
+# from IPApproX_common import *
 from IPTreeNode import *
 from vsim_defines import *
-from cadence_defines import *
 from vivado_defines import *
-from ips_defines import *
-from synopsys_defines import *
-from cadence_defines import *
-from verilator_defines import *
 from makefile_defines import *
 from makefile_defines_ncsim import *
 import IPConfig
+import signal
 
 ALLOWED_SOURCES=[
   "ips",
@@ -154,8 +150,26 @@ class IPDatabase(object):
         children = []
         # add all directly referenced IPs to the tree
         print("Retrieving ips_list.yml dependency list for all IPs (may take some time)...")
-        for ip in self.ip_list:
-            children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
+
+        try:
+            import progressbar
+            bar = progressbar.ProgressBar()
+            for i in bar(range(len(self.ip_list))):
+                ip = self.ip_list[i]
+                children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
+        except ImportError:
+            # setup toolbar
+            sys.stdout.write("[%s]" % (0, len(self.ip_list), " " * len(self.ip_list)))
+            sys.stdout.flush()
+            sys.stdout.write("\b" * (len(self.ip_list) + 1))  # return to start of line, after '['
+            for i in xrange(len(self.ip_list)):
+                ip = self.ip_list[i]
+                children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
+                # update the bar
+                sys.stdout.write("=")
+                sys.stdout.flush()
+            sys.stdout.write("\n")
+
         root = IPTreeNode(None, children=children)
         self.ip_tree = root
         print(tcolors.OK + "Generated IP dependency tree." + tcolors.ENDC)
@@ -186,8 +200,13 @@ class IPDatabase(object):
                             i+1, el.itself['group'], c, el.itself['commit'],
                             el.father['group'], el.father['name'], el.father['commit']))
             flag = False
+            signal.signal(signal.SIGINT, signal.default_int_handler)
             while not flag:
-                std_in = raw_input("Select the desired alternative (1-%d): " % (len(conflicts[c])))
+                try:
+                    std_in = raw_input("Select the desired alternative (1-%d, CTRL+C to exit hierarchical flow): " % (len(conflicts[c])))
+                except KeyboardInterrupt:
+                    print(tcolors.WARNING + "\nEscaped from IP choice, switching from hierarchical IP flow to flat IP flow." + tcolors.ENDC)
+                    return
                 if not std_in.isdigit():
                     print(tcolors.WARNING + "Alternative selected is not a number." + tcolors.ENDC)
                 elif int(std_in) < 1 or int(std_in) > len(conflicts[c]):

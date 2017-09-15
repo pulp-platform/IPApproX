@@ -8,13 +8,17 @@ Welcome to ipstools's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Documentation:
 
-.. automodule:: IPTreeNode
-   :members:
+   ips_list.rst
+   src_files.rst
 
-.. automodule:: IPDatabase
-   :members:
+.. toctree::
+   :maxdepth: 2
+   :caption: API:
+
+   ipdatabase.rst
+   iptreenode.rst
 
 Indices and tables
 ==================
