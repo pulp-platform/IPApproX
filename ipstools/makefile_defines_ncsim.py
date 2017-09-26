@@ -3,7 +3,7 @@
 # vsim_defines.py
 # Francesco Conti <f.conti@unibo.it>
 #
-# Copyright (C) 2015 ETH Zurich, University of Bologna
+# Copyright (C) 2015-2017 ETH Zurich, University of Bologna
 # All rights reserved.
 #
 # This software may be modified and distributed under the terms
@@ -12,7 +12,7 @@
 
 # templates for ip.mk scripts
 MKN_PREAMBLE = """#
-# Copyright (C) 2017 ETH Zurich, University of Bologna
+# Copyright (C) 2015-2017 ETH Zurich, University of Bologna
 # All rights reserved.
 #
 # This software may be modified and distributed under the terms
@@ -46,7 +46,7 @@ MKN_BUILDCMD_VLOG  = "$(VLOG_CC) +work+$(LIB_NAME) %s $(INCDIR_%s) $(SRC_%s)"
 MKN_BUILDCMD_VHDL  = "$(VHDL_CC) -work $(LIB_NAME) %s $(SRC_VHDL_%s)"
 
 NCELAB_LIST_PREAMBLE = """#
-# Copyright (C) 2017 ETH Zurich, University of Bologna
+# Copyright (C) 2015-2017 ETH Zurich, University of Bologna
 # All rights reserved.
 #
 # This software may be modified and distributed under the terms

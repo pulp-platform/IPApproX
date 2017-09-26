@@ -10,4 +10,7 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from ipstools import *
+from SubIPConfig import *
+from IPConfig import *
+from IPDatabase import *
+

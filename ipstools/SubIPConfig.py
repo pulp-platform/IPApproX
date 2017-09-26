@@ -3,21 +3,21 @@
 # SubIPConfig.py
 # Francesco Conti <f.conti@unibo.it>
 #
-# Copyright (C) 2015 ETH Zurich, University of Bologna
+# Copyright (C) 2015-2017 ETH Zurich, University of Bologna
 # All rights reserved.
 #
 # This software may be modified and distributed under the terms
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from .IPApproX_common        import *
-from .vsim_defines           import *
-from .makefile_defines       import *
-from .makefile_defines_ncsim import *
-from .vivado_defines         import *
-from .synopsys_defines       import *
-from .cadence_defines        import *
-from .SubIPConfig            import *
+from IPApproX_common        import *
+from vsim_defines           import *
+from makefile_defines       import *
+from makefile_defines_ncsim import *
+from vivado_defines         import *
+from synopsys_defines       import *
+from cadence_defines        import *
+from SubIPConfig            import *
 import sys
 
 # returns true if source file is VHDL
@@ -33,7 +33,6 @@ ALLOWED_KEYS = [
     'vlog_opts',
     'vcom_opts',
     'targets',
-    'tech',
     'flags',
     'defines',
     'dir'
@@ -61,7 +60,8 @@ ALLOWED_TARGETS = [
 ALLOWED_FLAGS = [
     'skip_simulation',
     'skip_synthesis',
-    'skip_tcsh'
+    'skip_tcsh',
+    'only_local'
 ]
 
 # legacy IPs blacklist (for backwards compatibility with tcsh flow)
@@ -75,10 +75,11 @@ class SubIPConfig(object):
     def __init__(self, ip_name, sub_ip_name, sub_ip_dic, ip_path):
         super(SubIPConfig, self).__init__()
 
-        self.ip_name     = ip_name
-        self.ip_path     = ip_path
-        self.sub_ip_name = sub_ip_name
-        self.sub_ip_dic  = sub_ip_dic
+        self.ip_name         = ip_name
+        self.ip_path         = ip_path
+        self.sub_ip_name     = sub_ip_name
+        self.sub_ip_name_alt = prepare(sub_ip_name)
+        self.sub_ip_dic      = sub_ip_dic
 
         self.__check_dic()
         self.files     = self.__get_files()     # list of source files in the sub-IP
@@ -89,7 +90,7 @@ class SubIPConfig(object):
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
 
-    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', simulator='vsim'):
+    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', local=False, simulator='vsim'):
         if simulator is "vsim":
             mk_subiprule = MK_SUBIPRULE
             mk_buildcmd_svlog = MK_BUILDCMD_SVLOG
@@ -98,7 +99,14 @@ class SubIPConfig(object):
             mk_subiprule = MKN_SUBIPRULE
             mk_buildcmd_svlog = MKN_BUILDCMD_SVLOG
             mk_buildcmd_vhdl = MKN_BUILDCMD_VHDL
+        building = True
         if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
+            building = False
+        if 'lint' not in self.targets or "skip_synthesis" in self.flags or not linting:
+            linting = False
+        if not building and not linting:
+            return "\n"
+        if "only_local" in self.flags and not local:
             return "\n"
         if "skip_simulation" in self.flags:
             return "\n"
@@ -138,11 +146,13 @@ class SubIPConfig(object):
 
         return vlog_cmd
 
-    def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi'):
+    def export_vsim(self, abs_path, more_opts, target_tech='st28fdsoi', local=False):
         if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
             return "\n"
         if target_tech == 'xilinx':
             return self.__export_vsim_xilinx(abs_path, more_opts)
+        if "only_local" in self.flags and local:
+            return "\n"
         if "skip_simulation" in self.flags:
             return "\n"
         if "skip_tcsh" in self.flags:
@@ -306,6 +316,13 @@ class SubIPConfig(object):
                 print("    %s" % el)
             print("Check the src_files.yml file.")
             sys.exit(1)
+        # 'rtl' and 'all' are considered the same now
+        save = None
+        for i,t in enumerate(targets):
+            if t == 'rtl':
+                save = i
+        if save is not None:
+            targets[save] = 'all'
         return targets
 
     def __get_incdirs(self):

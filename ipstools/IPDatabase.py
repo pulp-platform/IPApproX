@@ -3,91 +3,95 @@
 # IPDatabase.py
 # Francesco Conti <f.conti@unibo.it>
 #
-# Copyright (C) 2015 ETH Zurich, University of Bologna
+# Copyright (C) 2015-2017 ETH Zurich, University of Bologna
 # All rights reserved.
 #
 # This software may be modified and distributed under the terms
 # of the BSD license.  See the LICENSE file for details.
 #
 
-# YAML workaround
-import sys,os,stat
-sys.path.append(os.path.abspath("yaml/lib64/python"))
-import yaml
-if sys.version_info[0]==2 and sys.version_info[1]>=7:
-    from collections import OrderedDict
-elif sys.version_info[0]>2:
-    from collections import OrderedDict
-else:
-    from ordereddict import OrderedDict
-from .IPConfig import *
-from .IPApproX_common import *
-from .vivado_defines import *
-from .ips_defines import *
-from .synopsys_defines import *
-from .cadence_defines import *
-from .verilator_defines import *
+# from IPApproX_common import *
+from IPTreeNode import *
+from vsim_defines import *
+from vivado_defines import *
+from makefile_defines import *
+from makefile_defines_ncsim import *
+import IPConfig
+import signal
 
 ALLOWED_SOURCES=[
   "ips",
   "rtl"
 ]
 
-def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
-    class OrderedLoader(Loader):
-        pass
-    def construct_mapping(loader, node):
-        loader.flatten_mapping(node)
-        return object_pairs_hook(loader.construct_pairs(node))
-    OrderedLoader.add_constructor(
-        yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
-        construct_mapping)
-    return yaml.load(stream, OrderedLoader)
-
-def load_ips_list(filename, skip_commit=False):
-    # get a list of all IPs that we are interested in from ips_list.yml
-    with open(filename, "rb") as f:
-        ips_list = ordered_load(f, yaml.SafeLoader)
-    ips = []
-    for i in ips_list.keys():
-        if not skip_commit:
-            commit = ips_list[i]['commit']
-        else:
-            commit = None
-        try:
-            domain = ips_list[i]['domain']
-        except KeyError:
-            domain = None
-        try:
-            group = ips_list[i]['group']
-        except KeyError:
-            group = None
-        path = i
-        name = i.split()[0].split('/')[-1]
-        try:
-            alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
-        except KeyError:
-            alternatives = None
-        ips.append({'name': name, 'commit': commit, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
-    return ips
-
-def store_ips_list(filename, ips):
-    ips_list = {}
-    for i in ips:
-        if i['alternatives'] != None:
-            ips_list[i['path']] = {'commit': i['commit'], 'group': i['group'], 'domain': i['domain'], 'alternatives': i['alternatives']}
-        else:
-            ips_list[i['path']] = {'commit': i['commit'], 'group': i['group'], 'domain': i['domain']}
-    with open(filename, "wb") as f:
-        f.write(IPS_LIST_PREAMBLE)
-        f.write(yaml.dump(ips_list))
-
 class IPDatabase(object):
+    """Main interaction class for accessing the IP database.
+
+        :param list_path:                   Path where the main `ips_list.yml` and `rtl_list.yml` files are found.
+        :type  list_path: str
+
+        :param ips_dir:                     Path where the IPs are to be deployed.
+        :type  ips_dir: str
+
+        :param rtl_dir:                     Path where the local RTL files are deployed.
+        :type  rtl_dir: str
+
+        :param vsim_dir:                    Path where the simulation platform is set up.
+        :type  vsim_dir: str
+
+        :param fpgasim_dir:                 Path where the FPGA simulation platform is set up.
+        :type  fpgasim_dir: str
+
+        :param skip_scripts:                If True, do not set up ipstools for script generation.
+        :type  skip_scripts: bool
+
+        :param build_deps_tree:             If True, set up the hierarchical IP flow by building dependency trees.
+        :type  build_deps_tree: bool
+
+        :param resolve_deps_conflicts:      If True, resolve dependency conflicts in hierarchical IP flow.
+        :type  resolve_deps_conflicts: bool
+
+        :param server:                      Git remote repository to be used.
+        :type  server: str
+
+        :param default_group:               (Default) group to consider in the Git remote repository.
+        :type  default_group: str
+
+        :param default_commit:              (Default) branch / tag / commit hash to consider in the Git remote repository.
+        :type  default_commit: str
+
+        :param verbose:                     If true, prints all information on the dependencies that are being fetched.
+        :type  verbose: bool
+
+    This class is used for interacting with the IP database for:
+      1. resolving the IP hierarchy, including dependency conflicts
+      2. downloading the necessary IP set
+      3. generating scripts for a number of backends
+    If `build_deps_tree` and `resolve_deps_conflicts` are set to True, the hierarchical IP flow will be started and the 
+    user will be asked to resolve IP version conflicts manually in case different version of IPs are referenced throughout
+    the dependency tree.
+
+    """
+
     rtl_dir  = "./fe/rtl"
     ips_dir  = "./fe/ips"
     vsim_dir = "./fe/sim"
 
-    def __init__(self, list_path=".", ips_dir="./fe/ips", rtl_dir="./fe/rtl", vsim_dir="./fe/sim", fpgasim_dir="./fpga/sim", skip_scripts=False):
+    def __init__(
+        self,
+        list_path=".",
+        ips_dir="./fe/ips",
+        rtl_dir="./fe/rtl",
+        vsim_dir="./fe/sim",
+        fpgasim_dir="./fpga/sim",
+        skip_scripts=False,
+        build_deps_tree=False,
+        resolve_deps_conflicts=False,
+        server="git@iis-git.ee.ethz.ch",
+        default_group='pulp-open',
+        default_commit='master',
+        verbose=False
+    ):
         super(IPDatabase, self).__init__()
         self.ips_dir = ips_dir
         self.rtl_dir = rtl_dir
@@ -105,6 +109,12 @@ class IPDatabase(object):
             self.rtl_list = load_ips_list(rtl_list_yml, skip_commit=True)
         except IOError:
             self.rtl_list = None
+        if build_deps_tree:
+            self.generate_deps_tree(server=server, default_group=default_group, default_commit=default_commit, verbose=verbose)
+        else:
+            self.ip_tree = None
+        if resolve_deps_conflicts:
+            self.ips_list = self.resolve_deps_conflicts(verbose=verbose)
         if not skip_scripts:
             for ip in self.ip_list:
                 ip_full_name = ip['name']
@@ -134,7 +144,133 @@ class IPDatabase(object):
                 for el in blacklist:
                     print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
 
+    def generate_deps_tree(self, server="git@iis-git.ee.ethz.ch", default_group='pulp-open', default_commit='master', verbose=False):
+        """Generates the IP dependency tree for the IP hierarchical flow.
+
+            :param server:              Git remote repository to be used.
+            :type  server: str                         
+
+            :param default_group:       (Default) group to consider in the Git remote repository.
+            :type  default_group: str                  
+
+            :param default_commit:      (Default) branch / tag / commit hash to consider in the Git remote repository.
+            :type  default_commit: str                          
+
+            :param verbose:             If true, prints all information on the dependencies that are being fetched.
+            :type  verbose: bool
+
+        This function generates the dependency tree for all IPs by looking in the provided remote repository.
+        If `progressbar` is installed, it will show a progress bar with completion percentage, otherwise a simpler version.
+
+        """
+        children = []
+        # add all directly referenced IPs to the tree
+        print("Retrieving ips_list.yml dependency list for all IPs (may take some time)...")
+
+        try:
+            import progressbar
+            bar = progressbar.ProgressBar()
+            for i in bar(range(len(self.ip_list))):
+                ip = self.ip_list[i]
+                children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
+        except ImportError:
+            # setup toolbar
+            sys.stdout.write("[%s]" % (0, len(self.ip_list), " " * len(self.ip_list)))
+            sys.stdout.flush()
+            sys.stdout.write("\b" * (len(self.ip_list) + 1))  # return to start of line, after '['
+            for i in xrange(len(self.ip_list)):
+                ip = self.ip_list[i]
+                children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
+                # update the bar
+                sys.stdout.write("=")
+                sys.stdout.flush()
+            sys.stdout.write("\n")
+
+        root = IPTreeNode(None, children=children)
+        self.ip_tree = root
+        print(tcolors.OK + "Generated IP dependency tree." + tcolors.ENDC)
+
+    def resolve_deps_conflicts(self, verbose=False):
+        """Resolves the IP dependency conflicts in the IP hierarchical flow.                    
+
+            :param verbose:             If true, prints all information on the dependencies that are being fetched.
+            :type  verbose: bool
+
+            :returns: `list` -- the final list of IPs after resolving all conflicts.
+
+        This function resolves conflicts between IPs in a hierarchical flow by calling for the user's intervention.
+        """
+
+        conflicts = self.ip_tree.get_conflicts()
+        selected = {}
+        for c in conflicts.keys():
+            if len(conflicts[c]) == 1:
+                selected[c] = conflicts[c][0]
+                continue
+            print(tcolors.WARNING + "Conflict for IP %s" % c + tcolors.ENDC)
+            for i,el in enumerate(conflicts[c]):
+                if el.father is None:
+                    if verbose:
+                        print("  %d. %s:%s/%s @ %s (retrieved from local root repository)" % (
+                            i+1, el.itself['server'], el.itself['group'], c, el.itself['commit']))
+                    else:
+                        print("  %d. %s/%s @ %s (retrieved from local root repository)" % (
+                            i+1, el.itself['group'], c, el.itself['commit']))
+                else:
+                    if verbose:
+                        print("  %d. %s:%s/%s @ %s (retrieved from %s:%s/%s @ %s)" % (
+                            i+1, el.itself['server'], el.itself['group'], c, el.itself['commit'],
+                            el.father['server'], el.father['group'], el.father['name'], el.father['commit']))
+                    else:
+                        print("  %d. %s/%s @ %s (retrieved from %s/%s @ %s)" % (
+                            i+1, el.itself['group'], c, el.itself['commit'],
+                            el.father['group'], el.father['name'], el.father['commit']))
+            flag = False
+            signal.signal(signal.SIGINT, signal.default_int_handler)
+            while not flag:
+                try:
+                    std_in = raw_input("Select the desired alternative (1-%d, CTRL+C to exit hierarchical flow): " % (len(conflicts[c])))
+                except KeyboardInterrupt:
+                    print(tcolors.WARNING + "\nEscaped from IP choice, switching from hierarchical IP flow to flat IP flow." + tcolors.ENDC)
+                    return
+                if not std_in.isdigit():
+                    print(tcolors.WARNING + "Alternative selected is not a number." + tcolors.ENDC)
+                elif int(std_in) < 1 or int(std_in) > len(conflicts[c]):
+                    print(tcolors.WARNING + "Alternative selected is not within 1-%d." % (len(conflicts[c])) + tcolors.ENDC)
+                else:
+                    flag = True
+                    selected[c] = conflicts[c][int(std_in)-1]
+        new_ips_list = []
+        for s in selected.values():
+            new_ips_list.append(s.node)
+        return new_ips_list
+
     def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None, ips_dic=None, ips_dir=None):
+        """Generates a new :class:`IPConfig` for an IP and adds it to the :class:`IPDatabase` internal dictionary.                    
+
+            :param ip_name:             Name of the IP
+            :type  ip_name: str
+
+            :param filename:            Path to the IP's `src_files.yml`
+            :type  filename: str
+
+            :param ip_path:             Path to the IP
+            :type  ip_path: str
+
+            :param domain:              IP domain for multi-domain synthesis (e.g. SOC and CLUSTER)
+            :type  domain: str 
+
+            :param alternatives:        IP alternatives for interchangeable IPs (e.g. riscv vs zero-riscy)
+            :type  alternatives: str 
+
+            :param ips_dic:             Dictionary of IPs that is being referenced
+            :type  ips_dic: dict 
+
+            :param ips_dir:             IPs directory in the local repo
+            :type  ips_dir: str 
+
+        This function calls for the generation of an :class:`IPConfig` for an IP, given an external request.
+        """
         if ips_dic is None:
             ips_dic = self.ip_dic
         if ips_dir is None:
@@ -150,11 +286,13 @@ class IPDatabase(object):
             return
 
         try:
-            ips_dic[ip_name] = IPConfig(ip_name, ips_yaml_dic, ip_path, ips_dir, self.vsim_dir, domain=domain, alternatives=alternatives)
+            ips_dic[ip_name] = IPConfig.IPConfig(ip_name, ips_yaml_dic, ip_path, ips_dir, self.vsim_dir, domain=domain, alternatives=alternatives)
         except KeyError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename) + tcolors.ENDC)
 
     def diff_ips(self):
+        """Performs `git diff` for each of the IPs referenced by the tool.                    
+        """
         prepend = "  "
         ips = self.ip_list
         cwd = os.getcwd()
@@ -196,6 +334,13 @@ class IPDatabase(object):
         return (unstaged_ips, staged_ips)
 
     def remove_ips(self, skip_check=False):
+        """Removes the currently downloaded IPs.                    
+
+            :param skip_check:          If set to True, removes all IPs without checking for changes first
+            :type  skip_check: bool
+
+        This function removes the currently downloaded IPs, after having checked whether there are changes to be committed / pushed first.
+        """
         ips = self.ip_list
         cwd = os.getcwd()
         unstaged_ips, staged_ips = self.diff_ips()
@@ -223,6 +368,20 @@ class IPDatabase(object):
             print(tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC)
 
     def update_ips(self, server="git@iis-git.ee.ethz.ch", group="pulp-open", origin='origin'):
+        """Updates the IPs against the given repository.                    
+                 
+            :param server:          The remote repository (in http or ssh format)
+            :type  server: str
+                 
+            :param group:           The remote group (e.g. pulp-platform)
+            :type  group:  str
+                 
+            :param origin:          The GIT remote to be used (by default 'origin')
+            :type  origin: str
+
+        This function updates the currently downloaded IPs, after having checked whether the IPs are actually GIT repos and they
+        are not in detached mode. If the IPs are not there yet, they are cloned.
+        """
         errors = []
         ips = self.ip_list
         git = "git"
@@ -311,6 +470,13 @@ class IPDatabase(object):
         os.chdir(owd)
 
     def delete_tag_ips(self, tag_name):
+        """Deletes a tag for all IPs.                    
+                 
+            :param tag_name:        The tag to be removed
+            :type  tag_name: str
+
+        This function removes a tag to all IPs (no safety checks).
+        """
         cwd = os.getcwd()
         ips = self.ip_list
         new_ips = []
@@ -320,6 +486,13 @@ class IPDatabase(object):
             os.chdir(cwd)
 
     def push_tag_ips(self, tag_name=None):
+        """Pushes a tag for all IPs.                    
+                 
+            :param tag_name:             If not None, the name of the tag - else, the latest tag is pushed.
+            :type  tag_name: str or None
+
+        Pushes the latest tagged version, or a specific tag, for all IPs.
+        """
         cwd = os.getcwd()
         ips = self.ip_list
         new_ips = []
@@ -337,17 +510,32 @@ class IPDatabase(object):
             ret = execute("git push origin tags/%s" % newest_tag)
             os.chdir(cwd)
 
-    def push_ips(self, remote_name, remote):
-        cwd = os.getcwd()
-        ips = self.ip_list
-        new_ips = []
-        for ip in ips:
-            os.chdir("%s/%s" % (self.ips_dir, ip['path']))
-            ret = execute("git remote add %s %s/%s.git" % (remote_name, remote, ip['name']))
-            ret = execute("git push %s master" % remote_name)
-            os.chdir(cwd)
+    # def push_ips(self, remote_name, remote):
+    #     cwd = os.getcwd()
+    #     ips = self.ip_list
+    #     new_ips = []
+    #     for ip in ips:
+    #         os.chdir("%s/%s" % (self.ips_dir, ip['path']))
+    #         ret = execute("git remote add %s %s/%s.git" % (remote_name, remote, ip['name']))
+    #         ret = execute("git push %s master" % remote_name)
+    #         os.chdir(cwd)
 
     def tag_ips(self, tag_name, changes_severity='warning', tag_always=False):
+        """Tags all IPs.                    
+                 
+            :param tag_name:              The name of the tag
+            :type  tag_name: str            
+                 
+            :param changes_severity:      'warning' or 'error'
+            :type  changes_severity: str  
+                 
+            :param tag_always:            If True, tag even if an identical tag already exists
+            :type  tag_always: bool
+
+        This function checks the newest tag, staged and unstaged changes; if it found changes it throws a warning or dies depending
+        on the `changes_severity` setting. If no identical tag exists or `tag_always` is set to True, the current HEAD of the IP will
+        be tagged with the given `tag_name`.
+        """
         cwd = os.getcwd()
         ips = self.ip_list
         new_ips = []
@@ -355,7 +543,7 @@ class IPDatabase(object):
             os.chdir("%s/%s" % (self.ips_dir, ip['path']))
             newest_tag, err = execute_popen("git describe --tags --abbrev=0", silent=True).communicate()
             unstaged_changes, err = execute_popen("git diff --name-only").communicate()
-            staged_changes, err = execute_popen("git diff --name-only").communicate()
+            staged_changes, err = execute_popen("git diff --cached --name-only").communicate()
             if staged_changes.split("\n")[0] != "":
                 if changes_severity == 'warning':
                     print(tcolors.WARNING + "WARNING: skipping ip '%s' as it has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve, commit and " + tcolors.BLUE + "git tag %s" % tag_name + tcolors.ENDC + " manually.")
@@ -392,7 +580,21 @@ class IPDatabase(object):
 
         store_ips_list("new_ips_list.yml", new_ips)
         
-    def get_latest_ips(self, changes_severity='warning', tag_always=False):
+    def get_latest_ips(self, changes_severity='warning', new_ips_list='new_ips_list.yml'):
+        """Collects current versions for all IPs.                    
+                 
+            :param tag_name:              The name of the tag
+            :type  tag_name: str            
+                 
+            :param changes_severity:      'warning' or 'error'
+            :type  changes_severity: str  
+
+            :param new_ips_ist:           Name of the new `ips_list.yml` file (defaults to `new_ips_list.yml`)
+            :type  new_ips_ist: str 
+
+        This function collects the latest version of all IPs from the local repo and stores it in a new `ips_list.yml` file.
+        If there are changes (staged or unstaged) it will throw a warning, or die if `changes_severity` is set to 'error'.
+        """
         cwd = os.getcwd()
         ips = self.ip_list
         new_ips = []
@@ -402,7 +604,7 @@ class IPDatabase(object):
             #commit, err = execute_popen("git pull", silent=True).communicate()
             commit, err = execute_popen("git log -n 1 --format=format:%H", silent=True).communicate()
             unstaged_changes, err = execute_popen("git diff --name-only").communicate()
-            staged_changes, err = execute_popen("git diff --name-only").communicate()
+            staged_changes, err = execute_popen("git diff --cached --name-only").communicate()
             if staged_changes.split("\n")[0] != "":
                 if changes_severity == 'warning':
                     print(tcolors.WARNING + "WARNING: skipping ip '%s' as it has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve and commit manually.")
@@ -422,9 +624,31 @@ class IPDatabase(object):
             new_ips.append({'name': ip['name'], 'path': ip['path'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'group': ip['group'], 'commit': "%s" % commit})
             os.chdir(cwd)
 
-        store_ips_list("new_ips_list.yml", new_ips)
+        store_ips_list(new_ips_list, new_ips)
 
-    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech='st28fdsoi', simulator='vsim'):
+    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech='st28fdsoi', local=False, simulator='vsim'):
+        """Exports Makefiles and scripts to build the simulation platform.                    
+                 
+            :param abs_path:              The path to be used in Makefiles to find the IPs
+            :type  abs_path: str            
+                 
+            :param script_path:           The path where the Makefiles are collected
+            :type  script_path: str  
+
+            :param source:                Can be set to 'ips' or 'rtl' to use the `ips_list.yml` IPs or `rtl_list.yml` IPs respectively
+            :type  source: str 
+
+            :param target_tech:           Target silicon / FPGA technology to be used for script generation
+            :type  target_tech: str 
+
+            :param local:                 If set to True, files set to be used only locally (e.g. specific IP testbenches) are built
+            :type  local: bool 
+
+            :param simulator:             'vsim' or 'ncsim'
+            :type  simulator: str 
+
+        This function exports Makefiles and scripts to build the simulation platform to be used with Mentor ModelSim/QuestaSim or Cadence NCSim.
+        """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -434,19 +658,24 @@ class IPDatabase(object):
             ip_dic = self.rtl_dic
         for i in ip_dic.keys():
             filename = "%s/%s.mk" % (script_path, i)
-            makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source, simulator=simulator)
+            makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source, local=local, simulator=simulator)
             with open(filename, "wb") as f:
                 f.write(makefile)
 
-    def export_vsim(self, abs_path="${IP_PATH}", script_path="./", more_opts="", target_tech='st28fdsoi'):
-        for i in self.ip_dic.keys():
-            filename = "%s/vcompile_%s.csh" % (script_path, i)
-            vcompile_script = self.ip_dic[i].export_vsim(abs_path, more_opts, target_tech=target_tech)
-            with open(filename, "wb") as f:
-                f.write(vcompile_script)
-                os.fchmod(f.fileno(), os.fstat(f.fileno()).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-
     def export_synopsys(self, script_path=".", target_tech='st28fdsoi', source='ips', domain=None):
+        """Exports analyze scripts to be used for ASIC synthesis in Synopsys Design Compiler.
+                 
+            :param script_path:           The path where the Makefiles are collected
+            :type  script_path: str  
+
+            :param target_tech:           Target silicon technology to be used for script generation
+            :type  target_tech: str 
+
+            :param domain:                If not None, the domain to be targeting for script generation
+            :type  domain: str or None 
+
+        This function exports analyze scripts to be used for ASIC synthesis in Synopsys Design Compiler.
+        """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -461,9 +690,20 @@ class IPDatabase(object):
                 with open(filename, "wb") as f:
                     f.write(analyze_script)
 
-
-
     def export_cadence(self, script_path=".", target_tech='tsmc55', source='ips', domain=None):
+        """Exports analyze scripts to be used for ASIC synthesis in Cadence RTL Compiler.
+                 
+            :param script_path:           The path where the Makefiles are collected
+            :type  script_path: str  
+
+            :param target_tech:           Target silicon technology to be used for script generation
+            :type  target_tech: str 
+
+            :param domain:                If not None, the domain to be targeting for script generation
+            :type  domain: str or None 
+
+        This function exports analyze scripts to be used for ASIC synthesis in Cadence RTL Compiler.
+        """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -480,6 +720,25 @@ class IPDatabase(object):
 
 
     def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", source='ips', domain=None, alternatives=[]):
+        """Exports analyze scripts to be used for FPGA synthesis in Xilinx Vivado.
+                 
+            :param abs_path:              The path to be sued to find IPs within the Vivado scripts
+            :type  abs_path: str
+                    
+            :param script_path:           The path where the Makefiles are collected
+            :type  script_path: str  
+
+            :param target_tech:           Target silicon technology to be used for script generation
+            :type  target_tech: str 
+
+            :param domain:                If not None, the domain to be targeting for script generation
+            :type  domain: str or None 
+
+            :param alternatives:          If not empty, the list of alternative IPs to be actually used.
+            :type  alternatives: list 
+
+        This function exports analyze scripts to be used for FPGA synthesis in Xilinx Vivado.
+        """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -496,15 +755,25 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vivado_script)
 
-    def export_synplify(self, abs_path="$IPS", script_path="./src_files_synplify.tcl"):
-        filename = "%s" % (script_path)
-        synplify_script = ""
-        for i in self.ip_dic.keys():
-            synplify_script += self.ip_dic[i].export_synplify(abs_path)
-        with open(filename, "wb") as f:
-            f.write(synplify_script)
+    # def export_synplify(self, abs_path="$IPS", script_path="./src_files_synplify.tcl"):
+    #     filename = "%s" % (script_path)
+    #     synplify_script = ""
+    #     for i in self.ip_dic.keys():
+    #         synplify_script += self.ip_dic[i].export_synplify(abs_path)
+    #     with open(filename, "wb") as f:
+    #         f.write(synplify_script)
 
     def generate_vsim_tcl(self, filename, source='ips'):
+        """Exports the `vsim.tcl` script.
+                 
+            :param filename:              Output TCL script file name.
+            :type  filename: str
+                    
+            :param source:                'ips' or 'rtl'
+            :type  source: str  
+
+        This function exports the `vsim.tcl` script necessary to perform the `vopt` or `vsim` stage in ModelSim/QuestaSim.
+        """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: generate_vsim_tcl() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -520,6 +789,16 @@ class IPDatabase(object):
             f.write(vsim_tcl)
 
     def generate_ncelab_list(self, filename, source='ips'):
+        """Exports the `ncelab.list` list.
+                 
+            :param filename:              Output ncelab list file name.
+            :type  filename: str
+                    
+            :param source:                'ips' or 'rtl'
+            :type  source: str  
+
+        This function exports the `ncelab.list` script necessary to perform the `ncelab` stage in NCsim.
+        """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: generate_ncelab_list() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -534,6 +813,22 @@ class IPDatabase(object):
             f.write(ncelab_list)
 
     def generate_synopsys_list(self, filename, source='ips', analyze_path='analyze', domain=None):
+        """Exports the a TCL list of Synopsys analyze scripts.
+                 
+            :param filename:              Output script file name.
+            :type  filename: str
+                    
+            :param source:                'ips' or 'rtl'
+            :type  source: str  
+
+            :param analyze_path:          Path to analyze scripts.
+            :type  analyze_path: str
+
+            :param domain:                If not None, the domain to be targeting for script generation
+            :type  domain: str or None 
+
+        This function exports a script with a list of analyze scripts to be called for the given IP domain.
+        """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: generate_synopsys_list() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -547,12 +842,20 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(synopsys_list)
 
-
-
-
-
-
     def generate_makefile(self, filename, target_tech=None, source='ips'):
+        """Exports the mid-level Makefiles for simulation.
+                 
+            :param filename:              Output Makefile file name.
+            :type  filename: str
+                    
+            :param target_tech:           Target silicon or FPGA technology.
+            :type  target_tech: str or None  
+                    
+            :param source:                'ips' or 'rtl'
+            :type  source: str  
+
+        This function exports the mid-level Makefiles for building the simulation platform.
+        """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: generate_makefile() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -593,21 +896,40 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vcompile_libs)
 
-    def generate_vcompile_libs_csh(self, filename, target_tech=None):
-        l = []
-        for i in self.ip_dic.keys():
-            l.append(i)
-        vcompile_libs = VCOMPILE_LIBS_PREAMBLE
-        if target_tech != "xilinx":
-            for el in l:
-                vcompile_libs += VCOMPILE_LIBS_CMD % (self.vsim_dir, el)
-        else:
-            for el in l:
-                vcompile_libs += VCOMPILE_LIBS_XILINX_CMD % el
-        with open(filename, "wb") as f:
-            f.write(vcompile_libs)
+    # def generate_vcompile_libs_csh(self, filename, target_tech=None):
+    #     l = []
+    #     for i in self.ip_dic.keys():
+    #         l.append(i)
+    #     vcompile_libs = VCOMPILE_LIBS_PREAMBLE
+    #     if target_tech != "xilinx":
+    #         for el in l:
+    #             vcompile_libs += VCOMPILE_LIBS_CMD % (self.vsim_dir, el)
+    #     else:
+    #         for el in l:
+    #             vcompile_libs += VCOMPILE_LIBS_XILINX_CMD % el
+    #     with open(filename, "wb") as f:
+    #         f.write(vcompile_libs)
 
     def generate_vivado_add_files(self, filename, domain=None, source='ips', alternatives=[]):
+        """Exports the Vivado `add_files` script.
+                 
+            :param filename:              Output script file name.
+            :type  filename: str
+
+            :param domain:                If not None, the domain to be targeting for script generation
+            :type  domain: str or None 
+                    
+            :param target_tech:           Target silicon or FPGA technology.
+            :type  target_tech: str or None  
+                    
+            :param source:                'ips' or 'rtl'
+            :type  source: str  
+
+            :param alternatives:          If not empty, the list of alternative IPs to be actually used.
+            :type  alternatives: list 
+
+        Exports the Vivado `add_files` script.
+        """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: generate_vivado_add_files() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
@@ -626,8 +948,26 @@ class IPDatabase(object):
         with open(filename, "wb") as f:
             f.write(vivado_add_files_cmd)
 
-
     def generate_vivado_inc_dirs(self, filename, domain=None, source='ips', alternatives=[]):
+        """Exports the Vivado `inc_dirs` script.
+                 
+            :param filename:              Output script file name.
+            :type  filename: str
+
+            :param domain:                If not None, the domain to be targeting for script generation
+            :type  domain: str or None 
+                    
+            :param target_tech:           Target silicon or FPGA technology.
+            :type  target_tech: str or None  
+                    
+            :param source:                'ips' or 'rtl'
+            :type  source: str  
+
+            :param alternatives:          If not empty, the list of alternative IPs to be actually used.
+            :type  alternatives: list 
+
+        Exports the Vivado `inc_dirs` script.
+        """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: generate_vivado_inc_dirs() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
             sys.exit(1)
