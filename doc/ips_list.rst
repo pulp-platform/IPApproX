@@ -55,4 +55,5 @@ If the generator script is set up appropriately, the `ipstools` also support a h
 This can have several advantages, although it requires user interaction to resolve version conflicts when they arise.
 The `ips_list.yml` files within each IP (and, if one wants to do local simulations, their `rtl_list.yml` files) work exactly like in the "main"
 repositories.
+The hierarchical flow is started by setting to True the value of two parameters when creating the IP database (`build_deps_tree` and `resolve_deps_conflicts` -- both default to False).
 

@@ -18,7 +18,7 @@
    :caption: `ipstools` API:
 
    ipdatabase.rst
-   iptreenode.rst
+..   iptreenode.rst
 
 Indices and tables
 ==================
