@@ -15,26 +15,26 @@ from IPApproX_common import *
 class IPTreeNode(object):
     """Represents a node in the IP hierarchy tree.
 
-    :param node:                Dictionary representing the current IP.
-    :type  node: dict    
+        :param node:                Dictionary representing the current IP.
+        :type  node: dict    
 
-    :param server:              Git remote repository to be used.
-    :type  server: str                         
+        :param server:              Git remote repository to be used.
+        :type  server: str                         
 
-    :param default_group:       (Default) group to consider in the Git remote repository.
-    :type  default_group: str                  
+        :param default_group:       (Default) group to consider in the Git remote repository.
+        :type  default_group: str                  
 
-    :param default_commit:      (Default) branch / tag / commit hash to consider in the Git remote repository.
-    :type  default_commit: str            
+        :param default_commit:      (Default) branch / tag / commit hash to consider in the Git remote repository.
+        :type  default_commit: str            
 
-    :param children:            Normally is None - used only to provide a children list to the root :class:`IPTreeNode`.
-    :type  children: list                
+        :param children:            Normally is None - used only to provide a children list to the root :class:`IPTreeNode`.
+        :type  children: list                
 
-    :param father:              Dictionary representing the father of the current IP (None for the root :class:`IPTreeNode`).
-    :type  father: dict                 
+        :param father:              Dictionary representing the father of the current IP (None for the root :class:`IPTreeNode`).
+        :type  father: dict                 
 
-    :param verbose:             If true, prints all information on the dependencies that are being fetched.
-    :type  verbose: bool
+        :param verbose:             If true, prints all information on the dependencies that are being fetched.
+        :type  verbose: bool
 
     This class represents a node in the IP hierarchy tree. It is used to construct
     the list of all dependencies so that it is possible to resolve conflicts.                       

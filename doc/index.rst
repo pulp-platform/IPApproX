@@ -3,19 +3,19 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ipstools's documentation!
-====================================
+`ipstools`: a set of IP management tools for the PULP project
+=============================================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Documentation:
+   :caption: Introduction and basics:
 
    ips_list.rst
    src_files.rst
 
 .. toctree::
    :maxdepth: 2
-   :caption: API:
+   :caption: `ipstools` API:
 
    ipdatabase.rst
    iptreenode.rst
@@ -23,6 +23,6 @@ Welcome to ipstools's documentation!
 Indices and tables
 ==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`

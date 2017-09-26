@@ -27,46 +27,41 @@ ALLOWED_SOURCES=[
 class IPDatabase(object):
     """Main interaction class for accessing the IP database.
 
-        server="git@iis-git.ee.ethz.ch",
-        default_group='pulp-open',
-        default_commit='master',
-        verbose=False
+        :param list_path:                   Path where the main `ips_list.yml` and `rtl_list.yml` files are found.
+        :type  list_path: str
 
-    :param list_path:                   Path where the main `ips_list.yml` and `rtl_list.yml` files are found.
-    :type  list_path: str
+        :param ips_dir:                     Path where the IPs are to be deployed.
+        :type  ips_dir: str
 
-    :param ips_dir:                     Path where the IPs are to be deployed.
-    :type  ips_dir: str
+        :param rtl_dir:                     Path where the local RTL files are deployed.
+        :type  rtl_dir: str
 
-    :param rtl_dir:                     Path where the local RTL files are deployed.
-    :type  rtl_dir: str
+        :param vsim_dir:                    Path where the simulation platform is set up.
+        :type  vsim_dir: str
 
-    :param vsim_dir:                    Path where the simulation platform is set up.
-    :type  vsim_dir: str
+        :param fpgasim_dir:                 Path where the FPGA simulation platform is set up.
+        :type  fpgasim_dir: str
 
-    :param fpgasim_dir:                 Path where the FPGA simulation platform is set up.
-    :type  fpgasim_dir: str
+        :param skip_scripts:                If True, do not set up ipstools for script generation.
+        :type  skip_scripts: bool
 
-    :param skip_scripts:                If True, do not set up ipstools for script generation.
-    :type  skip_scripts: bool
+        :param build_deps_tree:             If True, set up the hierarchical IP flow by building dependency trees.
+        :type  build_deps_tree: bool
 
-    :param build_deps_tree:             If True, set up the hierarchical IP flow by building dependency trees.
-    :type  build_deps_tree: bool
+        :param resolve_deps_conflicts:      If True, resolve dependency conflicts in hierarchical IP flow.
+        :type  resolve_deps_conflicts: bool
 
-    :param resolve_deps_conflicts:      If True, resolve dependency conflicts in hierarchical IP flow.
-    :type  resolve_deps_conflicts: bool
+        :param server:                      Git remote repository to be used.
+        :type  server: str
 
-    :param server:                      Git remote repository to be used.
-    :type  server: str
+        :param default_group:               (Default) group to consider in the Git remote repository.
+        :type  default_group: str
 
-    :param default_group:               (Default) group to consider in the Git remote repository.
-    :type  default_group: str
+        :param default_commit:              (Default) branch / tag / commit hash to consider in the Git remote repository.
+        :type  default_commit: str
 
-    :param default_commit:              (Default) branch / tag / commit hash to consider in the Git remote repository.
-    :type  default_commit: str
-
-    :param verbose:                     If true, prints all information on the dependencies that are being fetched.
-    :type  verbose: bool
+        :param verbose:                     If true, prints all information on the dependencies that are being fetched.
+        :type  verbose: bool
 
     This class is used for interacting with the IP database for:
       1. resolving the IP hierarchy, including dependency conflicts
@@ -147,6 +142,24 @@ class IPDatabase(object):
                     print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
 
     def generate_deps_tree(self, server="git@iis-git.ee.ethz.ch", default_group='pulp-open', default_commit='master', verbose=False):
+        """Generates the IP dependency tree for the IP hierarchical flow.
+
+            :param server:              Git remote repository to be used.
+            :type  server: str                         
+
+            :param default_group:       (Default) group to consider in the Git remote repository.
+            :type  default_group: str                  
+
+            :param default_commit:      (Default) branch / tag / commit hash to consider in the Git remote repository.
+            :type  default_commit: str                          
+
+            :param verbose:             If true, prints all information on the dependencies that are being fetched.
+            :type  verbose: bool
+
+        This function generates the dependency tree for all IPs by looking in the provided remote repository.
+        If `progressbar` is installed, it will show a progress bar with completion percentage, otherwise a simpler version.
+
+        """
         children = []
         # add all directly referenced IPs to the tree
         print("Retrieving ips_list.yml dependency list for all IPs (may take some time)...")
@@ -175,6 +188,16 @@ class IPDatabase(object):
         print(tcolors.OK + "Generated IP dependency tree." + tcolors.ENDC)
 
     def resolve_deps_conflicts(self, verbose=False):
+        """Resolves the IP dependency conflicts in the IP hierarchical flow.                    
+
+            :param verbose:             If true, prints all information on the dependencies that are being fetched.
+            :type  verbose: bool
+
+            :returns: `list` -- the final list of IPs after resolving all conflicts.
+
+        This function resolves conflicts between IPs in a hierarchical flow by calling for the user's intervention.
+        """
+
         conflicts = self.ip_tree.get_conflicts()
         selected = {}
         for c in conflicts.keys():
@@ -220,6 +243,31 @@ class IPDatabase(object):
         return new_ips_list
 
     def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None, ips_dic=None, ips_dir=None):
+        """Generates a new :class:`IPConfig` for an IP and adds it to the :class:`IPDatabase` internal dictionary.                    
+
+            :param ip_name:             Name of the IP
+            :type  ip_name: str
+
+            :param filename:            Path to the IP's `src_files.yml`
+            :type  filename: str
+
+            :param ip_path:             Path to the IP
+            :type  ip_path: str
+
+            :param domain:              IP domain for multi-domain synthesis (e.g. SOC and CLUSTER)
+            :type  domain: str 
+
+            :param alternatives:        IP alternatives for interchangeable IPs (e.g. riscv vs zero-riscy)
+            :type  alternatives: str 
+
+            :param ips_dic:             Dictionary of IPs that is being referenced
+            :type  ips_dic: dict 
+
+            :param ips_dir:             IPs directory in the local repo
+            :type  ips_dir: str 
+
+        This function calls for the generation of an :class:`IPConfig` for an IP, given an external request.
+        """
         if ips_dic is None:
             ips_dic = self.ip_dic
         if ips_dir is None:
