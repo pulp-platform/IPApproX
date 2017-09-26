@@ -1,25 +1,21 @@
-In order to pull certain IPs, ame the following file `ips_list.yml` and put it into the root directory of your project.
+This repository contains a set of IP management tools used within the context
+of the PULP project.
 
-```YAML
-# Clone project apb_node into folder apb
-apb/apb_node:
-  commit: master
+To build the documentation, you can do the following:
 
-# Fix to a certain commit
-apb/apb_event_unit:
-  commit: 63308047
+```bash
+cd doc
 
-# Clone from different group or username
-rocket-chip-eth:
-  group: groupname/username
-  commit: master
+# build HTML documentation in _build/html
+make html
 
-# Specifiy alternatives
-riscv:
-  commit: master
-  alternatives: [or10n,riscv,rocket-chip-eth]
+# build Latex documentation in _build/latex
+make latex
+cd _build/latex
+make
 
-# Add domain example
+# build Latex documentation in _build/latex (single step)
+make latexpdf
 
 ```
 
