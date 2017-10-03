@@ -39,7 +39,7 @@ class IPConfig(object):
             for k in ip_dic.keys():
                 self.sub_ips[k] = SubIPConfig(ip_name, k, ip_dic[k], ip_path)
 
-    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', source='ips', local=False, simulator='vsim'):
+    def export_make(self, abs_path, more_opts, target_tech=None, source='ips', local=False, simulator='vsim'):
         if simulator is "vsim":
             mk_preamble = MK_PREAMBLE
             vmake = "vmake"
@@ -50,7 +50,7 @@ class IPConfig(object):
         commands = ""
         phony = ""
         for s in self.sub_ips.keys():
-            if ("all" in self.sub_ips[s].targets or "rtl" in self.sub_ips[s].targets or target_tech in self.sub_ips[s].targets):
+            if ("all" in self.sub_ips[s].targets or "rtl" in self.sub_ips[s].targets or target_tech is None or target_tech in self.sub_ips[s].targets):
                 if ("skip_simulation" not in self.sub_ips[s].flags and (("only_local" not in self.sub_ips[s].flags) or local)):
                     commands += "$(LIB_PATH)/%s.%s " % (s, vmake)
                     if simulator == 'vsim':
@@ -70,7 +70,7 @@ class IPConfig(object):
         vsim_script += VSIM_POSTAMBLE
         return vsim_script
 
-    def export_synopsys(self, target_tech='st28fdsoi', source='ips'):
+    def export_synopsys(self, target_tech=None, source='ips'):
         analyze_script = SYNOPSYS_ANALYZE_PREAMBLE % (self.ip_name)
         for s in self.sub_ips.keys():
             analyze_script += self.sub_ips[s].export_synopsys(self.ip_path, target_tech=target_tech, source=source)

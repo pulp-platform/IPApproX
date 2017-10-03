@@ -626,7 +626,7 @@ class IPDatabase(object):
 
         store_ips_list(new_ips_list, new_ips)
 
-    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech='st28fdsoi', local=False, simulator='vsim'):
+    def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech=None, local=False, simulator='vsim'):
         """Exports Makefiles and scripts to build the simulation platform.                    
                  
             :param abs_path:              The path to be used in Makefiles to find the IPs
@@ -639,7 +639,7 @@ class IPDatabase(object):
             :type  source: str 
 
             :param target_tech:           Target silicon / FPGA technology to be used for script generation
-            :type  target_tech: str 
+            :type  target_tech: None or str 
 
             :param local:                 If set to True, files set to be used only locally (e.g. specific IP testbenches) are built
             :type  local: bool 
@@ -662,14 +662,14 @@ class IPDatabase(object):
             with open(filename, "wb") as f:
                 f.write(makefile)
 
-    def export_synopsys(self, script_path=".", target_tech='st28fdsoi', source='ips', domain=None):
+    def export_synopsys(self, script_path=".", target_tech=None, source='ips', domain=None):
         """Exports analyze scripts to be used for ASIC synthesis in Synopsys Design Compiler.
                  
             :param script_path:           The path where the Makefiles are collected
             :type  script_path: str  
 
             :param target_tech:           Target silicon technology to be used for script generation
-            :type  target_tech: str 
+            :type  target_tech: None str 
 
             :param domain:                If not None, the domain to be targeting for script generation
             :type  domain: str or None 

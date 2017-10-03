@@ -90,7 +90,7 @@ class SubIPConfig(object):
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
 
-    def export_make(self, abs_path, more_opts, target_tech='st28fdsoi', local=False, simulator='vsim'):
+    def export_make(self, abs_path, more_opts, target_tech=None, local=False, simulator='vsim'):
         if simulator is "vsim":
             mk_subiprule = MK_SUBIPRULE
             mk_buildcmd_svlog = MK_BUILDCMD_SVLOG
@@ -100,7 +100,7 @@ class SubIPConfig(object):
             mk_buildcmd_svlog = MKN_BUILDCMD_SVLOG
             mk_buildcmd_vhdl = MKN_BUILDCMD_VHDL
         building = True
-        if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
+        if 'all' not in self.targets and 'rtl' not in self.targets and target_tech is not None and target_tech not in self.targets:
             building = False
         if 'lint' not in self.targets or "skip_synthesis" in self.flags or not linting:
             linting = False
@@ -192,8 +192,8 @@ class SubIPConfig(object):
                 vlog_cmd += VSIM_VCOM_CMD % ("%s %s" % (more_opts, self.vcom_opts), "%s/%s" % (abs_path, f))
         return vlog_cmd
 
-    def export_synopsys(self, path, target_tech='st28fdsoi', source='ips'):
-        if not ("all" in self.targets or target_tech in self.targets):
+    def export_synopsys(self, path, target_tech=None, source='ips'):
+        if not ("all" in self.targets or target_tech is None or target_tech in self.targets):
             return "\n"
         if "skip_synthesis" in self.flags:
             return "\n"
