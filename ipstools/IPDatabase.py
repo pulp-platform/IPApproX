@@ -390,8 +390,6 @@ class IPDatabase(object):
         os.chdir(self.ips_dir)
         cwd = os.getcwd()
 
-        server = None
-        group = None
         # try to strip group from remote
         remote = "%s:%s" % (server, group)
 
