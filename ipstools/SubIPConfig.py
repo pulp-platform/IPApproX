@@ -27,6 +27,13 @@ def is_vhdl(f):
     else:
         return False
 
+# returns true if source file is Verilog-2001
+def is_verilog_2001(f):
+    if f[-2:].lower() == ".v":
+        return True
+    else:
+        return False
+
 # list of allowed and mandatory keys for the Yaml dictionary
 ALLOWED_KEYS = [
     'incdirs',
@@ -203,10 +210,12 @@ class SubIPConfig(object):
             defines = "%s -define %s" % (defines, d)
         files = self.files
         for f in files:
-            if not is_vhdl(f):
-                analyze_cmd += SYNOPSYS_ANALYZE_SV_CMD % (defines, source.upper(), "%s/%s" % (path, f))
-            else:
+            if is_vhdl(f):
                 analyze_cmd += SYNOPSYS_ANALYZE_VHDL_CMD % (source.upper(), "%s/%s" % (path, f))
+            elif is_verilog_2001(f):
+                analyze_cmd += SYNOPSYS_ANALYZE_V_CMD % (defines, source.upper(), "%s/%s" % (path, f))
+            else:
+                analyze_cmd += SYNOPSYS_ANALYZE_SV_CMD % (defines, source.upper(), "%s/%s" % (path, f))
         return analyze_cmd
 
 
