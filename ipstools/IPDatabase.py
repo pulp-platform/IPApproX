@@ -125,10 +125,16 @@ class IPDatabase(object):
                 sub_ip_check_list.extend(self.ip_dic[i].sub_ips.keys())
             if len(set(sub_ip_check_list)) != len(sub_ip_check_list):
                 print(tcolors.WARNING + "WARNING: two sub-IPs have the same name. This can cause trouble!" + tcolors.ENDC)
-                import collections
-                blacklist = [item for item, count in collections.Counter(sub_ip_check_list).items() if count > 1]
-                for el in blacklist:
-                    print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
+                blacklist = {}
+                for el in set(sub_ip_check_list):
+                    blacklist[el] = 0
+                    for item in sub_ip_check_list:
+                        if el==item:
+                             blacklist[el] += 1
+                for el in blacklist.keys():
+                    cnt = blacklist[el]
+                    if cnt > 1:
+                        print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
         if not skip_scripts and self.rtl_list is not None:
             for ip in self.rtl_list:
                 ip_full_name = ip['name']
@@ -139,10 +145,16 @@ class IPDatabase(object):
                 sub_ip_check_list.extend(self.rtl_dic[i].sub_ips.keys())
             if len(set(sub_ip_check_list)) != len(sub_ip_check_list):
                 print(tcolors.WARNING + "WARNING: two sub-IPs have the same name. This can cause trouble!" + tcolors.ENDC)
-                import collections
-                blacklist = [item for item, count in collections.Counter(sub_ip_check_list).items() if count > 1]
-                for el in blacklist:
-                    print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
+                blacklist = {}
+                for el in set(sub_ip_check_list):
+                    blacklist[el] = 0
+                    for item in sub_ip_check_list:
+                        if el==item:
+                             blacklist[el] += 1
+                for el in blacklist.keys():
+                    cnt = blacklist[el]
+                    if cnt > 1:
+                        print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
 
     def generate_deps_tree(self, server="git@iis-git.ee.ethz.ch", default_group='pulp-open', default_commit='master', verbose=False):
         """Generates the IP dependency tree for the IP hierarchical flow.
