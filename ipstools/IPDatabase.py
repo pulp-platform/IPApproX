@@ -11,12 +11,12 @@
 #
 
 # from IPApproX_common import *
-from IPTreeNode import *
-from vsim_defines import *
-from vivado_defines import *
-from makefile_defines import *
-from makefile_defines_ncsim import *
-import IPConfig
+from .IPTreeNode import *
+from .vsim_defines import *
+from .vivado_defines import *
+from .makefile_defines import *
+from .makefile_defines_ncsim import *
+from .IPConfig import *
 import signal
 
 ALLOWED_SOURCES=[
@@ -187,7 +187,7 @@ class IPDatabase(object):
                 children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
         except ImportError:
             # setup toolbar
-            sys.stdout.write("[%s]" % (0, len(self.ip_list), " " * len(self.ip_list)))
+            sys.stdout.write("[%s]" % (" " * len(self.ip_list)))
             sys.stdout.flush()
             sys.stdout.write("\b" * (len(self.ip_list) + 1))  # return to start of line, after '['
             for i in xrange(len(self.ip_list)):
@@ -298,7 +298,7 @@ class IPDatabase(object):
             return
 
         try:
-            ips_dic[ip_name] = IPConfig.IPConfig(ip_name, ips_yaml_dic, ip_path, ips_dir, self.vsim_dir, domain=domain, alternatives=alternatives)
+            ips_dic[ip_name] = IPConfig(ip_name, ips_yaml_dic, ip_path, ips_dir, self.vsim_dir, domain=domain, alternatives=alternatives)
         except KeyError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename) + tcolors.ENDC)
 

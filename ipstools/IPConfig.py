@@ -10,15 +10,14 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from IPApproX_common        import *
-from vsim_defines           import *
-from makefile_defines       import *
-from makefile_defines_ncsim import *
-from vivado_defines         import *
-from synopsys_defines       import *
-from cadence_defines        import *
-from SubIPConfig            import *
-import IPDatabase
+from .IPApproX_common        import *
+from .vsim_defines           import *
+from .makefile_defines       import *
+from .makefile_defines_ncsim import *
+from .vivado_defines         import *
+from .synopsys_defines       import *
+from .cadence_defines        import *
+from .SubIPConfig            import *
 
 class IPConfig(object):
     def __init__(self, ip_name, ip_dic, ip_path, ips_dir, vsim_dir, domain=None, alternatives=None):
@@ -109,7 +108,3 @@ class IPConfig(object):
                 l.extend(self.sub_ips[s].incdirs)
         return l
 
-    # def get_deps_tree(self):
-    #     ipdb = IPDatabase.IPDatabase(list_path=".", ips_dir=None, rtl_dir=None, vsim_dir=None, fpgasim_dir=None, skip_scripts=False)
-    #     ipdb.generate_deps_tree()
-    #     return ipdb.ip_tree['children']

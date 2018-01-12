@@ -10,7 +10,7 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from IPApproX_common import *
+from .IPApproX_common import *
 
 class IPTreeNode(object):
     """Represents a node in the IP hierarchy tree.
@@ -67,7 +67,7 @@ class IPTreeNode(object):
         else:
             commit = default_commit
         if verbose:
-            print "   %s:%s/%s @ %s" % (server, group, node['name'], commit)
+            print("   %s:%s/%s @ %s" % (server, group, node['name'], commit))
         ips = load_ips_list_from_server(server, group, node['name'], commit)
         father_of_children = {
             'server' : server,

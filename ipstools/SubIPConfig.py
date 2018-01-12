@@ -10,14 +10,14 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-from IPApproX_common        import *
-from vsim_defines           import *
-from makefile_defines       import *
-from makefile_defines_ncsim import *
-from vivado_defines         import *
-from synopsys_defines       import *
-from cadence_defines        import *
-from SubIPConfig            import *
+from .IPApproX_common        import *
+from .vsim_defines           import *
+from .makefile_defines       import *
+from .makefile_defines_ncsim import *
+from .vivado_defines         import *
+from .synopsys_defines       import *
+from .cadence_defines        import *
+from .SubIPConfig            import *
 import sys
 
 # returns true if source file is VHDL
