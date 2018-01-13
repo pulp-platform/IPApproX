@@ -10,6 +10,7 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
+from __future__ import print_function
 from .IPApproX_common        import *
 from .vsim_defines           import *
 from .makefile_defines       import *
@@ -49,7 +50,7 @@ class IPConfig(object):
         commands = ""
         phony = ""
         for s in self.sub_ips.keys():
-            if ("all" in self.sub_ips[s].targets or "rtl" in self.sub_ips[s].targets or target_tech is None or target_tech in self.sub_ips[s].targets):
+            if ("all" in self.sub_ips[s].targets or "rtl" in self.sub_ips[s].targets or target_tech in self.sub_ips[s].targets):
                 if ("skip_simulation" not in self.sub_ips[s].flags and (("only_local" not in self.sub_ips[s].flags) or local)):
                     commands += "$(LIB_PATH)/%s.%s " % (s, vmake)
                     if simulator == 'vsim':

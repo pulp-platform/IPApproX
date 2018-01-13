@@ -10,6 +10,7 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
+from __future__ import print_function
 # from IPApproX_common import *
 from .IPTreeNode import *
 from .vsim_defines import *
@@ -114,7 +115,7 @@ class IPDatabase(object):
         else:
             self.ip_tree = None
         if resolve_deps_conflicts:
-            self.ips_list = self.resolve_deps_conflicts(verbose=verbose)
+            self.ip_list = self.resolve_deps_conflicts(verbose=verbose)
         if not skip_scripts:
             for ip in self.ip_list:
                 ip_full_name = ip['name']
@@ -186,17 +187,20 @@ class IPDatabase(object):
                 ip = self.ip_list[i]
                 children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
         except ImportError:
-            # setup toolbar
-            sys.stdout.write("[%s]" % (" " * len(self.ip_list)))
-            sys.stdout.flush()
-            sys.stdout.write("\b" * (len(self.ip_list) + 1))  # return to start of line, after '['
-            for i in xrange(len(self.ip_list)):
+            for i in range(len(self.ip_list)):
                 ip = self.ip_list[i]
-                children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
-                # update the bar
-                sys.stdout.write("=")
-                sys.stdout.flush()
-            sys.stdout.write("\n")
+                children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=True))
+            ### # setup toolbar
+            ### sys.stdout.write("[%s]" % (" " * len(self.ip_list)))
+            ### sys.stdout.flush()
+            ### sys.stdout.write("\b" * (len(self.ip_list) + 1))  # return to start of line, after '['
+            ### for i in xrange(len(self.ip_list)):
+            ###     ip = self.ip_list[i]
+            ###     children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
+            ###     # update the bar
+            ###     sys.stdout.write("=")
+            ###     sys.stdout.flush()
+            ### sys.stdout.write("\n")
 
         root = IPTreeNode(None, children=children)
         self.ip_tree = root

@@ -10,6 +10,7 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
+from __future__ import print_function
 from .IPApproX_common        import *
 from .vsim_defines           import *
 from .makefile_defines       import *
@@ -107,7 +108,7 @@ class SubIPConfig(object):
             mk_buildcmd_svlog = MKN_BUILDCMD_SVLOG
             mk_buildcmd_vhdl = MKN_BUILDCMD_VHDL
         building = True
-        if 'all' not in self.targets and 'rtl' not in self.targets and target_tech is not None and target_tech not in self.targets:
+        if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
             building = False
         if 'lint' not in self.targets or "skip_synthesis" in self.flags or not linting:
             linting = False

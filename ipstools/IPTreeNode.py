@@ -10,6 +10,7 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
+from __future__ import print_function
 from .IPApproX_common import *
 
 class IPTreeNode(object):
