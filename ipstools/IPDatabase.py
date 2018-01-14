@@ -19,6 +19,7 @@ from .makefile_defines import *
 from .makefile_defines_ncsim import *
 from .IPConfig import *
 import signal
+import json, gzip
 
 ALLOWED_SOURCES=[
   "ips",
@@ -61,6 +62,9 @@ class IPDatabase(object):
         :param default_commit:              (Default) branch / tag / commit hash to consider in the Git remote repository.
         :type  default_commit: str
 
+        :param load_cache:                  If true, load configuration from cache file.
+        :type  load_cache: bool
+
         :param verbose:                     If true, prints all information on the dependencies that are being fetched.
         :type  verbose: bool
 
@@ -91,6 +95,7 @@ class IPDatabase(object):
         server="git@iis-git.ee.ethz.ch",
         default_group='pulp-open',
         default_commit='master',
+        load_cache=False,
         verbose=False
     ):
         super(IPDatabase, self).__init__()
@@ -116,6 +121,8 @@ class IPDatabase(object):
             self.ip_tree = None
         if resolve_deps_conflicts:
             self.ip_list = self.resolve_deps_conflicts(verbose=verbose)
+        if load_cache:
+            self.load_database()
         if not skip_scripts:
             for ip in self.ip_list:
                 ip_full_name = ip['name']
@@ -157,6 +164,45 @@ class IPDatabase(object):
                     if cnt > 1:
                         print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
 
+    def save_database(self, filename='.cached_ipdb.json.gz'):
+        """Saves the IP database state in a cache JSON gzipped file.
+
+            :param filename:     Name fo the JSON cache file (defaults to '.cached_ipdb.json.gz').
+            :type  filename: str                         
+
+        This function saves the IP database state in a cache JSON gzipped file.
+
+        """
+        self_dict = {
+            'ips_dir'     : self.ips_dir,
+            'rtl_dir'     : self.rtl_dir,
+            'vsim_dir'    : self.vsim_dir,
+            'fpgasim_dir' : self.fpgasim_dir,
+            'ip_list'     : self.ip_list,
+            'rtl_list'    : self.rtl_list
+        }
+        with gzip.open(filename, "wb") as f:
+            f.write(json.dumps(self_dict))
+
+    def load_database(self, filename='.cached_ipdb.json.gz'):
+        """Loads the IP database state from a cache JSON gzipped file.
+
+            :param filename:     Name fo the JSON cache file (defaults to '.cached_ipdb.json.gz').
+            :type  filename: str                         
+
+        This function loads the IP database state from a cache JSON gzipped file.
+
+        """
+        with gzip.open(filename, "rb") as f:
+            json_dump = f.read()
+        self_dict = json.loads(json_dump)
+        self.ips_dir     = self_dict['ips_dir']
+        self.rtl_dir     = self_dict['rtl_dir']
+        self.vsim_dir    = self_dict['vsim_dir']
+        self.fpgasim_dir = self_dict['fpgasim_dir']
+        self.ip_list     = self_dict['ip_list']
+        self.rtl_list    = self_dict['rtl_list']
+
     def generate_deps_tree(self, server="git@iis-git.ee.ethz.ch", default_group='pulp-open', default_commit='master', verbose=False):
         """Generates the IP dependency tree for the IP hierarchical flow.
 
@@ -173,34 +219,15 @@ class IPDatabase(object):
             :type  verbose: bool
 
         This function generates the dependency tree for all IPs by looking in the provided remote repository.
-        If `progressbar` is installed, it will show a progress bar with completion percentage, otherwise a simpler version.
 
         """
         children = []
         # add all directly referenced IPs to the tree
         print("Retrieving ips_list.yml dependency list for all IPs (may take some time)...")
 
-        try:
-            import progressbar
-            bar = progressbar.ProgressBar()
-            for i in bar(range(len(self.ip_list))):
-                ip = self.ip_list[i]
-                children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
-        except ImportError:
-            for i in range(len(self.ip_list)):
-                ip = self.ip_list[i]
-                children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=True))
-            ### # setup toolbar
-            ### sys.stdout.write("[%s]" % (" " * len(self.ip_list)))
-            ### sys.stdout.flush()
-            ### sys.stdout.write("\b" * (len(self.ip_list) + 1))  # return to start of line, after '['
-            ### for i in xrange(len(self.ip_list)):
-            ###     ip = self.ip_list[i]
-            ###     children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=verbose))
-            ###     # update the bar
-            ###     sys.stdout.write("=")
-            ###     sys.stdout.flush()
-            ### sys.stdout.write("\n")
+        for i in range(len(self.ip_list)):
+            ip = self.ip_list[i]
+            children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=True))
 
         root = IPTreeNode(None, children=children)
         self.ip_tree = root

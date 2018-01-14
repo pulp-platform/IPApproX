@@ -68,7 +68,7 @@ class IPTreeNode(object):
         else:
             commit = default_commit
         if verbose:
-            print("   %s:%s/%s @ %s" % (server, group, node['name'], commit))
+            print("   Fetching ips_list.yml from %s:%s/%s @ %s" % (server, group, node['name'], commit))
         ips = load_ips_list_from_server(server, group, node['name'], commit)
         father_of_children = {
             'server' : server,
