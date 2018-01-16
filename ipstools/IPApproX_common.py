@@ -118,8 +118,17 @@ def get_ips_list_yml(server="git@iis-git.ee.ethz.ch", group='pulp-open', name='m
             ips_list_yml = subprocess.check_output(cmd.split(), stdin=git_archive.stdout, stderr=devnull)
             git_archive.wait()
         except subprocess.CalledProcessError:
-            ips_list_yml = None
-    # ips_list_yml, err = execute_popen("git archive --remote=%s:%s/%s %s ips_list.yml" % (server, group, name, commit), silent=True).communicate()
+            if "github.com" in server:
+                cmd = "curl https://raw.githubusercontent.com/%s/%s/%s/ips_list.yml" % (group, name, commit)
+            else:
+                cmd = "curl https://iis-git.ee.ethz.ch/%s/%s/raw/%s/ips_list.yml" % (group, name, commit)
+            try:
+                curl = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=devnull)
+                cmd = "cat"
+                ips_list_yml = subprocess.check_output(cmd.split(), stdin=curl.stdout, stderr=devnull)
+                curl.wait()
+            except subprocess.CalledProcessError:
+                ips_list_yml = None
     return ips_list_yml
 
 def load_ips_list_from_server(server="git@iis-git.ee.ethz.ch", group='pulp-open', name='mr-wolf.git', commit='master', skip_commit=False):
@@ -129,27 +138,30 @@ def load_ips_list_from_server(server="git@iis-git.ee.ethz.ch", group='pulp-open'
     f = StringIO(ips_list_yml)
     ips_list = ordered_load(f, yaml.SafeLoader)
     ips = []
-    for i in ips_list.keys():
-        if not skip_commit:
-            commit = ips_list[i]['commit']
-        else:
-            commit = None
-        try:
-            domain = ips_list[i]['domain']
-        except KeyError:
-            domain = None
-        try:
-            group = ips_list[i]['group']
-        except KeyError:
-            group = None
-        try:
-            path = ips_list[i]['path']
-        except KeyError:
-            path = i
-        name = i.split()[0].split('/')[-1]
-        try:
-            alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
-        except KeyError:
-            alternatives = None
-        ips.append({'name': name, 'commit': commit, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
+    try:
+        for i in ips_list.keys():
+            if not skip_commit:
+                commit = ips_list[i]['commit']
+            else:
+                commit = None
+            try:
+                domain = ips_list[i]['domain']
+            except KeyError:
+                domain = None
+            try:
+                group = ips_list[i]['group']
+            except KeyError:
+                group = None
+            try:
+                path = ips_list[i]['path']
+            except KeyError:
+                path = i
+            name = i.split()[0].split('/')[-1]
+            try:
+                alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
+            except KeyError:
+                alternatives = None
+            ips.append({'name': name, 'commit': commit, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
+    except AttributeError:
+        return []
     return ips
