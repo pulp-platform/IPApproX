@@ -163,5 +163,13 @@ def load_ips_list_from_server(server="git@iis-git.ee.ethz.ch", group='pulp-open'
                 alternatives = None
             ips.append({'name': name, 'commit': commit, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
     except AttributeError:
+        # here it fails silently (by design). it means that at the same time
+        #  1. the ip's version is a commit hash, not a branch or tag
+        #  2. the https repository is private
+        # when both conditions are true, it is not possible to get an updated
+        # ips_list.yml without cloning the full IP. Therefore, at the moment
+        # we simply treat the IP as being a leaf of the hierarchy tree.
+        # This is more a problem in the case of private repositories than for
+        # the public, open-source ones of course.
         return []
     return ips
