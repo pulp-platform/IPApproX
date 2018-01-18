@@ -30,7 +30,7 @@ class IPConfig(object):
         self.ip_path = ip_path
         self.ips_dir = ips_dir
         self.vsim_dir = vsim_dir
-        self.sub_ips = {}
+        self.sub_ips = OrderedDict()
 
         # if the keyword "files" is in the ip_dic dictionary, then there are no sub-IPs
         try:
@@ -40,7 +40,7 @@ class IPConfig(object):
                 for k in ip_dic.keys():
                     self.sub_ips[k] = SubIPConfig(ip_name, k, ip_dic[k], ip_path)
         except AttributeError:
-            self.sub_ips = {}
+            self.sub_ips = OrderedDict()
 
     def export_make(self, abs_path, more_opts, target_tech=None, source='ips', local=False, simulator='vsim'):
         if simulator is "vsim":

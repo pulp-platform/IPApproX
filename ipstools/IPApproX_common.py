@@ -99,7 +99,7 @@ def load_ips_list(filename, skip_commit=False):
     return ips
 
 def store_ips_list(filename, ips):
-    ips_list = {}
+    ips_list = OrderedDict()
     for i in ips:
         if i['alternatives'] != None:
             ips_list[i['path']] = {'commit': i['commit'], 'group': i['group'], 'domain': i['domain'], 'alternatives': i['alternatives']}
@@ -134,6 +134,7 @@ def get_ips_list_yml(server="git@iis-git.ee.ethz.ch", group='pulp-open', name='m
 def load_ips_list_from_server(server="git@iis-git.ee.ethz.ch", group='pulp-open', name='mr-wolf.git', commit='master', skip_commit=False):
     ips_list_yml = get_ips_list_yml(server, group, name, commit)
     if ips_list_yml is None:
+        print("No ips_list.yml gathered for %s" % name)
         return []
     f = StringIO(ips_list_yml)
     ips_list = ordered_load(f, yaml.SafeLoader)

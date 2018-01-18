@@ -103,7 +103,7 @@ class IPTreeNode(object):
         """
 
         flat_list = self.flattenize_children()
-        conflict_dict = {}
+        conflict_dict = OrderedDict()
         # create a dictionary of possible conflicts
         for f in flat_list:
             conflict_dict[f.node['name']] = []
