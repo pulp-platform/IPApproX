@@ -286,6 +286,7 @@ class IPDatabase(object):
         new_ips_list = []
         for s in selected.values():
             new_ips_list.append(s.node)
+        print(new_ips_list)
         return new_ips_list
 
     def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None, ips_dic=None, ips_dir=None):
@@ -697,7 +698,7 @@ class IPDatabase(object):
             ip_dic = self.ip_dic
         elif source=='rtl':
             ip_dic = self.rtl_dic
-        for i in ip_dic.keys()[::-1]:
+        for i in ip_dic.keys():
             filename = "%s/%s.mk" % (script_path, i)
             makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source, local=local, simulator=simulator)
             with open(filename, "wb") as f:
@@ -724,7 +725,7 @@ class IPDatabase(object):
             ip_dic = self.ip_dic
         elif source=='rtl':
             ip_dic = self.rtl_dic
-        for i in ip_dic.keys()[::-1]:
+        for i in ip_dic.keys():
             if domain==None or domain in ip_dic[i].domain:
                 filename = "%s/%s.tcl" % (script_path, i)
                 analyze_script = ip_dic[i].export_synopsys(target_tech=target_tech, source=source)
@@ -752,7 +753,7 @@ class IPDatabase(object):
             ip_dic = self.ip_dic
         elif source=='rtl':
             ip_dic = self.rtl_dic
-        for i in ip_dic.keys()[::-1]:
+        for i in ip_dic.keys():
             if domain==None or domain in ip_dic[i].domain:
                 filename = "%s/%s.tcl" % (script_path, i)
                 analyze_script = ip_dic[i].export_cadence(target_tech=target_tech, source=source)
@@ -789,7 +790,7 @@ class IPDatabase(object):
             ip_dic = self.rtl_dic
         filename = "%s" % (script_path)
         vivado_script = VIVADO_PREAMBLE % (self.rtl_dir, self.ips_dir)
-        for i in ip_dic.keys()[::-1]:
+        for i in ip_dic.keys():
             if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
                 if domain==None or domain in ip_dic[i].domain:
                     vivado_script += ip_dic[i].export_vivado(abs_path)
@@ -812,7 +813,7 @@ class IPDatabase(object):
             sys.exit(1)
         l = []
         ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
-        for i in ip_dic.keys()[::-1]:
+        for i in ip_dic.keys():
             l.append(i)
         vsim_tcl = VSIM_TCL_PREAMBLE % ('IP' if source=='ips' else source.upper())
         for el in l:
@@ -837,7 +838,7 @@ class IPDatabase(object):
             sys.exit(1)
         l = []
         ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
-        for i in ip_dic.keys()[::-1]:
+        for i in ip_dic.keys():
             l.append(i)
         ncelab_list = NCELAB_LIST_PREAMBLE % (source.upper())
         for el in l:
@@ -868,7 +869,7 @@ class IPDatabase(object):
         l = []
         ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
         synopsys_list = ""
-        for i in ip_dic.keys()[::-1]:
+        for i in ip_dic.keys():
             if domain==None or domain in ip_dic[i].domain:
                 synopsys_list += "source %s/%s.tcl\n" % (analyze_path,i)
 
@@ -895,11 +896,11 @@ class IPDatabase(object):
         l = []
         if source == 'ips':
             mk_libs_cmd = MK_LIBS_CMD
-            for i in self.ip_dic.keys()[::-1]:
+            for i in self.ip_dic.keys():
                 l.append(i)
         elif source == 'rtl':
             mk_libs_cmd = MK_LIBS_CMD_RTL
-            for i in self.rtl_dic.keys()[::-1]:
+            for i in self.rtl_dic.keys():
                 l.append(i)
         vcompile_libs = MK_LIBS_PREAMBLE
         if target_tech != "xilinx":
@@ -958,7 +959,7 @@ class IPDatabase(object):
             ip_dic = self.rtl_dic
         l = []
         vivado_add_files_cmd = ""
-        for i in ip_dic.keys()[::-1]:
+        for i in ip_dic.keys():
             if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
                 if domain==None or domain in ip_dic[i].domain:
                     l.extend(ip_dic[i].generate_vivado_add_files())
@@ -996,7 +997,7 @@ class IPDatabase(object):
             ip_dic = self.rtl_dic
         l = []
         vivado_inc_dirs = VIVADO_INC_DIRS_PREAMBLE % (self.rtl_dir)
-        for i in ip_dic.keys()[::-1]:
+        for i in ip_dic.keys():
             if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
                 if domain==None or domain in ip_dic[i].domain:
                     incdirs = []
