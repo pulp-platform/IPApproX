@@ -286,7 +286,6 @@ class IPDatabase(object):
         new_ips_list = []
         for s in selected.values():
             new_ips_list.append(s.node)
-        print(new_ips_list)
         return new_ips_list
 
     def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None, ips_dic=None, ips_dir=None):
