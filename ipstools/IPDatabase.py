@@ -164,7 +164,7 @@ class IPDatabase(object):
                     if cnt > 1:
                         print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
 
-    def save_database(self, filename='.cached_ipdb.json.gz'):
+    def save_database(self, filename='.cached_ipdb.json.gz', gzip=True):
         """Saves the IP database state in a cache JSON gzipped file.
 
             :param filename:     Name fo the JSON cache file (defaults to '.cached_ipdb.json.gz').
@@ -181,8 +181,12 @@ class IPDatabase(object):
             'ip_list'     : self.ip_list,
             'rtl_list'    : self.rtl_list
         }
-        with gzip.open(filename, "wb") as f:
-            f.write(json.dumps(self_dict))
+        if gzip:
+            with gzip.open(filename, "wb") as f:
+                f.write(json.dumps(self_dict))
+        else:
+            with open(filename, "wb") as f:
+                f.write(json.dumps(self_dict))
 
     def load_database(self, filename='.cached_ipdb.json.gz'):
         """Loads the IP database state from a cache JSON gzipped file.
@@ -193,8 +197,12 @@ class IPDatabase(object):
         This function loads the IP database state from a cache JSON gzipped file.
 
         """
-        with gzip.open(filename, "rb") as f:
-            json_dump = f.read()
+        if filename[-3:-1] == ".gz":
+            with gzip.open(filename, "rb") as f:
+                json_dump = f.read()
+        else:
+            with open(filename, "rb") as f:
+                json_dump = f.read()
         self_dict = json.loads(json_dump)
         self.ips_dir     = self_dict['ips_dir']
         self.rtl_dir     = self_dict['rtl_dir']
