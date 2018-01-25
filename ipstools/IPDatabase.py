@@ -164,7 +164,7 @@ class IPDatabase(object):
                     if cnt > 1:
                         print(tcolors.WARNING + "  %s" % el + tcolors.ENDC)
 
-    def save_database(self, filename='.cached_ipdb.json.gz', gzip=True):
+    def save_database(self, filename='.cached_ipdb.json', gzip=False):
         """Saves the IP database state in a cache JSON gzipped file.
 
             :param filename:     Name fo the JSON cache file (defaults to '.cached_ipdb.json.gz').
@@ -188,7 +188,7 @@ class IPDatabase(object):
             with open(filename, "wb") as f:
                 f.write(json.dumps(self_dict))
 
-    def load_database(self, filename='.cached_ipdb.json.gz'):
+    def load_database(self, filename='.cached_ipdb.json'):
         """Loads the IP database state from a cache JSON gzipped file.
 
             :param filename:     Name fo the JSON cache file (defaults to '.cached_ipdb.json.gz').
