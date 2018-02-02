@@ -486,13 +486,12 @@ class IPDatabase(object):
 
 
                 # compose remote name
-                server = ip['server'] if ip['server'] else default_server
-                group  = ip['group']  if ip['group']  else default_group
+                server = ip['server'] if ip['server'] is not None else default_server
+                group  = ip['group']  if ip['group']  is not None else default_group
                 if server[:5] == "https":
-                    ip['remote'] = "%s/%s" % (ip['server'], ip['group'])
+                    ip['remote'] = "%s/%s" % (server, group)
                 else:
-                    ip['remote'] = "%s:%s" % (ip['server'], ip['group'])
-                print(ip['remote'])
+                    ip['remote'] = "%s:%s" % (server, group)
 
                 ret = execute("%s clone %s/%s.git %s" % (git, ip['remote'], ip['name'], ip['path']))
                 if ret != 0:
