@@ -53,8 +53,8 @@ class IPDatabase(object):
         :param resolve_deps_conflicts:      If True, resolve dependency conflicts in hierarchical IP flow.
         :type  resolve_deps_conflicts: bool
 
-        :param server:                      Git remote repository to be used.
-        :type  server: str
+        :param default_server:              Git remote repository to be used if not otherwise specified.
+        :type  default_server: str
 
         :param default_group:               (Default) group to consider in the Git remote repository.
         :type  default_group: str
@@ -92,8 +92,8 @@ class IPDatabase(object):
         skip_scripts=False,
         build_deps_tree=False,
         resolve_deps_conflicts=False,
-        server="git@iis-git.ee.ethz.ch",
-        default_group='pulp-open',
+        default_server="https://github.com",
+        default_group='pulp-platform',
         default_commit='master',
         load_cache=False,
         verbose=False
@@ -116,7 +116,7 @@ class IPDatabase(object):
         except IOError:
             self.rtl_list = None
         if build_deps_tree:
-            self.generate_deps_tree(server=server, default_group=default_group, default_commit=default_commit, verbose=verbose)
+            self.generate_deps_tree(default_server=default_server, default_group=default_group, default_commit=default_commit, verbose=verbose)
         else:
             self.ip_tree = None
         if resolve_deps_conflicts:
@@ -211,11 +211,11 @@ class IPDatabase(object):
         self.ip_list     = self_dict['ip_list']
         self.rtl_list    = self_dict['rtl_list']
 
-    def generate_deps_tree(self, server="git@iis-git.ee.ethz.ch", default_group='pulp-open', default_commit='master', verbose=False):
+    def generate_deps_tree(self, default_server="https://github.com", default_group='pulp-platform', default_commit='master', verbose=False):
         """Generates the IP dependency tree for the IP hierarchical flow.
 
-            :param server:              Git remote repository to be used.
-            :type  server: str                         
+            :param default_server:      Git remote repository to be used.
+            :type  default_server: str                         
 
             :param default_group:       (Default) group to consider in the Git remote repository.
             :type  default_group: str                  
@@ -235,7 +235,7 @@ class IPDatabase(object):
 
         for i in range(len(self.ip_list)):
             ip = self.ip_list[i]
-            children.append(IPTreeNode(ip, server, default_group, default_commit, verbose=True))
+            children.append(IPTreeNode(ip, default_server, default_group, default_commit, verbose=True))
 
         root = IPTreeNode(None, children=children)
         self.ip_tree = root
@@ -418,16 +418,16 @@ class IPDatabase(object):
         except OSError:
             print(tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC)
 
-    def update_ips(self, server="git@iis-git.ee.ethz.ch", group="pulp-open", origin='origin'):
+    def update_ips(self, default_server="https://github.com", default_group="pulp-platform", origin='origin'):
         """Updates the IPs against the given repository.                    
                  
-            :param server:          The remote repository (in http or ssh format)
-            :type  server: str
+            :param default_server:     The remote repository (in http or ssh format)
+            :type  default_server: str
                  
-            :param group:           The remote group (e.g. pulp-platform)
-            :type  group:  str
+            :param default_group:      The remote group (e.g. pulp-platform)
+            :type  default_group:  str
                  
-            :param origin:          The GIT remote to be used (by default 'origin')
+            :param origin:             The GIT remote to be used (by default 'origin')
             :type  origin: str
 
         This function updates the currently downloaded IPs, after having checked whether the IPs are actually GIT repos and they
@@ -440,9 +440,6 @@ class IPDatabase(object):
         owd = os.getcwd()
         os.chdir(self.ips_dir)
         cwd = os.getcwd()
-
-        # try to strip group from remote
-        remote = "%s:%s" % (server, group)
 
         for ip in ips:
             os.chdir(cwd)
@@ -487,11 +484,14 @@ class IPDatabase(object):
 
                 print(tcolors.OK + "\nCloning ip '%s'..." % ip['name'] + tcolors.ENDC)
 
-                if group and ip['group']:
-                    ip['remote'] = "%s:%s" % (server, ip['group'])
-                else:
-                    ip['remote'] = remote
 
+                # compose remote name
+                server = ip['server'] if ip['server'] else default_server
+                group  = ip['group']  if ip['group']  else default_group
+                if server[:5] == "https":
+                    ip['remote'] = "%s/%s" % (ip['server'], ip['group'])
+                else:
+                    ip['remote'] = "%s:%s" % (ip['server'], ip['group'])
                 print(ip['remote'])
 
                 ret = execute("%s clone %s/%s.git %s" % (git, ip['remote'], ip['name'], ip['path']))

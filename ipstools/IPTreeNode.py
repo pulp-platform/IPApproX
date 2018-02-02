@@ -19,8 +19,8 @@ class IPTreeNode(object):
         :param node:                Dictionary representing the current IP.
         :type  node: dict    
 
-        :param server:              Git remote repository to be used.
-        :type  server: str                         
+        :param default_server:      (Default) git remote repository to be used.
+        :type  default_server: str                         
 
         :param default_group:       (Default) group to consider in the Git remote repository.
         :type  default_group: str                  
@@ -44,7 +44,7 @@ class IPTreeNode(object):
 
     def __init__(self,
         node,
-        server='https://github.com',
+        default_server='https://github.com',
         default_group='pulp-platform',
         default_commit='master',
         children=None,
@@ -59,6 +59,10 @@ class IPTreeNode(object):
         if children is not None:
             self.children = children
             return
+        if node['server'] is not None:
+            server = node['server']
+        else:
+            server = default_server
         if node['group'] is not None:
             group = node['group']
         else:
@@ -79,7 +83,7 @@ class IPTreeNode(object):
         self.itself = father_of_children
         children = []
         for ip in ips:
-            children.append(IPTreeNode(ip, server, default_group, default_commit, father=father_of_children, verbose=verbose))
+            children.append(IPTreeNode(ip, default_server, default_group, default_commit, father=father_of_children, verbose=verbose))
         self.children = children
 
     def flattenize_children(self):

@@ -83,6 +83,10 @@ def load_ips_list(filename, skip_commit=False):
         except KeyError:
             domain = None
         try:
+            server = ips_list[i]['server']
+        except KeyError:
+            server = None
+        try:
             group = ips_list[i]['group']
         except KeyError:
             group = None
@@ -95,43 +99,47 @@ def load_ips_list(filename, skip_commit=False):
             alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
         except KeyError:
             alternatives = None
-        ips.append({'name': name, 'commit': commit, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
+        ips.append({'name': name, 'commit': commit, 'server': server, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
     return ips
 
 def store_ips_list(filename, ips):
     ips_list = OrderedDict()
     for i in ips:
         if i['alternatives'] != None:
-            ips_list[i['path']] = {'commit': i['commit'], 'group': i['group'], 'domain': i['domain'], 'alternatives': i['alternatives']}
+            ips_list[i['path']] = {'commit': i['commit'], 'server': i['server'], 'group': i['group'], 'domain': i['domain'], 'alternatives': i['alternatives']}
         else:
-            ips_list[i['path']] = {'commit': i['commit'], 'group': i['group'], 'domain': i['domain']}
+            ips_list[i['path']] = {'commit': i['commit'], 'server': i['server'], 'group': i['group'], 'domain': i['domain']}
     with open(filename, "wb") as f:
         f.write(IPS_LIST_PREAMBLE)
         f.write(yaml.dump(ips_list))
 
-def get_ips_list_yml(server="git@iis-git.ee.ethz.ch", group='pulp-open', name='mr-wolf.git', commit='master'):
+def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master'):
     with open(os.devnull, "wb") as devnull:
-        cmd = "git archive --remote=%s:%s/%s %s ips_list.yml" % (server, group, name, commit)
-        git_archive = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=devnull)
-        cmd = "tar -xO"
-        try:
-            ips_list_yml = subprocess.check_output(cmd.split(), stdin=git_archive.stdout, stderr=devnull)
-            git_archive.wait()
-        except subprocess.CalledProcessError:
-            if "github.com" in server:
-                cmd = "curl https://raw.githubusercontent.com/%s/%s/%s/ips_list.yml" % (group, name, commit)
-            else:
-                cmd = "curl https://iis-git.ee.ethz.ch/%s/%s/raw/%s/ips_list.yml" % (group, name, commit)
+        rawcontent_failed = False
+        ips_list_yml = "   "
+        if "github.com" in server:
+            cmd = "curl https://raw.githubusercontent.com/%s/%s/%s/ips_list.yml" % (group, name, commit)
             try:
                 curl = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=devnull)
                 cmd = "cat"
                 ips_list_yml = subprocess.check_output(cmd.split(), stdin=curl.stdout, stderr=devnull)
                 curl.wait()
             except subprocess.CalledProcessError:
+                rawcontent_failed = True
+        if ips_list_yml[:3] == "404":
+            ips_list_yml = ""
+        if rawcontent_failed or "github.com" not in server:
+            cmd = "git archive --remote=%s:%s/%s %s ips_list.yml" % (server, group, name, commit)
+            git_archive = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=devnull)
+            cmd = "tar -xO"
+            try:
+                ips_list_yml = subprocess.check_output(cmd.split(), stdin=git_archive.stdout, stderr=devnull)
+                git_archive.wait()
+            except subprocess.CalledProcessError:
                 ips_list_yml = None
     return ips_list_yml
 
-def load_ips_list_from_server(server="git@iis-git.ee.ethz.ch", group='pulp-open', name='mr-wolf.git', commit='master', skip_commit=False):
+def load_ips_list_from_server(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', skip_commit=False):
     ips_list_yml = get_ips_list_yml(server, group, name, commit)
     if ips_list_yml is None:
         print("No ips_list.yml gathered for %s" % name)
@@ -150,6 +158,10 @@ def load_ips_list_from_server(server="git@iis-git.ee.ethz.ch", group='pulp-open'
             except KeyError:
                 domain = None
             try:
+                server = ips_list[i]['server']
+            except KeyError:
+                server = None
+            try:
                 group = ips_list[i]['group']
             except KeyError:
                 group = None
@@ -162,7 +174,7 @@ def load_ips_list_from_server(server="git@iis-git.ee.ethz.ch", group='pulp-open'
                 alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
             except KeyError:
                 alternatives = None
-            ips.append({'name': name, 'commit': commit, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
+            ips.append({'name': name, 'commit': commit, 'server': server, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
     except AttributeError:
         # here it fails silently (by design). it means that at the same time
         #  1. the ip's version is a commit hash, not a branch or tag
