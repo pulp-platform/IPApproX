@@ -130,6 +130,7 @@ class IPDatabase(object):
                 if ip['path'] == "$SITE_DEPENDENT_PATH":
                     try:
                         ip_full_path = "%s/src_files.yml" % os.environ['SITE_DEPENDENT_PATH']
+                        ip['path'] = os.environ['SITE_DEPENDENT_PATH']
                     except KeyError:
                         print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable.")
                         sys.exit(1)
@@ -157,6 +158,7 @@ class IPDatabase(object):
                 if ip['path'] == "$SITE_DEPENDENT_PATH":
                     try:
                         ip_full_path = "%s/src_files.yml" % os.environ['SITE_DEPENDENT_PATH']
+                        ip['path'] = os.environ['SITE_DEPENDENT_PATH']
                     except KeyError:
                         print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable.")
                         sys.exit(1)

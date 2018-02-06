@@ -63,7 +63,7 @@ MK_BUILDCMD_VHDL  = "$(VHDL_CC) -work $(LIB_PATH) %s $(SRC_VHDL_%s)"
 
 # templates for general Makefile
 MK_LIBS_PREAMBLE = """#
-# Copyright (C) 2016 ETH Zurich, University of Bologna
+# Copyright (C) 2016-2018 ETH Zurich, University of Bologna
 # All rights reserved.
 #
 # This software may be modified and distributed under the terms

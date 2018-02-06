@@ -60,7 +60,10 @@ class IPConfig(object):
                         phony += "vcompile-subip-%s " %s
                     elif simulator == 'ncsim':
                         phony += "ncompile-subip-%s " %s
-        makefile = mk_preamble % (prepare(self.ip_name), ip_path_env, self.ip_path, phony, commands) 
+        if self.ip_path[0] == '/':
+            makefile = mk_preamble % (prepare(self.ip_name), '', self.ip_path[1:], phony, commands) 
+        else:
+            makefile = mk_preamble % (prepare(self.ip_name), ip_path_env, self.ip_path, phony, commands) 
         makefile += MK_POSTAMBLE
         for s in self.sub_ips.keys():
             makefile += self.sub_ips[s].export_make(abs_path, more_opts, target_tech=target_tech, local=local, simulator=simulator)
