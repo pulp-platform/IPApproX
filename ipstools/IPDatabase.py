@@ -129,7 +129,7 @@ class IPDatabase(object):
                 ip_full_name = ip['name']
                 if ip['path'] == "$SITE_DEPENDENT_PATH":
                     try:
-                        ip_full_path = "%s/src_files..yml" % os.environ['SITE_DEPENDENT_PATH']
+                        ip_full_path = "%s/src_files.yml" % os.environ['SITE_DEPENDENT_PATH']
                     except KeyError:
                         print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable.")
                         sys.exit(1)
@@ -160,6 +160,7 @@ class IPDatabase(object):
                     except KeyError:
                         print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable.")
                         sys.exit(1)
+                    print(ip_full_path)
                 else:
                     ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, rtl_dir, ip['path'])
                 self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'], alternatives=ip['alternatives'], ips_dic=self.rtl_dic, ips_dir=rtl_dir)
