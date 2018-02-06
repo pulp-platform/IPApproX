@@ -20,6 +20,7 @@ from .makefile_defines_ncsim import *
 from .IPConfig import *
 import signal
 import json, gzip
+import os
 
 ALLOWED_SOURCES=[
   "ips",
@@ -126,7 +127,14 @@ class IPDatabase(object):
         if not skip_scripts:
             for ip in self.ip_list:
                 ip_full_name = ip['name']
-                ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, ips_dir, ip['path'])
+                if ip['path'] == "$SITE_DEPENDENT_PATH":
+                    try:
+                        ip_full_path = "%s/src_files..yml" % os.environ['SITE_DEPENDENT_PATH']
+                    except KeyError:
+                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable."
+                        sys.exit(1)
+                else:
+                    ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, ips_dir, ip['path'])
                 self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'], alternatives=ip['alternatives'], ips_dic=self.ip_dic)
             sub_ip_check_list = []
             for i in self.ip_dic.keys():
@@ -146,7 +154,14 @@ class IPDatabase(object):
         if not skip_scripts and self.rtl_list is not None:
             for ip in self.rtl_list:
                 ip_full_name = ip['name']
-                ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, rtl_dir, ip['path'])
+                if ip['path'] == "$SITE_DEPENDENT_PATH":
+                    try:
+                        ip_full_path = "%s/src_files..yml" % os.environ['SITE_DEPENDENT_PATH']
+                    except KeyError:
+                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable."
+                        sys.exit(1)
+                else:
+                    ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, rtl_dir, ip['path'])
                 self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'], alternatives=ip['alternatives'], ips_dic=self.rtl_dic, ips_dir=rtl_dir)
             sub_ip_check_list = []
             for i in self.rtl_dic.keys():
