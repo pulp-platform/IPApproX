@@ -158,7 +158,7 @@ class IPDatabase(object):
                     try:
                         ip_full_path = "%s/src_files..yml" % os.environ['SITE_DEPENDENT_PATH']
                     except KeyError:
-                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable."
+                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable.")
                         sys.exit(1)
                 else:
                     ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, rtl_dir, ip['path'])
