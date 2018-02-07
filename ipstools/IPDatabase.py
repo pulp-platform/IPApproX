@@ -749,11 +749,18 @@ class IPDatabase(object):
         elif source=='rtl':
             ip_dic = self.rtl_dic
         for i in ip_dic.keys():
-            if domain==None or domain in ip_dic[i].domain:
-                filename = "%s/%s.tcl" % (script_path, i)
-                analyze_script = ip_dic[i].export_synopsys(target_tech=target_tech, source=source)
-                with open(filename, "wb") as f:
-                    f.write(analyze_script)
+            try:
+                if domain==None or domain in ip_dic[i].domain:
+                    filename = "%s/%s.tcl" % (script_path, i)
+                    analyze_script = ip_dic[i].export_synopsys(target_tech=target_tech, source=source)
+                    with open(filename, "wb") as f:
+                        f.write(analyze_script)
+            except TypeError:
+                if ip_dic[i].domain is None:
+                    filename = "%s/%s.tcl" % (script_path, i)
+                    analyze_script = ip_dic[i].export_synopsys(target_tech=target_tech, source=source)
+                    with open(filename, "wb") as f:
+                        f.write(analyze_script)
 
     def export_cadence(self, script_path=".", target_tech='tsmc55', source='ips', domain=None):
         """Exports analyze scripts to be used for ASIC synthesis in Cadence RTL Compiler.
@@ -815,7 +822,10 @@ class IPDatabase(object):
         vivado_script = VIVADO_PREAMBLE % (self.rtl_dir, self.ips_dir)
         for i in ip_dic.keys():
             if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
-                if domain==None or domain in ip_dic[i].domain:
+                try:
+                    if domain==None or domain in ip_dic[i].domain:
+                        vivado_script += ip_dic[i].export_vivado(abs_path)
+                except TypeError:
                     vivado_script += ip_dic[i].export_vivado(abs_path)
         with open(filename, "wb") as f:
             f.write(vivado_script)
@@ -893,8 +903,12 @@ class IPDatabase(object):
         ip_dic = self.ip_dic if source=='ips' else self.rtl_dic
         synopsys_list = ""
         for i in ip_dic.keys():
-            if domain==None or domain in ip_dic[i].domain:
-                synopsys_list += "source %s/%s.tcl\n" % (analyze_path,i)
+            try:
+                if domain==None or domain in ip_dic[i].domain:
+                    synopsys_list += "source %s/%s.tcl\n" % (analyze_path,i)
+            except TypeError:
+                if ip_dic[i].domain is None:
+                    synopsys_list += "source %s/%s.tcl\n" % (analyze_path,i)
 
         with open(filename, "wb") as f:
             f.write(synopsys_list)
@@ -984,7 +998,10 @@ class IPDatabase(object):
         vivado_add_files_cmd = ""
         for i in ip_dic.keys():
             if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
-                if domain==None or domain in ip_dic[i].domain:
+                try:
+                    if domain==None or domain in ip_dic[i].domain:
+                        l.extend(ip_dic[i].generate_vivado_add_files())
+                except TypeError:
                     l.extend(ip_dic[i].generate_vivado_add_files())
         for el in l:
             vivado_add_files_cmd += VIVADO_ADD_FILES_CMD % el.upper()
@@ -1022,7 +1039,14 @@ class IPDatabase(object):
         vivado_inc_dirs = VIVADO_INC_DIRS_PREAMBLE % (self.rtl_dir)
         for i in ip_dic.keys():
             if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
-                if domain==None or domain in ip_dic[i].domain:
+                try:
+                    if domain==None or domain in ip_dic[i].domain:
+                        incdirs = []
+                        path = ip_dic[i].ip_path
+                        for j in ip_dic[i].generate_vivado_inc_dirs():
+                            incdirs.append("%s/%s" % (path, j))
+                        l.extend(incdirs)
+                except TypeError:
                     incdirs = []
                     path = ip_dic[i].ip_path
                     for j in ip_dic[i].generate_vivado_inc_dirs():
