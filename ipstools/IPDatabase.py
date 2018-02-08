@@ -93,7 +93,7 @@ class IPDatabase(object):
         skip_scripts=False,
         build_deps_tree=False,
         resolve_deps_conflicts=False,
-        default_server="https://github.com",
+        default_server="git@github.com",
         default_group='pulp-platform',
         default_commit='master',
         load_cache=False,
@@ -228,7 +228,7 @@ class IPDatabase(object):
         self.ip_list     = self_dict['ip_list']
         self.rtl_list    = self_dict['rtl_list']
 
-    def generate_deps_tree(self, default_server="https://github.com", default_group='pulp-platform', default_commit='master', verbose=False):
+    def generate_deps_tree(self, default_server="git@github.com", default_group='pulp-platform', default_commit='master', verbose=False):
         """Generates the IP dependency tree for the IP hierarchical flow.
 
             :param default_server:      Git remote repository to be used.
@@ -435,7 +435,7 @@ class IPDatabase(object):
         except OSError:
             print(tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC)
 
-    def update_ips(self, default_server="https://github.com", default_group="pulp-platform", origin='origin'):
+    def update_ips(self, default_server="git@github.com", default_group="pulp-platform", origin='origin'):
         """Updates the IPs against the given repository.                    
                  
             :param default_server:     The remote repository (in http or ssh format)

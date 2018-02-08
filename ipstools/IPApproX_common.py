@@ -113,11 +113,13 @@ def store_ips_list(filename, ips):
         f.write(IPS_LIST_PREAMBLE)
         f.write(yaml.dump(ips_list))
 
-def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master'):
+def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', verbose=False):
     with open(os.devnull, "wb") as devnull:
         rawcontent_failed = False
         ips_list_yml = "   "
         if "github.com" in server:
+            if verbose:
+                print("   Fetching ips_list.yml from https://raw.githubusercontent.com/%s/%s/%s/ips_list.yml" % (group, name, commit))
             cmd = "curl https://raw.githubusercontent.com/%s/%s/%s/ips_list.yml" % (group, name, commit)
             try:
                 curl = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=devnull)
@@ -129,6 +131,8 @@ def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpi
         if ips_list_yml[:3] == "404":
             ips_list_yml = ""
         if rawcontent_failed or "github.com" not in server:
+            if verbose:
+                print("   Fetching ips_list.yml from %s:%s/%s @ %s" % (server, group, name, commit))
             cmd = "git archive --remote=%s:%s/%s %s ips_list.yml" % (server, group, name, commit)
             git_archive = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=devnull)
             cmd = "tar -xO"
@@ -139,8 +143,8 @@ def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpi
                 ips_list_yml = None
     return ips_list_yml
 
-def load_ips_list_from_server(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', skip_commit=False):
-    ips_list_yml = get_ips_list_yml(server, group, name, commit)
+def load_ips_list_from_server(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', verbose=False, skip_commit=False):
+    ips_list_yml = get_ips_list_yml(server, group, name, commit, verbose=verbose)
     if ips_list_yml is None:
         print("No ips_list.yml gathered for %s" % name)
         return []
