@@ -119,6 +119,8 @@ def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpi
         rawcontent_failed = False
         ips_list_yml = "   "
         if "github.com" in server:
+            if "tags/" in commit:
+                commit = commit[5:]
             if verbose:
                 print("   Fetching ips_list.yml from https://raw.githubusercontent.com/%s/%s/%s/ips_list.yml" % (group, name, commit))
             cmd = "curl https://raw.githubusercontent.com/%s/%s/%s/ips_list.yml" % (group, name, commit)
