@@ -106,6 +106,9 @@ class IPDatabase(object):
         self.fpgasim_dir = fpgasim_dir
         self.ip_dic = OrderedDict()
         self.rtl_dic = OrderedDict()
+        self.default_server = default_server
+        self.default_group = default_group
+        self.default_commit = default_commit
         ips_list_yml = "%s/ips_list.yml" % (list_path)
         rtl_list_yml = "%s/rtl_list.yml" % (list_path)
         try:
@@ -117,7 +120,7 @@ class IPDatabase(object):
         except IOError:
             self.rtl_list = None
         if build_deps_tree:
-            self.generate_deps_tree(default_server=default_server, default_group=default_group, default_commit=default_commit, verbose=verbose)
+            self.generate_deps_tree(verbose=verbose)
         else:
             self.ip_tree = None
         if resolve_deps_conflicts:
@@ -200,10 +203,10 @@ class IPDatabase(object):
         }
         if gzip:
             with gzip.open(filename, "wb") as f:
-                f.write(json.dumps(self_dict))
+                f.write(json.dumps(self_dict, indent=4))
         else:
             with open(filename, "wb") as f:
-                f.write(json.dumps(self_dict))
+                f.write(json.dumps(self_dict, indent=4))
 
     def load_database(self, filename='.cached_ipdb.json'):
         """Loads the IP database state from a cache JSON gzipped file.
@@ -228,17 +231,8 @@ class IPDatabase(object):
         self.ip_list     = self_dict['ip_list']
         self.rtl_list    = self_dict['rtl_list']
 
-    def generate_deps_tree(self, default_server="git@github.com", default_group='pulp-platform', default_commit='master', verbose=False):
+    def generate_deps_tree(self, verbose=False):
         """Generates the IP dependency tree for the IP hierarchical flow.
-
-            :param default_server:      Git remote repository to be used.
-            :type  default_server: str                         
-
-            :param default_group:       (Default) group to consider in the Git remote repository.
-            :type  default_group: str                  
-
-            :param default_commit:      (Default) branch / tag / commit hash to consider in the Git remote repository.
-            :type  default_commit: str                          
 
             :param verbose:             If true, prints all information on the dependencies that are being fetched.
             :type  verbose: bool
@@ -252,7 +246,7 @@ class IPDatabase(object):
 
         for i in range(len(self.ip_list)):
             ip = self.ip_list[i]
-            children.append(IPTreeNode(ip, default_server, default_group, default_commit, verbose=True))
+            children.append(IPTreeNode(ip, self.default_server, self.default_group, self.default_commit, verbose=True))
 
         root = IPTreeNode(None, children=children)
         self.ip_tree = root
@@ -435,14 +429,8 @@ class IPDatabase(object):
         except OSError:
             print(tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC)
 
-    def update_ips(self, default_server="git@github.com", default_group="pulp-platform", origin='origin'):
+    def update_ips(self, origin='origin'):
         """Updates the IPs against the given repository.                    
-                 
-            :param default_server:     The remote repository (in http or ssh format)
-            :type  default_server: str
-                 
-            :param default_group:      The remote group (e.g. pulp-platform)
-            :type  default_group:  str
                  
             :param origin:             The GIT remote to be used (by default 'origin')
             :type  origin: str
@@ -503,8 +491,8 @@ class IPDatabase(object):
 
 
                 # compose remote name
-                server = ip['server'] if ip['server'] is not None else default_server
-                group  = ip['group']  if ip['group']  is not None else default_group
+                server = ip['server'] if ip['server'] is not None else self.default_server
+                group  = ip['group']  if ip['group']  is not None else self.default_group
                 if server[:5] == "https":
                     ip['remote'] = "%s/%s" % (server, group)
                 else:
