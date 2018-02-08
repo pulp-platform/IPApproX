@@ -24,6 +24,7 @@ elif sys.version_info[0]>2:
     from collections import OrderedDict
 else:
     from ordereddict import OrderedDict
+from ips_defines import *
 
 def prepare(s):
     return re.sub("[^a-zA-Z0-9_]", "_", s)

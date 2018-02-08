@@ -585,7 +585,7 @@ class IPDatabase(object):
     #         ret = execute("git push %s master" % remote_name)
     #         os.chdir(cwd)
 
-    def tag_ips(self, tag_name, changes_severity='warning', tag_always=False):
+    def tag_ips(self, tag_name, changes_severity='warning', tag_always=False, store=False):
         """Tags all IPs.                    
                  
             :param tag_name:              The name of the tag
@@ -640,10 +640,11 @@ class IPDatabase(object):
                 newest_tag = newest_tag.split()[0]
             except IndexError:
                 pass
-            new_ips.append({'name': ip['name'], 'path': ip['path'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'group': ip['group'], 'commit': "tags/%s" % newest_tag})
+            new_ips.append({'name': ip['name'], 'path': ip['path'], 'server': ip['server'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'group': ip['group'], 'commit': "tags/%s" % newest_tag})
             os.chdir(cwd)
 
-        store_ips_list("new_ips_list.yml", new_ips)
+        if store:
+            store_ips_list("new_ips_list.yml", new_ips)
         
     def get_latest_ips(self, changes_severity='warning', new_ips_list='new_ips_list.yml'):
         """Collects current versions for all IPs.                    
@@ -686,7 +687,7 @@ class IPDatabase(object):
                 else:
                     print(tcolors.ERROR + "ERROR: ip '%s' has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to get latest version.")
                     sys.exit(1)
-            new_ips.append({'name': ip['name'], 'path': ip['path'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'group': ip['group'], 'commit': "%s" % commit})
+            new_ips.append({'name': ip['name'], 'path': ip['path'], 'server': ip['server'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'group': ip['group'], 'commit': "%s" % commit})
             os.chdir(cwd)
 
         store_ips_list(new_ips_list, new_ips)
