@@ -20,7 +20,7 @@ from .makefile_defines_ncsim import *
 from .IPConfig import *
 import signal
 import json, gzip
-import os
+import os, sys
 
 ALLOWED_SOURCES=[
   "ips",
@@ -202,10 +202,10 @@ class IPDatabase(object):
             'rtl_list'    : self.rtl_list
         }
         if gzip:
-            with gzip.open(filename, "wb") as f:
+            with gzip.open(filename, "w") as f:
                 f.write(json.dumps(self_dict, indent=4))
         else:
-            with open(filename, "wb") as f:
+            with open(filename, "w") as f:
                 f.write(json.dumps(self_dict, indent=4))
 
     def load_database(self, filename='.cached_ipdb.json'):
@@ -218,10 +218,10 @@ class IPDatabase(object):
 
         """
         if filename[-3:-1] == ".gz":
-            with gzip.open(filename, "rb") as f:
+            with gzip.open(filename, "r") as f:
                 json_dump = f.read()
         else:
-            with open(filename, "rb") as f:
+            with open(filename, "r") as f:
                 json_dump = f.read()
         self_dict = json.loads(json_dump)
         self.ips_dir     = self_dict['ips_dir']
@@ -341,7 +341,7 @@ class IPDatabase(object):
             print(tcolors.ERROR + "ERROR: ip '%s' IP path %s does not exist." % (ip_name, filename) + tcolors.ENDC)
             sys.exit(1)
         try:
-            with open(filename, "rb") as f:
+            with open(filename, "r") as f:
                 ips_yaml_dic = ordered_load(f, yaml.SafeLoader)
         except IOError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' as it has no src_files.yml file." % ip_name + tcolors.ENDC)
@@ -713,7 +713,7 @@ class IPDatabase(object):
         for i in ip_dic.keys():
             filename = "%s/%s.mk" % (script_path, i)
             makefile = ip_dic[i].export_make(abs_path, more_opts, target_tech=target_tech, source=source, local=local, simulator=simulator)
-            with open(filename, "wb") as f:
+            with open(filename, "w") as f:
                 f.write(makefile)
 
     def export_synopsys(self, script_path=".", target_tech=None, source='ips', domain=None):
@@ -742,13 +742,13 @@ class IPDatabase(object):
                 if domain==None or domain in ip_dic[i].domain:
                     filename = "%s/%s.tcl" % (script_path, i)
                     analyze_script = ip_dic[i].export_synopsys(target_tech=target_tech, source=source)
-                    with open(filename, "wb") as f:
+                    with open(filename, "w") as f:
                         f.write(analyze_script)
             except TypeError:
                 if ip_dic[i].domain is None:
                     filename = "%s/%s.tcl" % (script_path, i)
                     analyze_script = ip_dic[i].export_synopsys(target_tech=target_tech, source=source)
-                    with open(filename, "wb") as f:
+                    with open(filename, "w") as f:
                         f.write(analyze_script)
 
     def export_cadence(self, script_path=".", target_tech='tsmc55', source='ips', domain=None):
@@ -776,7 +776,7 @@ class IPDatabase(object):
             if domain==None or domain in ip_dic[i].domain:
                 filename = "%s/%s.tcl" % (script_path, i)
                 analyze_script = ip_dic[i].export_cadence(target_tech=target_tech, source=source)
-                with open(filename, "wb") as f:
+                with open(filename, "w") as f:
                     f.write(analyze_script)
 
 
@@ -816,7 +816,7 @@ class IPDatabase(object):
                         vivado_script += ip_dic[i].export_vivado(abs_path)
                 except TypeError:
                     vivado_script += ip_dic[i].export_vivado(abs_path)
-        with open(filename, "wb") as f:
+        with open(filename, "w") as f:
             f.write(vivado_script)
 
     def generate_vsim_tcl(self, filename, source='ips'):
@@ -841,7 +841,7 @@ class IPDatabase(object):
         for el in l:
             vsim_tcl += VSIM_TCL_CMD % prepare(el)
         vsim_tcl += VSIM_TCL_POSTAMBLE
-        with open(filename, "wb") as f:
+        with open(filename, "w") as f:
             f.write(vsim_tcl)
 
     def generate_ncelab_list(self, filename, source='ips'):
@@ -865,7 +865,7 @@ class IPDatabase(object):
         ncelab_list = NCELAB_LIST_PREAMBLE % (source.upper())
         for el in l:
             ncelab_list += NCELAB_LIST_CMD % prepare(el)
-        with open(filename, "wb") as f:
+        with open(filename, "w") as f:
             f.write(ncelab_list)
 
     def generate_synopsys_list(self, filename, source='ips', analyze_path='analyze', domain=None):
@@ -899,7 +899,7 @@ class IPDatabase(object):
                 if ip_dic[i].domain is None:
                     synopsys_list += "source %s/%s.tcl\n" % (analyze_path,i)
 
-        with open(filename, "wb") as f:
+        with open(filename, "w") as f:
             f.write(synopsys_list)
 
     def generate_makefile(self, filename, target_tech=None, source='ips'):
@@ -953,7 +953,7 @@ class IPDatabase(object):
             for el in l:
                 vcompile_libs += mk_libs_cmd % (el, "clean")
         vcompile_libs += "\n"
-        with open(filename, "wb") as f:
+        with open(filename, "w") as f:
             f.write(vcompile_libs)
 
     def generate_vivado_add_files(self, filename, domain=None, source='ips', alternatives=[]):
@@ -994,7 +994,7 @@ class IPDatabase(object):
                     l.extend(ip_dic[i].generate_vivado_add_files())
         for el in l:
             vivado_add_files_cmd += VIVADO_ADD_FILES_CMD % el.upper()
-        with open(filename, "wb") as f:
+        with open(filename, "w") as f:
             f.write(vivado_add_files_cmd)
 
     def generate_vivado_inc_dirs(self, filename, domain=None, source='ips', alternatives=[]):
@@ -1044,6 +1044,6 @@ class IPDatabase(object):
         for el in l:
             vivado_inc_dirs += VIVADO_INC_DIRS_CMD % (self.ips_dir, el)
         vivado_inc_dirs += VIVADO_INC_DIRS_POSTAMBLE
-        with open(filename, "wb") as f:
+        with open(filename, "w") as f:
             f.write(vivado_inc_dirs)
 

@@ -37,7 +37,7 @@ class tcolors:
     BLUE    = '\033[94m'
 
 def execute(cmd, silent=False):
-    with open(os.devnull, "wb") as devnull:
+    with open(os.devnull, "w") as devnull:
         if silent:
             stdout = devnull
         else:
@@ -52,7 +52,7 @@ def execute_out(cmd, silent=False):
     return out
 
 def execute_popen(cmd, silent=False):
-    with open(os.devnull, "wb") as devnull:
+    with open(os.devnull, "w") as devnull:
         if silent:
             return subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=devnull)
         else:
@@ -71,7 +71,7 @@ def ordered_load(stream, Loader=yaml.Loader, object_pairs_hook=OrderedDict):
 
 def load_ips_list(filename, skip_commit=False):
     # get a list of all IPs that we are interested in from ips_list.yml
-    with open(filename, "rb") as f:
+    with open(filename, "r") as f:
         ips_list = ordered_load(f, yaml.SafeLoader)
     ips = []
     for i in ips_list.keys():
@@ -110,12 +110,12 @@ def store_ips_list(filename, ips):
             ips_list[i['path']] = {'commit': i['commit'], 'server': i['server'], 'group': i['group'], 'domain': i['domain'], 'alternatives': i['alternatives']}
         else:
             ips_list[i['path']] = {'commit': i['commit'], 'server': i['server'], 'group': i['group'], 'domain': i['domain']}
-    with open(filename, "wb") as f:
+    with open(filename, "w") as f:
         f.write(IPS_LIST_PREAMBLE)
         f.write(yaml.dump(ips_list))
 
 def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', verbose=False):
-    with open(os.devnull, "wb") as devnull:
+    with open(os.devnull, "w") as devnull:
         rawcontent_failed = False
         ips_list_yml = "   "
         if "github.com" in server:
