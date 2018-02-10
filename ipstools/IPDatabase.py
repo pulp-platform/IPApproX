@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # IPDatabase.py
 # Francesco Conti <f.conti@unibo.it>
@@ -11,7 +11,7 @@
 #
 
 from __future__ import print_function
-from IPApproX_common import *
+from .IPApproX_common import *
 from .IPTreeNode import *
 from .vsim_defines import *
 from .vivado_defines import *

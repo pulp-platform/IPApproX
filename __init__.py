@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # __init__.py
 # Francesco Conti <f.conti@unibo.it>
@@ -13,5 +13,5 @@
 __all__ = [ "ipstools" ]
 __path__ = [ "ipstools" ]
 
-from ipstools import *
+from .ipstools import *
 

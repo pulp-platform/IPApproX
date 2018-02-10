@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # IPApproX_common.py
 # Francesco Conti <f.conti@unibo.it>
@@ -24,7 +24,7 @@ elif sys.version_info[0]>2:
     from collections import OrderedDict
 else:
     from ordereddict import OrderedDict
-from ips_defines import *
+from .ips_defines import *
 
 def prepare(s):
     return re.sub("[^a-zA-Z0-9_]", "_", s)
@@ -131,6 +131,7 @@ def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpi
                 curl.wait()
             except subprocess.CalledProcessError:
                 rawcontent_failed = True
+            ips_list_yml = ips_list_yml.decode(sys.stdout.encoding)
         if ips_list_yml[:3] == "404":
             ips_list_yml = ""
         if rawcontent_failed or "github.com" not in server:
@@ -144,6 +145,7 @@ def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpi
                 git_archive.wait()
             except subprocess.CalledProcessError:
                 ips_list_yml = None
+            ips_list_yml = ips_list_yml.decode(sys.stdout.encoding)
     return ips_list_yml
 
 def load_ips_list_from_server(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', verbose=False, skip_commit=False):

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # vsim_defines.py
 # Francesco Conti <f.conti@unibo.it>

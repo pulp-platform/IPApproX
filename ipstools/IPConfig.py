@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # IPConfig.py
 # Francesco Conti <f.conti@unibo.it>
