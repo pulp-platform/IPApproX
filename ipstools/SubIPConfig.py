@@ -61,7 +61,8 @@ ALLOWED_TARGETS = [
     'tsmc40',
     'gf28',
     'gf22',
-    'smic130'
+    'smic130',
+    'smic110'
 ]
 
 # list of allowed flags
