@@ -145,7 +145,8 @@ def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpi
                 git_archive.wait()
             except subprocess.CalledProcessError:
                 ips_list_yml = None
-            ips_list_yml = ips_list_yml.decode(sys.stdout.encoding)
+            if ips_list_yml is not None:
+                ips_list_yml = ips_list_yml.decode(sys.stdout.encoding)
     return ips_list_yml
 
 def load_ips_list_from_server(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', verbose=False, skip_commit=False):
