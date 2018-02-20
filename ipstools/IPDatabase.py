@@ -780,11 +780,8 @@ class IPDatabase(object):
                     f.write(analyze_script)
 
 
-    def export_vivado(self, abs_path="$IPS", script_path="./src_files.tcl", source='ips', domain=None, alternatives=[]):
+    def export_vivado(self, script_path="./src_files.tcl", root='.', source='ips', domain=None, alternatives=[]):
         """Exports analyze scripts to be used for FPGA synthesis in Xilinx Vivado.
-                 
-            :param abs_path:              The path to be sued to find IPs within the Vivado scripts
-            :type  abs_path: str
                     
             :param script_path:           The path where the Makefiles are collected
             :type  script_path: str  
@@ -805,10 +802,12 @@ class IPDatabase(object):
             sys.exit(1)
         if source=='ips':
             ip_dic = self.ip_dic
+            abs_path = '$IPS'
         elif source=='rtl':
             ip_dic = self.rtl_dic
+            abs_path = '$RTL'
         filename = "%s" % (script_path)
-        vivado_script = VIVADO_PREAMBLE % (self.rtl_dir, self.ips_dir)
+        vivado_script = VIVADO_PREAMBLE % (os.path.abspath(root), self.rtl_dir, os.path.abspath(root), self.ips_dir)
         for i in ip_dic.keys():
             if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
                 try:
@@ -997,7 +996,7 @@ class IPDatabase(object):
         with open(filename, "w") as f:
             f.write(vivado_add_files_cmd)
 
-    def generate_vivado_inc_dirs(self, filename, domain=None, source='ips', alternatives=[]):
+    def generate_vivado_inc_dirs(self, filename, domain=None, root='.', source='ips', alternatives=[]):
         """Exports the Vivado `inc_dirs` script.
                  
             :param filename:              Output script file name.
@@ -1025,7 +1024,7 @@ class IPDatabase(object):
         elif source=='rtl':
             ip_dic = self.rtl_dic
         l = []
-        vivado_inc_dirs = VIVADO_INC_DIRS_PREAMBLE % (self.rtl_dir)
+        vivado_inc_dirs = VIVADO_INC_DIRS_PREAMBLE % (os.path.abspath(root), self.rtl_dir)
         for i in ip_dic.keys():
             if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
                 try:
@@ -1042,7 +1041,7 @@ class IPDatabase(object):
                         incdirs.append("%s/%s" % (path, j))
                     l.extend(incdirs)
         for el in l:
-            vivado_inc_dirs += VIVADO_INC_DIRS_CMD % (self.ips_dir, el)
+            vivado_inc_dirs += VIVADO_INC_DIRS_CMD % (os.path.abspath(root), self.ips_dir, el)
         vivado_inc_dirs += VIVADO_INC_DIRS_POSTAMBLE
         with open(filename, "w") as f:
             f.write(vivado_inc_dirs)

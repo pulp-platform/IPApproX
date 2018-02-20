@@ -11,8 +11,8 @@
 #
 
 VIVADO_PREAMBLE = """if ![info exists PULP_HSA_SIM] {
-    set RTL ../../%s
-    set IPS ../../%s
+    set RTL %s/%s
+    set IPS %s/%s
     set FPGA_IPS ../ips
     set FPGA_RTL ../rtl
 }
@@ -38,10 +38,10 @@ VIVADO_INC_DIRS_PREAMBLE = """if ![info exists INCLUDE_DIRS] {
 }
 
 eval "set INCLUDE_DIRS {
-    ../../%s/includes \\
+    %s/%s/includes \\
 """
 
-VIVADO_INC_DIRS_CMD = "    ../../%s/%s \\\n"
+VIVADO_INC_DIRS_CMD = "    %s/%s/%s \\\n"
 
 VIVADO_INC_DIRS_POSTAMBLE = """	${INCLUDE_DIRS} \\
 }"
