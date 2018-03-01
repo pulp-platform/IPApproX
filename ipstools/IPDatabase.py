@@ -773,11 +773,18 @@ class IPDatabase(object):
         elif source=='rtl':
             ip_dic = self.rtl_dic
         for i in ip_dic.keys():
-            if domain==None or domain in ip_dic[i].domain:
-                filename = "%s/%s.tcl" % (script_path, i)
-                analyze_script = ip_dic[i].export_cadence(target_tech=target_tech, source=source)
-                with open(filename, "w") as f:
-                    f.write(analyze_script)
+            try:
+                if domain==None or domain in ip_dic[i].domain:
+                    filename = "%s/%s.tcl" % (script_path, i)
+                    analyze_script = ip_dic[i].export_cadence(target_tech=target_tech, source=source)
+                    with open(filename, "w") as f:
+                        f.write(analyze_script)
+            except TypeError:
+                if ip_dic[i].domain is None:
+                    filename = "%s/%s.tcl" % (script_path, i)
+                    analyze_script = ip_dic[i].export_cadence(target_tech=target_tech, source=source)
+                    with open(filename, "w") as f:
+                        f.write(analyze_script)
 
 
     def export_vivado(self, script_path="./src_files.tcl", root='.', source='ips', domain=None, alternatives=[]):
