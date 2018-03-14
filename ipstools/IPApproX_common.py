@@ -128,7 +128,7 @@ def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpi
                 curl = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=devnull)
                 cmd = "cat"
                 ips_list_yml = subprocess.check_output(cmd.split(), stdin=curl.stdout, stderr=devnull)
-                curl.wait()
+                out = curl.communicate()[0]
             except subprocess.CalledProcessError:
                 rawcontent_failed = True
             ips_list_yml = ips_list_yml.decode(sys.stdout.encoding)
@@ -142,7 +142,7 @@ def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpi
             cmd = "tar -xO"
             try:
                 ips_list_yml = subprocess.check_output(cmd.split(), stdin=git_archive.stdout, stderr=devnull)
-                git_archive.wait()
+                out = git_archive.communicate()[0]
             except subprocess.CalledProcessError:
                 ips_list_yml = None
             if ips_list_yml is not None:
