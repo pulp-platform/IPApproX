@@ -148,7 +148,7 @@ class SubIPConfig(object):
             vlog_rule += mk_buildcmd_svlog % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
             vlog_rule += "\n\t"
         if len(vhdl_files) > 0:
-            vlog_rule += mk_buildcmd_vhdl % ("%s" % (more_opts), self.sub_ip_name.upper())
+            vlog_rule += mk_buildcmd_vhdl % ("%s %s" % (more_opts, self.vcom_opts), self.sub_ip_name.upper())
             vlog_rule += "\n"
         vlog_cmd += mk_subiprule % (self.sub_ip_name, self.sub_ip_name, self.sub_ip_name, self.sub_ip_name.upper(), self.sub_ip_name.upper(), self.sub_ip_name, vlog_rule, self.sub_ip_name)
         vlog_cmd += "\n"
