@@ -213,7 +213,7 @@ class SubIPConfig(object):
         files = self.files
         for f in files:
             if is_vhdl(f):
-                analyze_cmd += SYNOPSYS_ANALYZE_VHDL_CMD % (source.upper(), "%s/%s" % (path, f))
+                analyze_cmd += SYNOPSYS_ANALYZE_VHDL_CMD % (self.sub_ip_name, source.upper(), "%s/%s" % (path, f))
             elif is_verilog_2001(f):
                 analyze_cmd += SYNOPSYS_ANALYZE_V_CMD % (defines, source.upper(), "%s/%s" % (path, f))
             else:

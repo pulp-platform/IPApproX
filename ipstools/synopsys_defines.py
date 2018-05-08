@@ -18,7 +18,7 @@ SYNOPSYS_ANALYZE_PREAMBLE_SUBIP = "\nputs \"${Green}--> compile %s${NC}\"\n"
 
 SYNOPSYS_ANALYZE_SV_CMD   = "analyze -format sverilog %s -work work ${%s_PATH}/%s\n"
 SYNOPSYS_ANALYZE_V_CMD    = "analyze -format verilog  %s -work work ${%s_PATH}/%s\n"
-SYNOPSYS_ANALYZE_VHDL_CMD = "analyze -format vhdl        -work work ${%s_PATH}/%s\n"
+SYNOPSYS_ANALYZE_VHDL_CMD = "analyze -format vhdl        -work %s_lib ${%s_PATH}/%s\n"
 
 
 
