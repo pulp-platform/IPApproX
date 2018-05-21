@@ -104,10 +104,14 @@ class SubIPConfig(object):
             mk_subiprule = MK_SUBIPRULE
             mk_buildcmd_svlog = MK_BUILDCMD_SVLOG
             mk_buildcmd_vhdl = MK_BUILDCMD_VHDL
+            vlog_opts = self.vlog_opts
+            vcom_opts = self.vcom_opts
         elif simulator is "ncsim":
             mk_subiprule = MKN_SUBIPRULE
             mk_buildcmd_svlog = MKN_BUILDCMD_SVLOG
             mk_buildcmd_vhdl = MKN_BUILDCMD_VHDL
+            vlog_opts = ""
+            vcom_opts = ""
         building = True
         if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
             building = False
@@ -145,10 +149,10 @@ class SubIPConfig(object):
                 defines = ""
             for d in self.defines:
                 defines = "%s +define+%s" % (defines, d)
-            vlog_rule += mk_buildcmd_svlog % ("%s %s %s" % (more_opts, self.vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
+            vlog_rule += mk_buildcmd_svlog % ("%s %s %s" % (more_opts, vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
             vlog_rule += "\n\t"
         if len(vhdl_files) > 0:
-            vlog_rule += mk_buildcmd_vhdl % ("%s %s" % (more_opts, self.vcom_opts), self.sub_ip_name.upper())
+            vlog_rule += mk_buildcmd_vhdl % ("%s %s" % (more_opts, vcom_opts), self.sub_ip_name.upper())
             vlog_rule += "\n"
         vlog_cmd += mk_subiprule % (self.sub_ip_name, self.sub_ip_name, self.sub_ip_name, self.sub_ip_name.upper(), self.sub_ip_name.upper(), self.sub_ip_name, vlog_rule, self.sub_ip_name)
         vlog_cmd += "\n"
