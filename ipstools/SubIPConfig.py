@@ -144,7 +144,7 @@ class SubIPConfig(object):
             if target_tech=='xilinx':
                 defines = "+define+PULP_FPGA_EMUL +define+PULP_FPGA_SIM -suppress 2583"
             elif simulator is 'vsim':
-                defines = "-suppress 2583"
+                defines = "-suppress 2583 -suppress 13314"
             else:
                 defines = ""
             for d in self.defines:
