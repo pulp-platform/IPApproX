@@ -41,8 +41,8 @@ $(LIB_PATH)/%s.nmake: $(SRC_SVLOG_%s) $(SRC_VHDL_%s)
 	@touch $(LIB_PATH)/%s.nmake
 """
 
-MKN_BUILDCMD_SVLOG = "$(SVLOG_CC) +work+$(LIB_NAME) %s $(INCDIR_%s) $(SRC_SVLOG_%s)"
-MKN_BUILDCMD_VLOG  = "$(VLOG_CC) +work+$(LIB_NAME) %s $(INCDIR_%s) $(SRC_%s)"
+MKN_BUILDCMD_SVLOG = "$(SVLOG_CC) -work $(LIB_NAME) %s $(INCDIR_%s) $(SRC_SVLOG_%s)"
+MKN_BUILDCMD_VLOG  = "$(VLOG_CC) -work $(LIB_NAME) %s $(INCDIR_%s) $(SRC_%s)"
 MKN_BUILDCMD_VHDL  = "$(VHDL_CC) -work $(LIB_NAME) %s $(SRC_VHDL_%s)"
 
 NCELAB_LIST_PREAMBLE = """#
