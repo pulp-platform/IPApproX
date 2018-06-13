@@ -3,5 +3,5 @@
 IPTreeNode class
 ================
 
-.. automodule:: IPTreeNode
+.. automodule:: ipstools.IPTreeNode
    :members:

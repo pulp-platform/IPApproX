@@ -3,5 +3,5 @@
 IPDatabase class
 ================
 
-.. automodule:: IPDatabase
+.. automodule:: ipstools.IPDatabase
    :members:
