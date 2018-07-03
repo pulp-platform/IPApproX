@@ -10,7 +10,7 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-VIVADO_PREAMBLE = """if ![info exists PULP_HSA_SIM] {
+VIVADO_PREAMBLE = """if ![info exists PULP_FPGA_SIM] {
     set RTL %s/%s
     set IPS %s/%s
     set FPGA_IPS ../ips
