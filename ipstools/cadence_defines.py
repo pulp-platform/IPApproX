@@ -18,5 +18,5 @@ CADENCE_ANALYZE_PREAMBLE_SUBIP = "\nputs \"${Green}--> compile %s${NC}\"\n"
 
 CADENCE_ANALYZE_SV_CMD   = "read_hdl -sv %s -library work ${%s_PATH}/%s\n"
 CADENCE_ANALYZE_V_CMD    = "read_hdl -v  %s -library work ${%s_PATH}/%s\n"
-CADENCE_ANALYZE_VHDL_CMD = "read_hdl -vhdl  -library work ${%s_PATH}/%s\n"
+CADENCE_ANALYZE_VHDL_CMD = "read_hdl -vhdl  -library %s_lib ${%s_PATH}/%s\n"
 

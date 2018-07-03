@@ -240,7 +240,7 @@ class SubIPConfig(object):
             if not is_vhdl(f):
                 analyze_cmd += CADENCE_ANALYZE_SV_CMD % (defines, source.upper(), "%s/%s" % (path, f))
             else:
-                analyze_cmd += CADENCE_ANALYZE_VHDL_CMD % (source.upper(), "%s/%s" % (path, f))
+                analyze_cmd += CADENCE_ANALYZE_VHDL_CMD % (self.sub_ip_name, source.upper(), "%s/%s" % (path, f))
         return analyze_cmd
 
 
