@@ -43,7 +43,8 @@ ALLOWED_KEYS = [
     'targets',
     'flags',
     'defines',
-    'dir'
+    'dir',
+    'sim_tools'
 ]
 MANDATORY_KEYS = [
     'files'
@@ -79,6 +80,13 @@ LEGACY_TCSH_BLACKLIST = [
     #+ 'cea',
     #+ 'tech'
 ]
+# list of allowed targets
+ALLOWED_SIM_TOOLS = [
+    'all',
+    'questa',
+    'xcelium',
+    'ncsim'
+]
 
 class SubIPConfig(object):
     def __init__(self, ip_name, sub_ip_name, sub_ip_dic, ip_path):
@@ -98,6 +106,7 @@ class SubIPConfig(object):
         self.defines   = self.__get_defines()   # additional defines
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
+        self.sim_tools = self.__get_sim_tools() # eda tools supported (for RTL encrypted models)
 
     def export_make(self, abs_path, more_opts, target_tech=None, local=False, simulator='vsim'):
         if simulator is "vsim":
@@ -106,12 +115,16 @@ class SubIPConfig(object):
             mk_buildcmd_vhdl = MK_BUILDCMD_VHDL
             vlog_opts = self.vlog_opts
             vcom_opts = self.vcom_opts
+            if 'all' not in self.sim_tools and 'questa' not in self.sim_tools:
+                return "\n"
         elif simulator is "ncsim":
             mk_subiprule = MKN_SUBIPRULE
             mk_buildcmd_svlog = MKN_BUILDCMD_SVLOG
             mk_buildcmd_vhdl = MKN_BUILDCMD_VHDL
             vlog_opts = ""
             vcom_opts = ""
+            if 'all' not in self.sim_tools and 'xcelium' not in self.sim_tools and 'ncsim' not in self.sim_tools:
+                return "\n"
         building = True
         if 'all' not in self.targets and 'rtl' not in self.targets and target_tech not in self.targets:
             building = False
@@ -333,6 +346,20 @@ class SubIPConfig(object):
             sys.exit(1)
         return targets
 
+    def __get_sim_tools(self):
+        try:
+            sim_tools = self.sub_ip_dic['sim_tools']
+        except KeyError:
+            sim_tools = ["all"]
+        not_allowed = set(sim_tools) - (set(ALLOWED_SIM_TOOLS))
+        if not_allowed != set([]):
+            print("ERROR: sim_tools not allowed for ip '%s', sub-ip '%s':" % (self.ip_name, self.sub_ip_name))
+            print(not_allowed)
+            for el in list(not_allowed):
+                print("    %s" % el)
+            print("Check the src_files.yml file.")
+            sys.exit(1)
+        return sim_tools
     def __get_incdirs(self):
         try:
             incdirs = self.sub_ip_dic['incdirs']
