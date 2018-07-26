@@ -55,11 +55,14 @@ class IPConfig(object):
         for s in self.sub_ips.keys():
             if ("all" in self.sub_ips[s].targets or "rtl" in self.sub_ips[s].targets or target_tech in self.sub_ips[s].targets):
                 if ("skip_simulation" not in self.sub_ips[s].flags and (("only_local" not in self.sub_ips[s].flags) or local)):
-                    commands += "$(LIB_PATH)/%s.%s " % (s, vmake)
                     if simulator == 'vsim':
-                        phony += "vcompile-subip-%s " %s
+                        if 'all' in self.sub_ips[s].sim_tools or 'questa' in self.sub_ips[s].sim_tools:
+                            commands += "$(LIB_PATH)/%s.%s " % (s, vmake)
+                            phony += "vcompile-subip-%s " %s
                     elif simulator == 'ncsim':
-                        phony += "ncompile-subip-%s " %s
+                        if 'all' in self.sub_ips[s].sim_tools or 'xcelium' in self.sub_ips[s].sim_tools or 'ncsim' in self.sub_ips[s].sim_tools:
+                            commands += "$(LIB_PATH)/%s.%s " % (s, vmake)
+                            phony += "ncompile-subip-%s " %s
         if self.ip_path[0] == '/':
             makefile = mk_preamble % (prepare(self.ip_name), '', self.ip_path[1:], phony, commands) 
         else:
