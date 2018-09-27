@@ -44,7 +44,8 @@ ALLOWED_KEYS = [
     'flags',
     'defines',
     'dir',
-    'sim_tools'
+    'sim_tools',
+    'synth_tools'
 ]
 MANDATORY_KEYS = [
     'files'
@@ -88,6 +89,13 @@ ALLOWED_SIM_TOOLS = [
     'ncsim'
 ]
 
+# list of allowed targets
+ALLOWED_SYNTH_TOOLS = [
+    'all',
+    'genus',
+    'dc',
+    'mentor'
+]
 class SubIPConfig(object):
     def __init__(self, ip_name, sub_ip_name, sub_ip_dic, ip_path):
         super(SubIPConfig, self).__init__()
@@ -107,6 +115,7 @@ class SubIPConfig(object):
         self.vlog_opts = self.__get_vlog_opts() # generic vlog options
         self.vcom_opts = self.__get_vcom_opts() # generic vcom options
         self.sim_tools = self.__get_sim_tools() # eda tools supported (for RTL encrypted models)
+        self.synth_tools = self.__get_synth_tools() # eda tools supported (for RTL encrypted models)
 
     def export_make(self, abs_path, more_opts, target_tech=None, local=False, simulator='vsim'):
         if simulator is "vsim":
@@ -223,6 +232,8 @@ class SubIPConfig(object):
             return "\n"
         if "skip_synthesis" in self.flags:
             return "\n"
+        if not ("all" in self.synth_tools or "dc" in self.synth_tools):            
+            return "\n"            
         analyze_cmd = SYNOPSYS_ANALYZE_PREAMBLE_SUBIP % (self.sub_ip_name)
         defines = ""
         for d in self.defines:
@@ -243,6 +254,8 @@ class SubIPConfig(object):
         if not ("all" in self.targets or target_tech in self.targets):
             return "\n"
         if "skip_synthesis" in self.flags:
+            return "\n"
+        if not ("all" in self.synth_tools or "genus" in self.synth_tools):            
             return "\n"
         analyze_cmd = CADENCE_ANALYZE_PREAMBLE_SUBIP % (self.sub_ip_name)
         defines = ""
@@ -360,6 +373,22 @@ class SubIPConfig(object):
             print("Check the src_files.yml file.")
             sys.exit(1)
         return sim_tools
+
+    def __get_synth_tools(self):
+        try:
+            synth_tools = self.sub_ip_dic['synth_tools']
+        except KeyError:
+            synth_tools = ["all"]
+        not_allowed = set(synth_tools) - (set(ALLOWED_SYNTH_TOOLS))
+        if not_allowed != set([]):
+            print("ERROR: synth_tools not allowed for ip '%s', sub-ip '%s':" % (self.ip_name, self.sub_ip_name))
+            print(not_allowed)
+            for el in list(not_allowed):
+                print("    %s" % el)
+            print("Check the src_files.yml file.")
+            sys.exit(1)
+        return synth_tools
+
     def __get_incdirs(self):
         try:
             incdirs = self.sub_ip_dic['incdirs']
