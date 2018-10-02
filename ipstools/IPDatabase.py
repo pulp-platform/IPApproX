@@ -493,7 +493,7 @@ class IPDatabase(object):
                 # compose remote name
                 server = ip['server'] if ip['server'] is not None else self.default_server
                 group  = ip['group']  if ip['group']  is not None else self.default_group
-                if server[:5] == "https":
+                if server[:5] == "https" or server[:6] == "git://":
                     ip['remote'] = "%s/%s" % (server, group)
                 else:
                     ip['remote'] = "%s:%s" % (server, group)
