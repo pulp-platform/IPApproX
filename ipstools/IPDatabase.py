@@ -130,12 +130,13 @@ class IPDatabase(object):
         if not skip_scripts:
             for ip in self.ip_list:
                 ip_full_name = ip['name']
-                if ip['path'] == "$SITE_DEPENDENT_PATH":
+                if ip['path'][:21] == "$SITE_DEPENDENT_PATH[":
+                    ip_path_idx = int(ip['path'][21:-1])
                     try:
-                        ip_full_path = "%s/src_files.yml" % os.environ['SITE_DEPENDENT_PATH']
-                        ip['path'] = os.environ['SITE_DEPENDENT_PATH']
+                        ip_full_path = "%s/src_files.yml" % os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx]
+                        ip['path'] = os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx]
                     except KeyError:
-                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable.")
+                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable with a list of comma-separated paths.")
                         sys.exit(1)
                 else:
                     ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, ips_dir, ip['path'])
@@ -158,12 +159,13 @@ class IPDatabase(object):
         if not skip_scripts and self.rtl_list is not None:
             for ip in self.rtl_list:
                 ip_full_name = ip['name']
-                if ip['path'] == "$SITE_DEPENDENT_PATH":
+                if ip['path'][:21] == "$SITE_DEPENDENT_PATH[":
+                    ip_path_idx = int(ip['path'][21:-1])
                     try:
-                        ip_full_path = "%s/src_files.yml" % os.environ['SITE_DEPENDENT_PATH']
-                        ip['path'] = os.environ['SITE_DEPENDENT_PATH']
+                        ip_full_path = "%s/src_files.yml" % os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx]
+                        ip['path'] = os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx]
                     except KeyError:
-                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable.")
+                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable with a list of comma-separated paths.")
                         sys.exit(1)
                 else:
                     ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, rtl_dir, ip['path'])
@@ -447,6 +449,11 @@ class IPDatabase(object):
         cwd = os.getcwd()
 
         for ip in ips:
+
+            # check if path is SITE_DEPENDENT, in that case skip it
+            if ip['path'][:21] == "$SITE_DEPENDENT_PATH[":
+                continue
+
             os.chdir(cwd)
             # check if directory already exists, this hints to the fact that we probably already cloned it
             if os.path.isdir("./%s" % ip['path']):
