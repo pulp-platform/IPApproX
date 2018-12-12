@@ -76,7 +76,15 @@ def load_ips_list(filename, skip_commit=False):
     ips = []
     for i in ips_list.keys():
         if not skip_commit:
-            commit = ips_list[i]['commit']
+            try:
+                commit = ips_list[i]['commit']
+            except KeyError:
+                try:
+                    commit = None
+                    path = ips_list[i]['path']
+                except KeyError:
+                    print(tcolors.ERROR + "An ips_list.yml entry must point to a commit or a path." + tcolors.ENDC)
+                    sys.exit(1)
         else:
             commit = None
         try:

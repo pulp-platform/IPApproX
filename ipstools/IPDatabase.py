@@ -21,6 +21,7 @@ from .IPConfig import *
 import signal
 import json, gzip
 import os, sys
+import re
 
 ALLOWED_SOURCES=[
   "ips",
@@ -130,11 +131,24 @@ class IPDatabase(object):
         if not skip_scripts:
             for ip in self.ip_list:
                 ip_full_name = ip['name']
-                if ip['path'][:21] == "$SITE_DEPENDENT_PATH[":
-                    ip_path_idx = int(ip['path'][21:-1])
+                if ip['path'][:20] == "$SITE_DEPENDENT_PATH":
+                    pattern = r'\[(.*)](.*)'
+                    match = re.search(pattern, ip['path'][20:])
+                    if match is None:
+                        ip_path_idx = 0
+                        ip_path_suffix = ip['path'][20:]
+                    else:
+                        try:
+                            ip_path_idx = int(match.group(1))
+                        except AttributeError:
+                            ip_path_idx = 0
+                        try:
+                            ip_path_suffix = match.group(2)
+                        except AttributeError:
+                            ip_path_suffix = ""
                     try:
-                        ip_full_path = "%s/src_files.yml" % os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx]
-                        ip['path'] = os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx]
+                        ip['path'] = (os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx] + ip_path_suffix)
+                        ip_full_path = "%s/src_files.yml" % ip['path'] 
                     except KeyError:
                         print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable with a list of comma-separated paths.")
                         sys.exit(1)
@@ -159,11 +173,24 @@ class IPDatabase(object):
         if not skip_scripts and self.rtl_list is not None:
             for ip in self.rtl_list:
                 ip_full_name = ip['name']
-                if ip['path'][:21] == "$SITE_DEPENDENT_PATH[":
-                    ip_path_idx = int(ip['path'][21:-1])
+                if ip['path'][:20] == "$SITE_DEPENDENT_PATH":
+                    pattern = r'\[(.*)](.*)'
+                    match = re.search(pattern, ip['path'][20:])
+                    if match is None:
+                        ip_path_idx = 0
+                        ip_path_suffix = ip['path'][20:]
+                    else:
+                        try:
+                            ip_path_idx = int(match.group(1))
+                        except AttributeError:
+                            ip_path_idx = 0
+                        try:
+                            ip_path_suffix = match.group(2)
+                        except AttributeError:
+                            ip_path_suffix = ""
                     try:
-                        ip_full_path = "%s/src_files.yml" % os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx]
-                        ip['path'] = os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx]
+                        ip['path'] = (os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx] + ip_path_suffix)
+                        ip_full_path = "%s/src_files.yml" % ip['path'] 
                     except KeyError:
                         print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable with a list of comma-separated paths.")
                         sys.exit(1)
@@ -347,6 +374,7 @@ class IPDatabase(object):
                 ips_yaml_dic = ordered_load(f, yaml.SafeLoader)
         except IOError:
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' as it has no src_files.yml file." % ip_name + tcolors.ENDC)
+            print(filename)
             return
 
         try:
@@ -451,7 +479,7 @@ class IPDatabase(object):
         for ip in ips:
 
             # check if path is SITE_DEPENDENT, in that case skip it
-            if ip['path'][:21] == "$SITE_DEPENDENT_PATH[":
+            if ip['path'][:20] == "$SITE_DEPENDENT_PATH":
                 continue
 
             os.chdir(cwd)
