@@ -64,6 +64,9 @@ class IPDatabase(object):
         :param default_commit:              (Default) branch / tag / commit hash to consider in the Git remote repository.
         :type  default_commit: str
 
+        :param default_site_dependent_path: (Default) site-dependent path for non-Git repositories.
+        :type  default_site_dependent_path: str
+
         :param load_cache:                  If true, load configuration from cache file.
         :type  load_cache: bool
 
@@ -97,6 +100,7 @@ class IPDatabase(object):
         default_server="git@github.com",
         default_group='pulp-platform',
         default_commit='master',
+        default_site_dependent_path='./fe/local_ips',
         load_cache=False,
         verbose=False
     ):
@@ -110,6 +114,7 @@ class IPDatabase(object):
         self.default_server = default_server
         self.default_group = default_group
         self.default_commit = default_commit
+        self.default_site_dependent_path = default_site_dependent_path
         ips_list_yml = "%s/ips_list.yml" % (list_path)
         rtl_list_yml = "%s/rtl_list.yml" % (list_path)
         try:
@@ -147,11 +152,14 @@ class IPDatabase(object):
                         except AttributeError:
                             ip_path_suffix = ""
                     try:
-                        ip['path'] = (os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx] + ip_path_suffix)
-                        ip_full_path = "%s/src_files.yml" % ip['path'] 
+                        site_dependent_path = os.environ['SITE_DEPENDENT_PATH']
                     except KeyError:
-                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable with a list of comma-separated paths.")
+                        site_dependent_path = self.default_site_dependent_path
+                    if not os.path.isdir(site_dependent_path):
+                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable with a list of valid comma-separated paths." + tcolors.ENDC)
                         sys.exit(1)
+                    ip['path'] = (site_dependent_path.split(',')[ip_path_idx] + ip_path_suffix)
+                    ip_full_path = "%s/src_files.yml" % ip['path']
                 else:
                     ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, ips_dir, ip['path'])
                 self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'], alternatives=ip['alternatives'], ips_dic=self.ip_dic)
@@ -189,11 +197,14 @@ class IPDatabase(object):
                         except AttributeError:
                             ip_path_suffix = ""
                     try:
-                        ip['path'] = (os.environ['SITE_DEPENDENT_PATH'].split(',')[ip_path_idx] + ip_path_suffix)
-                        ip_full_path = "%s/src_files.yml" % ip['path'] 
+                        site_dependent_path = os.environ['SITE_DEPENDENT_PATH']
                     except KeyError:
-                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable with a list of comma-separated paths.")
+                        site_dependent_path = self.default_site_dependent_path
+                    if not os.path.isdir(site_dependent_path):
+                        print(tcolors.ERROR + "ERROR: you must define the SITE_DEPENDENT_PATH environment variable with a list of valid comma-separated paths." + tcolors.ENDC)
                         sys.exit(1)
+                    ip['path'] = (site_dependent_path.split(',')[ip_path_idx] + ip_path_suffix)
+                    ip_full_path = "%s/src_files.yml" % ip['path']
                 else:
                     ip_full_path = "%s/%s/%s/src_files.yml" % (list_path, rtl_dir, ip['path'])
                 self.import_yaml(ip_full_name, ip_full_path, ip['path'], domain=ip['domain'], alternatives=ip['alternatives'], ips_dic=self.rtl_dic, ips_dir=rtl_dir)
