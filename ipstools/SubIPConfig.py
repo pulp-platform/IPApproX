@@ -153,10 +153,16 @@ class SubIPConfig(object):
         vhdl_files = ""
         vlog_files = ""
         for f in files:
-            if not is_vhdl(f):
-                vlog_files += "\\\n\t%s/%s" % (abs_path, f)
+            if f[0] == '/':
+                if not is_vhdl(f):
+                    vlog_files += "\\\n\t%s" % (f)
+                else:
+                    vhdl_files += "\\\n\t%s" % (f)
             else:
-                vhdl_files += "\\\n\t%s/%s" % (abs_path, f)
+                if not is_vhdl(f):
+                    vlog_files += "\\\n\t%s/%s" % (abs_path, f)
+                else:
+                    vhdl_files += "\\\n\t%s/%s" % (abs_path, f)
         if len(vlog_includes) > 0:
             vlog_cmd += MK_SUBIPINC % (self.sub_ip_name, self.sub_ip_name.upper(), "+incdir" + vlog_includes)
         vlog_cmd += MK_SUBIPSRC % (self.sub_ip_name.upper(), vlog_files, self.sub_ip_name.upper(), vhdl_files)
