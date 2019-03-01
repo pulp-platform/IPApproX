@@ -15,10 +15,10 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: `ipstools` API:
+   :caption: ipstools API:
 
    ipdatabase.rst
-..   iptreenode.rst
+   iptreenode.rst
 
 Indices and tables
 ==================
