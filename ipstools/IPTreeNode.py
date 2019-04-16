@@ -134,5 +134,5 @@ class IPTreeNode(object):
                 else:
                     commits.append(ip.node['commit'])
             for i in removed_keys:
-                c.pop(i, None)
+                c.pop(i)
         return conflict_dict
