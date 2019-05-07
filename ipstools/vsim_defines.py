@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # vsim_defines.py
 # Francesco Conti <f.conti@unibo.it>
 #
-# Copyright (C) 2015 ETH Zurich, University of Bologna
+# Copyright (C) 2015-2017 ETH Zurich, University of Bologna
 # All rights reserved.
 #
 # This software may be modified and distributed under the terms
@@ -82,7 +82,7 @@ VSIM_VLOG_CMD = "vlog -quiet -sv -suppress 2583 -work ${LIB_PATH} %s %s %s || go
 VSIM_VCOM_CMD = "vcom -quiet -suppress 2583 -work ${LIB_PATH} %s %s || goto error\n"
 
 # templates for vsim.tcl
-VSIM_TCL_PREAMBLE = """set VSIM_IP_LIBS " \\\
+VSIM_TCL_PREAMBLE = """set VSIM_%s_LIBS " \\\
 
 """
 

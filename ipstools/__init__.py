@@ -10,8 +10,7 @@
 # of the BSD license.  See the LICENSE file for details.
 #
 
-__all__ = [ "ipstools" ]
-__path__ = [ "ipstools" ]
-
-from .ipstools import *
+from .SubIPConfig import *
+from .IPConfig import *
+from .IPDatabase import *
 
