@@ -16,6 +16,7 @@ from .vsim_defines           import *
 from .makefile_defines       import *
 from .makefile_defines_ncsim import *
 from .vivado_defines         import *
+from .verilator_defines      import *
 from .synopsys_defines       import *
 from .cadence_defines        import *
 from .SubIPConfig            import *
@@ -77,6 +78,7 @@ ALLOWED_TARGETS = [
 ALLOWED_FLAGS = [
     'skip_simulation',
     'skip_synthesis',
+    'skip_verilator',
     'skip_tcsh',
     'only_local'
 ]
@@ -298,6 +300,22 @@ class SubIPConfig(object):
             ncsim_files += "%s/%s/%s\n" % (abs_path, self.ip_path, f)
 
         return ncsim_files
+    def export_verilator(self, abs_path):
+        if 'all' not in self.targets and 'verilator' not in self.targets:
+            return "\n"
+        if "skip_verilator" in self.flags:
+            return "\n"
+        verilator_mk = VERILATOR_PREAMBLE_SUBIP % (self.sub_ip_name, prepare(self.sub_ip_name.upper()))
+        files = self.files
+        for f in files:
+            verilator_mk += "    %s/%s/%s \\\n" % (abs_path, self.ip_path, f)
+        verilator_mk += VERILATOR_POSTAMBLE_SUBIP
+        if len(self.incdirs) > 0:
+            verilator_mk += VERILATOR_PREAMBLE_SUBIP_INCDIRS % prepare(self.sub_ip_name.upper())
+            for i in self.incdirs:
+                verilator_mk += "    -I%s/%s/%s \\\n" % (abs_path, self.ip_path, i)
+            verilator_mk += VERILATOR_POSTAMBLE_SUBIP
+        return verilator_mk
 
     def export_vivado(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):
