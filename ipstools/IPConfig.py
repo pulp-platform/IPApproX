@@ -16,6 +16,7 @@ from .vsim_defines           import *
 from .makefile_defines       import *
 from .makefile_defines_ncsim import *
 from .vivado_defines         import *
+from .verilator_defines      import *
 from .synopsys_defines       import *
 from .cadence_defines        import *
 from .SubIPConfig            import *
@@ -91,6 +92,11 @@ class IPConfig(object):
             analyze_script += self.sub_ips[s].export_cadence(self.ip_path, target_tech=target_tech, source=source)
         return analyze_script
 
+    def export_verilator(self, abs_path):
+        verilator_mk = ""
+        for s in self.sub_ips.keys():
+            verilator_mk += self.sub_ips[s].export_verilator(abs_path)
+        return verilator_mk
 
     def export_vivado(self, abs_path):
         vivado_script = ""
@@ -111,10 +117,17 @@ class IPConfig(object):
                 l.append(prepare(s))
         return l
 
-    def generate_vivado_inc_dirs(self):
+    def generate_verilator_src(self):
         l = []
         for s in self.sub_ips.keys():
-            if (("xilinx" in self.sub_ips[s].targets or "all" in  self.sub_ips[s].targets) and ("skip_synthesis" not in self.sub_ips[s].flags)):
-                l.extend(self.sub_ips[s].incdirs)
+            if (("all" in  self.sub_ips[s].targets or "verilator" in self.sub_ips[s].targets) and ("skip_verilator" not in self.sub_ips[s].flags)):
+                l.append(prepare(s))
+        return l
+
+    def generate_verilator_inc_dirs(self):
+        l = []
+        for s in self.sub_ips.keys():
+            if (("all" in  self.sub_ips[s].targets or "verilator" in self.sub_ips[s].targets) and ("skip_verilator" not in self.sub_ips[s].flags)):
+                l.append(prepare(s))
         return l
 

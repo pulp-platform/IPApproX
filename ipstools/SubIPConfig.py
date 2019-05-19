@@ -16,6 +16,7 @@ from .vsim_defines           import *
 from .makefile_defines       import *
 from .makefile_defines_ncsim import *
 from .vivado_defines         import *
+from .verilator_defines      import *
 from .synopsys_defines       import *
 from .cadence_defines        import *
 from .SubIPConfig            import *
@@ -71,6 +72,7 @@ ALLOWED_TARGETS = [
 ALLOWED_FLAGS = [
     'skip_simulation',
     'skip_synthesis',
+    'skip_verilator',
     'skip_tcsh',
     'only_local'
 ]
@@ -275,7 +277,22 @@ class SubIPConfig(object):
                 analyze_cmd += CADENCE_ANALYZE_VHDL_CMD % (self.sub_ip_name, source.upper(), "%s/%s" % (path, f))
         return analyze_cmd
 
-
+    def export_verilator(self, abs_path):
+        if 'all' not in self.targets and 'verilator' not in self.targets:
+            return "\n"
+        if "skip_verilator" in self.flags:
+            return "\n"
+        verilator_mk = VERILATOR_PREAMBLE_SUBIP % (self.sub_ip_name, prepare(self.sub_ip_name.upper()))
+        files = self.files
+        for f in files:
+            verilator_mk += "    %s/%s/%s \\\n" % (abs_path, self.ip_path, f)
+        verilator_mk += VERILATOR_POSTAMBLE_SUBIP
+        if len(self.incdirs) > 0:
+            verilator_mk += VERILATOR_PREAMBLE_SUBIP_INCDIRS % prepare(self.sub_ip_name.upper())
+            for i in self.incdirs:
+                verilator_mk += "    -I%s/%s/%s \\\n" % (abs_path, self.ip_path, i)
+            verilator_mk += VERILATOR_POSTAMBLE_SUBIP
+        return verilator_mk
 
     def export_vivado(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):
@@ -309,19 +326,7 @@ class SubIPConfig(object):
             else:
                 synplify_cmd += "add_file -vhdl %s/%s/%s\n" % (abs_path, self.ip_path, f)
         return synplify_cmd
-
-    def export_verilator(self, abs_path):
-        verilator_cmd = ""
-        if not ("all" in self.targets or "verilator" in self.targets):
-            return ""
-        files = self.files
-        if len(files) == 0:
-            files.extend(self.files)
-        for f in files:
-            if not is_vhdl(f):
-                verilator_cmd += "%s/%s/%s \\\n" % (abs_path, self.ip_path, f)
-        return verilator_cmd
-
+        
     ### management of the Yaml dictionary
 
     def __check_dic(self):
