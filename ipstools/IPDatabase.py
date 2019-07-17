@@ -470,11 +470,14 @@ class IPDatabase(object):
         except OSError:
             print(tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC)
 
-    def update_ips(self, origin='origin'):
+    def update_ips(self, origin='origin', force_downgrade=True):
         """Updates the IPs against the given repository.                    
                  
             :param origin:             The GIT remote to be used (by default 'origin')
             :type  origin: str
+
+            :param force_downgrade:    If true, download specified version even if current version is newer.
+            :type  force_downgrade: bool
 
         This function updates the currently downloaded IPs, after having checked whether the IPs are actually GIT repos and they
         are not in detached mode. If the IPs are not there yet, they are cloned.
@@ -514,11 +517,19 @@ class IPDatabase(object):
                     continue
 
                 # make sure we have the correct branch/tag for the pull
-                ret = execute("%s checkout %s" % (git, ip['commit']))
-                if ret != 0:
-                    print(tcolors.ERROR + "ERROR: could not checkout ip '%s' at %s." % (ip['name'], ip['commit']) + tcolors.ENDC)
-                    errors.append("%s - Could not checkout commit %s" % (ip['name'], ip['commit']));
-                    continue
+                date_current = int(execute_out("%s show -s --format=%%ct HEAD" % git).rstrip())
+                lines = execute_out("%s show -s --format=%%ct %s" % (git, ip['commit'])).splitlines()
+                date_specified = int(lines[-1])
+
+                if (date_current > date_specified) and not force_downgrade:
+                    current_commit = execute_out("%s rev-parse --abbrev-ref HEAD" % git).rstrip().decode('UTF-8')
+                    print(tcolors.WARNING + "Current commit '%s' is more recent than specified commit '%s'.\nAre you trying out a new IP version? Will not downgrade version of ip '%s'" % (current_commit, ip['commit'], ip['name']) + tcolors.ENDC)
+                else:
+                    ret = execute("%s checkout %s" % (git, ip['commit']))
+                    if ret != 0:
+                        print(tcolors.ERROR + "ERROR: could not checkout ip '%s' at %s." % (ip['name'], ip['commit']) + tcolors.ENDC)
+                        errors.append("%s - Could not checkout commit %s" % (ip['name'], ip['commit']));
+                        continue
 
                 # only do the pull if we are not in detached head mode
                 stdout = execute_out("%s rev-parse --abbrev-ref HEAD" % (git))
