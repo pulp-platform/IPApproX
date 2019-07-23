@@ -896,6 +896,46 @@ class IPDatabase(object):
         with open(filename, "w") as f:
             f.write(vsim_tcl)
 
+    def generate_ncsim_command_list(self, script_path="./src_files.f", root='.', source='ips', domain=None, alternatives=[]):
+        """Exports command script to be used for compilation and elaboration in ncsim or Xcelium.
+
+            :param script_path:           The path where the command file is placed relative to the root variable
+            :type  script_path: str
+
+            :param root:                  The path to which the script is placed relative to. By default the current directory.
+            :type  root: str
+
+            :param domain:                If not None, the domain to be targeting for script generation
+            :type  domain: str or None
+
+            :param alternatives:          If not empty, the list of alternative IPs to be actually used.
+            :type  alternatives: list
+
+        This function exports command scripts to be used for simulation with ncsim or Xcelium.
+        """
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        if source=='ips':
+            ip_dic = self.ip_dic
+            # abs_path = '$IPS'
+            abs_path = os.path.abspath(root) + '/' + self.ips_dir
+        elif source=='rtl':
+            ip_dic = self.rtl_dic
+            #abs_path = '$RTL'
+            abs_path = os.path.abspath(root) + '/'+ self.rtl_dir
+        filename = "%s" % (script_path)
+        ncsim_script = ""
+        for i in ip_dic.keys():
+            if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
+                try:
+                    if domain==None or domain in ip_dic[i].domain:
+                        ncsim_script += ip_dic[i].export_ncsim(abs_path)
+                except TypeError:
+                    ncsim_script += ip_dic[i].export_ncsim(abs_path)
+        with open(filename, "w") as f:
+            f.write(ncsim_script)
+
     def generate_ncelab_list(self, filename, source='ips'):
         """Exports the `ncelab.list` list.
                  
