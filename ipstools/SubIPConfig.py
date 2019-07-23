@@ -275,7 +275,23 @@ class SubIPConfig(object):
                 analyze_cmd += CADENCE_ANALYZE_VHDL_CMD % (self.sub_ip_name, source.upper(), "%s/%s" % (path, f))
         return analyze_cmd
 
+    def export_ncsim(self, abs_path):
+        if not ("all" in self.targets or "rtl" in self.targets):
+            return ""
+        if "only_local" in self.flags:
+            return ""
+        if "skip_simulation" in self.flags:
+            return ""
+        ncsim_files = ""
+        if len(self.incdirs) > 0:
+            for i in self.incdirs:
+                ncsim_files +="-incdir "
+                ncsim_files += "%s/%s/%s\n" % (abs_path, self.ip_path, i)
+        files = self.files
+        for f in files:
+            ncsim_files += "%s/%s/%s\n" % (abs_path, self.ip_path, f)
 
+        return ncsim_files
 
     def export_vivado(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):

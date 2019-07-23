@@ -91,6 +91,11 @@ class IPConfig(object):
             analyze_script += self.sub_ips[s].export_cadence(self.ip_path, target_tech=target_tech, source=source)
         return analyze_script
 
+    def export_ncsim(self, abs_path):
+        ncsim_script = ""
+        for s in self.sub_ips.keys():
+            ncsim_script += self.sub_ips[s].export_ncsim(abs_path)
+        return ncsim_script
 
     def export_vivado(self, abs_path):
         vivado_script = ""
