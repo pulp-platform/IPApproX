@@ -45,7 +45,13 @@ ALLOWED_KEYS = [
     'defines',
     'dir',
     'sim_tools',
-    'synth_tools'
+    'synth_tools',
+    'jg_inclibs',
+    'jg_slint_top_name',
+    'jg_slint_clocks',
+    'jg_slint_resets',
+    'jg_slint_elab_opt',
+    'jg_slint_postelab_cmds'
 ]
 MANDATORY_KEYS = [
     'files'
