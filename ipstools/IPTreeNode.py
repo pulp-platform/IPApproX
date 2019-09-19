@@ -118,21 +118,21 @@ class IPTreeNode(object):
                     if g not in conflict_dict[f.node['name']]:
                         conflict_dict[f.node['name']].append(g)
         # evict empty entries from the conflict dictionary
-        removed_keys = []
+        nodes_to_remove = []
         for ck in conflict_dict.keys():
             if len(conflict_dict[ck]) < 1:
-                removed_keys.append(ck)
-        for ck in removed_keys:
+                nodes_to_remove.append(ck)
+        for ck in nodes_to_remove:
             conflict_dict.pop(ck, None)
         # collapse non-conflict entries from the conflict dictionary
         for c in conflict_dict.values():
-            removed_keys = []
+            nodes_to_remove = []
             commits = []
-            for i,ip in enumerate(c):
+            for ip in c:
                 if ip.node['commit'] in commits:
-                    removed_keys.append(i)
+                    nodes_to_remove.append(ip)
                 else:
                     commits.append(ip.node['commit'])
-            for i in removed_keys:
-                c.pop(i)
+            for ip in nodes_to_remove:
+                c.remove(ip)
         return conflict_dict
