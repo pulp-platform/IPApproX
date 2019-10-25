@@ -102,7 +102,9 @@ class IPDatabase(object):
         default_commit='master',
         default_site_dependent_path='./fe/local_ips',
         load_cache=False,
-        verbose=False
+        verbose=False,
+        ips_list_yml_name='ips_list.yml',
+        rtl_list_yml_name='rtl_list.yml'
     ):
         super(IPDatabase, self).__init__()
         self.ips_dir = ips_dir
@@ -115,8 +117,8 @@ class IPDatabase(object):
         self.default_group = default_group
         self.default_commit = default_commit
         self.default_site_dependent_path = default_site_dependent_path
-        ips_list_yml = "%s/ips_list.yml" % (list_path)
-        rtl_list_yml = "%s/rtl_list.yml" % (list_path)
+        ips_list_yml = "%s/%s" % (list_path, ips_list_yml_name)
+        rtl_list_yml = "%s/%s" % (list_path, rtl_list_yml_name)
         try:
             self.ip_list = load_ips_list(ips_list_yml)
         except IOError:
