@@ -98,6 +98,12 @@ class IPConfig(object):
             verilator_mk += self.sub_ips[s].export_verilator(abs_path)
         return verilator_mk
 
+    def export_ncsim(self, abs_path):
+        ncsim_script = ""
+        for s in self.sub_ips.keys():
+            ncsim_script += self.sub_ips[s].export_ncsim(abs_path)
+        return ncsim_script
+
     def export_vivado(self, abs_path):
         vivado_script = ""
         for s in self.sub_ips.keys():

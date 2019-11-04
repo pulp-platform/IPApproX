@@ -46,7 +46,13 @@ ALLOWED_KEYS = [
     'defines',
     'dir',
     'sim_tools',
-    'synth_tools'
+    'synth_tools',
+    'jg_inclibs',
+    'jg_slint_top_name',
+    'jg_slint_clocks',
+    'jg_slint_resets',
+    'jg_slint_elab_opt',
+    'jg_slint_postelab_cmds'
 ]
 MANDATORY_KEYS = [
     'files'
@@ -293,6 +299,24 @@ class SubIPConfig(object):
                 verilator_mk += "    -I%s/%s/%s \\\n" % (abs_path, self.ip_path, i)
             verilator_mk += VERILATOR_POSTAMBLE_SUBIP
         return verilator_mk
+
+    def export_ncsim(self, abs_path):
+        if not ("all" in self.targets or "rtl" in self.targets):
+            return ""
+        if "only_local" in self.flags:
+            return ""
+        if "skip_simulation" in self.flags:
+            return ""
+        ncsim_files = ""
+        if len(self.incdirs) > 0:
+            for i in self.incdirs:
+                ncsim_files +="-incdir "
+                ncsim_files += "%s/%s/%s\n" % (abs_path, self.ip_path, i)
+        files = self.files
+        for f in files:
+            ncsim_files += "%s/%s/%s\n" % (abs_path, self.ip_path, f)
+
+        return ncsim_files
 
     def export_vivado(self, abs_path):
         if not ("all" in self.targets or "xilinx" in self.targets):
