@@ -536,7 +536,10 @@ class IPDatabase(object):
                 # only do the pull if we are not in detached head mode
                 stdout = execute_out("%s rev-parse --abbrev-ref HEAD" % (git))
                 if stdout[:4].decode(sys.stdout.encoding) != "HEAD":
-                    ret = execute("%s pull --ff-only %s %s" % (git, origin, ip['commit']))
+                    if (date_current > date_specified) and not force_downgrade:
+                        ret = execute("%s pull --ff-only %s %s" % (git, origin, current_commit))
+                    else:
+                        ret = execute("%s pull --ff-only %s %s" % (git, origin, ip['commit']))
                     if ret != 0:
                         print(tcolors.ERROR + "ERROR: could not update ip '%s'" % ip['name'] + tcolors.ENDC)
                         errors.append("%s - Could not update" % (ip['name']));
