@@ -542,6 +542,8 @@ class IPDatabase(object):
                 # compose remote name
                 server = ip['server'] if ip['server'] is not None else self.default_server
                 group  = ip['group']  if ip['group']  is not None else self.default_group
+                server_runner = "https://gitlab-ci-token:${CI_JOB_TOKEN}@${GITLAB}"
+                rmt = "%s/%s" % (server_runner, grooup)
                 if server[:5] == "https" or server[:6] == "git://":
                     ip['remote'] = "%s/%s" % (server, group)
                 else:
@@ -549,9 +551,13 @@ class IPDatabase(object):
 
                 ret = execute("%s clone %s/%s.git %s" % (git, ip['remote'], ip['name'], ip['path']))
                 if ret != 0:
-                    print(tcolors.ERROR + "ERROR: could not clone, you probably have to remove the '%s' directory." % ip['name'] + tcolors.ENDC)
-                    errors.append("%s - Could not clone" % (ip['name']));
-                    continue
+                    print(tcolors.ERROR + "ERROR: could not clone, try with CI runner to clone '%s' directory." % ip['name'] + tcolors.ENDC)
+                    #errors.append("%s - Could not clone" % (ip['name']));
+                    ret2 = execute("%s clone %s/%s.git %s" % (git, rmt, ip['name'], ip['path']))
+                    if ret2 != 0:
+                        print(tcolors.ERROR + "ERROR: could not clone, you probably have to remove the '%s' directory." % ip['name'] + tcolors.ENDC)
+                        errors.append("%s - Could not clone" % (ip['name']));
+                        continue
                 os.chdir("./%s" % ip['path'])
                 ret = execute("%s checkout %s" % (git, ip['commit']))
                 if ret != 0:
