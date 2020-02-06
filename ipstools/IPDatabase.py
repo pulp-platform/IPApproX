@@ -543,7 +543,7 @@ class IPDatabase(object):
                 server = ip['server'] if ip['server'] is not None else self.default_server
                 group  = ip['group']  if ip['group']  is not None else self.default_group
                 server_runner = "https://gitlab-ci-token:${CI_JOB_TOKEN}@${GITLAB}"
-                rmt = "%s/%s" % (server_runner, grooup)
+                rmt = "%s/%s" % (server_runner, group)
                 if server[:5] == "https" or server[:6] == "git://":
                     ip['remote'] = "%s/%s" % (server, group)
                 else:
