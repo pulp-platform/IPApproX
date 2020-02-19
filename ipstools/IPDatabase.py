@@ -584,6 +584,83 @@ class IPDatabase(object):
             sys.exit(1)
         os.chdir(owd)
 
+    def flatten_ips(self, origin='origin', squash=False, dry_run=False):
+        """Merges in all IPs as subtrees into this repository. The result is a
+        flattened repository with a merged history of all IPs' histories. This
+        is manually reversible.
+
+            :param origin:             The GIT remote to be used (by default 'origin')
+            :type  origin: str
+
+            :param squash:             If true, squash the IPs' history before flattening (merging) them.
+            :type  squash: bool
+
+            :param dry_run:            If true, just pretend to flatten. Useful for seeing what commands are being run.
+            :type  dry_run: bool
+
+        """
+        errors = []
+        ips = self.ip_list
+        git = "git"
+        # make sure we are in the correct directory to start
+        owd = os.getcwd()
+        os.chdir(self.ips_dir)
+        cwd = os.getcwd()
+
+        for ip in ips:
+            # check if path is SITE_DEPENDENT, in that case skip it
+            if ip['path'][:20] == "$SITE_DEPENDENT_PATH":
+                continue
+
+            os.chdir(cwd)
+            # check if directory already exists, this hints to the fact that we probably already cloned it
+            if os.path.isdir("./%s" % ip['path']):
+                errors.append("""%s - %s: exists already. git subtree only works when the path is not yet
+                existing""" % (ip['name'], ip['path']));
+
+            # Not yet cloned, so we have to do that first
+            else:
+                os.chdir(owd)
+
+                print(tcolors.OK + "\nFlattening IP '%s'..." % ip['name'] + tcolors.ENDC)
+
+
+                # compose remote name
+                server = ip['server'] if ip['server'] is not None else self.default_server
+                group  = ip['group']  if ip['group']  is not None else self.default_group
+                if server[:5] == "https" or server[:6] == "git://":
+                    ip['remote'] = "%s/%s" % (server, group)
+                else:
+                    ip['remote'] = "%s:%s" % (server, group)
+
+                flatten_cmd = ("%s subtree add --prefix ips/%s%s %s/%s.git %s" %
+                               (git, ip['path'], ' --squash' if squash else '',
+                                ip['remote'], ip['name'], ip['commit']))
+                print(flatten_cmd)
+
+                ret = 0
+                if not(dry_run):
+                    ret = execute(flatten_cmd)
+                if ret != 0:
+                    print(tcolors.ERROR + """ERROR: could not git subtree, the remote probably
+doesn't exist OR is not reachable. You can try to refer to tags. You could also try to to remove
+the '%s' directory.""" % ip['name'] + tcolors.ENDC)
+                    errors.append("%s - Could not git subtree" % (ip['name']));
+                    continue
+
+        os.chdir(cwd)
+        print('\n\n')
+        print(tcolors.WARNING + "SUMMARY" + tcolors.ENDC)
+        if len(errors) == 0:
+            print(tcolors.OK + "IPs flattened (merged) successfully!!" + tcolors.ENDC)
+        else:
+            for error in errors:
+                print(tcolors.ERROR + '    %s' % (error) + tcolors.ENDC)
+            print()
+            print(tcolors.ERROR + "ERRORS during IP flattening!" + tcolors.ENDC)
+            sys.exit(1)
+        os.chdir(owd)
+
     def delete_tag_ips(self, tag_name):
         """Deletes a tag for all IPs.                    
                  
