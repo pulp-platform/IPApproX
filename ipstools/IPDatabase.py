@@ -798,7 +798,7 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
             commit, err = execute_popen("git log -n 1 --format=format:%H", silent=True).communicate()
             unstaged_changes, err = execute_popen("git diff --name-only").communicate()
             staged_changes, err = execute_popen("git diff --cached --name-only").communicate()
-            if staged_changes.split("\n")[0] != "":
+            if staged_changes.decode().split("\n")[0] != "":
                 if changes_severity == 'warning':
                     print(tcolors.WARNING + "WARNING: skipping ip '%s' as it has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve and commit manually.")
                     os.chdir(cwd)
@@ -806,7 +806,7 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
                 else:
                     print(tcolors.ERROR + "ERROR: ip '%s' has changes staged for commit." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to get latest version.")
                     sys.exit(1)
-            if unstaged_changes.split("\n")[0] != "":
+            if unstaged_changes.decode().split("\n")[0] != "":
                 if changes_severity == 'warning':
                     print(tcolors.WARNING + "WARNING: skipping ip '%s' as it has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve and commit manually.")
                     os.chdir(cwd)
@@ -814,7 +814,7 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
                 else:
                     print(tcolors.ERROR + "ERROR: ip '%s' has unstaged changes." % ip['name'] + tcolors.ENDC + "\nSolve and commit before trying to get latest version.")
                     sys.exit(1)
-            new_ips.append({'name': ip['name'], 'path': ip['path'], 'server': ip['server'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'group': ip['group'], 'commit': "%s" % commit})
+            new_ips.append({'name': ip['name'], 'path': ip['path'], 'server': ip['server'], 'domain': ip['domain'], 'alternatives': ip['alternatives'], 'group': ip['group'], 'commit': "%s" % commit.decode()})
             os.chdir(cwd)
 
         store_ips_list(new_ips_list, new_ips)
