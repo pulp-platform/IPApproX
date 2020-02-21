@@ -409,8 +409,8 @@ class IPDatabase(object):
                 os.chdir("%s/%s" % (self.ips_dir, ip['path']))
                 output, err = execute_popen("git diff --name-only").communicate()
                 unstaged_out = ""
-                if output.split("\n")[0] != "":
-                    for line in output.split("\n"):
+                if output.decode().split("\n")[0] != "":
+                    for line in output.decode().split("\n"):
                         l = line.split()
                         try:
                             unstaged_out += "%s%s\n" % (prepend, l[0])
@@ -418,8 +418,8 @@ class IPDatabase(object):
                             break
                 output, err = execute_popen("git diff --cached --name-only").communicate()
                 staged_out = ""
-                if output.split("\n")[0] != "":
-                    for line in output.split("\n"):
+                if output.decode().split("\n")[0] != "":
+                    for line in output.decode().split("\n"):
                         l = line.split()
                         try:
                             staged_out += "%s%s\n" % (prepend, l[0])
@@ -756,7 +756,7 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
                 output, err = execute_popen("git diff --name-only tags/%s" % newest_tag).communicate()
             else:
                 output = ""
-            if output.split("\n")[0] != "" or newest_tag=="" or tag_always:
+            if output.decode().split("\n")[0] != "" or newest_tag=="" or tag_always:
                 ret = execute("git tag %s" % tag_name)
                 if ret != 0:
                     print(tcolors.WARNING + "WARNING: could not tag ip '%s', probably the tag already exists." % (ip['name']) + tcolors.ENDC)
