@@ -246,8 +246,8 @@ class SubIPConfig(object):
             return "\n"
         if "skip_synthesis" in self.flags:
             return "\n"
-        if not ("all" in self.synth_tools or "dc" in self.synth_tools):            
-            return "\n"            
+        if not ("all" in self.synth_tools or "dc" in self.synth_tools):
+            return "\n"
         analyze_cmd = SYNOPSYS_ANALYZE_PREAMBLE_SUBIP % (self.sub_ip_name)
         defines = ""
         for d in self.defines:
@@ -269,7 +269,7 @@ class SubIPConfig(object):
             return "\n"
         if "skip_synthesis" in self.flags:
             return "\n"
-        if not ("all" in self.synth_tools or "genus" in self.synth_tools):            
+        if not ("all" in self.synth_tools or "genus" in self.synth_tools):
             return "\n"
         analyze_cmd = CADENCE_ANALYZE_PREAMBLE_SUBIP % (self.sub_ip_name)
         defines = ""
@@ -462,4 +462,3 @@ class SubIPConfig(object):
         except KeyError:
             vcom_opts = ""
         return vcom_opts
-

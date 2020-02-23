@@ -78,7 +78,7 @@ class IPDatabase(object):
       1. resolving the IP hierarchy, including dependency conflicts
       2. downloading the necessary IP set
       3. generating scripts for a number of backends
-    If `build_deps_tree` and `resolve_deps_conflicts` are set to True, the hierarchical IP flow will be started and the 
+    If `build_deps_tree` and `resolve_deps_conflicts` are set to True, the hierarchical IP flow will be started and the
     user will be asked to resolve IP version conflicts manually in case different version of IPs are referenced throughout
     the dependency tree.
 
@@ -231,7 +231,7 @@ class IPDatabase(object):
         """Saves the IP database state in a cache JSON gzipped file.
 
             :param filename:     Name fo the JSON cache file (defaults to '.cached_ipdb.json.gz').
-            :type  filename: str                         
+            :type  filename: str
 
         This function saves the IP database state in a cache JSON gzipped file.
 
@@ -255,7 +255,7 @@ class IPDatabase(object):
         """Loads the IP database state from a cache JSON gzipped file.
 
             :param filename:     Name fo the JSON cache file (defaults to '.cached_ipdb.json.gz').
-            :type  filename: str                         
+            :type  filename: str
 
         This function loads the IP database state from a cache JSON gzipped file.
 
@@ -296,7 +296,7 @@ class IPDatabase(object):
         print(tcolors.OK + "Generated IP dependency tree." + tcolors.ENDC)
 
     def resolve_deps_conflicts(self, verbose=False):
-        """Resolves the IP dependency conflicts in the IP hierarchical flow.                    
+        """Resolves the IP dependency conflicts in the IP hierarchical flow.
 
             :param verbose:             If true, prints all information on the dependencies that are being fetched.
             :type  verbose: bool
@@ -351,7 +351,7 @@ class IPDatabase(object):
         return new_ips_list
 
     def import_yaml(self, ip_name, filename, ip_path, domain=None, alternatives=None, ips_dic=None, ips_dir=None):
-        """Generates a new :class:`IPConfig` for an IP and adds it to the :class:`IPDatabase` internal dictionary.                    
+        """Generates a new :class:`IPConfig` for an IP and adds it to the :class:`IPDatabase` internal dictionary.
 
             :param ip_name:             Name of the IP
             :type  ip_name: str
@@ -363,16 +363,16 @@ class IPDatabase(object):
             :type  ip_path: str
 
             :param domain:              IP domain for multi-domain synthesis (e.g. SOC and CLUSTER)
-            :type  domain: str 
+            :type  domain: str
 
             :param alternatives:        IP alternatives for interchangeable IPs (e.g. riscv vs zero-riscy)
-            :type  alternatives: str 
+            :type  alternatives: str
 
             :param ips_dic:             Dictionary of IPs that is being referenced
-            :type  ips_dic: dict 
+            :type  ips_dic: dict
 
             :param ips_dir:             IPs directory in the local repo
-            :type  ips_dir: str 
+            :type  ips_dir: str
 
         This function calls for the generation of an :class:`IPConfig` for an IP, given an external request.
         """
@@ -397,7 +397,7 @@ class IPDatabase(object):
             print(tcolors.WARNING + "WARNING: Skipped ip '%s' with %s config file as it seems it is already in the ip database." % (ip_name, filename) + tcolors.ENDC)
 
     def diff_ips(self):
-        """Performs `git diff` for each of the IPs referenced by the tool.                    
+        """Performs `git diff` for each of the IPs referenced by the tool.
         """
         prepend = "  "
         ips = self.ip_list
@@ -406,7 +406,7 @@ class IPDatabase(object):
         staged_ips = []
         for ip in ips:
             try:
-                # print "Diffing " + tcolors.WARNING + "%s" % ip['name'] + tcolors.ENDC + "..." 
+                # print "Diffing " + tcolors.WARNING + "%s" % ip['name'] + tcolors.ENDC + "..."
                 os.chdir("%s/%s" % (self.ips_dir, ip['path']))
                 output, err = execute_popen("git diff --name-only").communicate()
                 unstaged_out = ""
@@ -440,7 +440,7 @@ class IPDatabase(object):
         return (unstaged_ips, staged_ips)
 
     def remove_ips(self, skip_check=False):
-        """Removes the currently downloaded IPs.                    
+        """Removes the currently downloaded IPs.
 
             :param skip_check:          If set to True, removes all IPs without checking for changes first
             :type  skip_check: bool
@@ -474,8 +474,8 @@ class IPDatabase(object):
             print(tcolors.WARNING + "WARNING: Not removing %s as there are unknown IPs there." % (self.ips_dir) + tcolors.ENDC)
 
     def update_ips(self, origin='origin', force_downgrade=True):
-        """Updates the IPs against the given repository.                    
-                 
+        """Updates the IPs against the given repository.
+
             :param origin:             The GIT remote to be used (by default 'origin')
             :type  origin: str
 
@@ -663,8 +663,8 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
         os.chdir(owd)
 
     def delete_tag_ips(self, tag_name):
-        """Deletes a tag for all IPs.                    
-                 
+        """Deletes a tag for all IPs.
+
             :param tag_name:        The tag to be removed
             :type  tag_name: str
 
@@ -679,8 +679,8 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
             os.chdir(cwd)
 
     def push_tag_ips(self, tag_name=None):
-        """Pushes a tag for all IPs.                    
-                 
+        """Pushes a tag for all IPs.
+
             :param tag_name:             If not None, the name of the tag - else, the latest tag is pushed.
             :type  tag_name: str or None
 
@@ -714,14 +714,14 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
     #         os.chdir(cwd)
 
     def tag_ips(self, tag_name, changes_severity='warning', tag_always=False, store=False):
-        """Tags all IPs.                    
-                 
+        """Tags all IPs.
+
             :param tag_name:              The name of the tag
-            :type  tag_name: str            
-                 
+            :type  tag_name: str
+
             :param changes_severity:      'warning' or 'error'
-            :type  changes_severity: str  
-                 
+            :type  changes_severity: str
+
             :param tag_always:            If True, tag even if an identical tag already exists
             :type  tag_always: bool
 
@@ -773,18 +773,18 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
         if store:
             store_ips_list("new_ips_list.yml", new_ips)
-        
+
     def get_latest_ips(self, changes_severity='warning', new_ips_list='new_ips_list.yml'):
-        """Collects current versions for all IPs.                    
-                 
+        """Collects current versions for all IPs.
+
             :param tag_name:              The name of the tag
-            :type  tag_name: str            
-                 
+            :type  tag_name: str
+
             :param changes_severity:      'warning' or 'error'
-            :type  changes_severity: str  
+            :type  changes_severity: str
 
             :param new_ips_ist:           Name of the new `ips_list.yml` file (defaults to `new_ips_list.yml`)
-            :type  new_ips_ist: str 
+            :type  new_ips_ist: str
 
         This function collects the latest version of all IPs from the local repo and stores it in a new `ips_list.yml` file.
         If there are changes (staged or unstaged) it will throw a warning, or die if `changes_severity` is set to 'error'.
@@ -822,25 +822,25 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
         store_ips_list(new_ips_list, new_ips)
 
     def export_make(self, abs_path="$(IP_PATH)", script_path="./", more_opts="", source='ips', target_tech=None, local=False, simulator='vsim'):
-        """Exports Makefiles and scripts to build the simulation platform.                    
-                 
+        """Exports Makefiles and scripts to build the simulation platform.
+
             :param abs_path:              The path to be used in Makefiles to find the IPs
-            :type  abs_path: str            
-                 
+            :type  abs_path: str
+
             :param script_path:           The path where the Makefiles are collected
-            :type  script_path: str  
+            :type  script_path: str
 
             :param source:                Can be set to 'ips' or 'rtl' to use the `ips_list.yml` IPs or `rtl_list.yml` IPs respectively
-            :type  source: str 
+            :type  source: str
 
             :param target_tech:           Target silicon / FPGA technology to be used for script generation
-            :type  target_tech: None or str 
+            :type  target_tech: None or str
 
             :param local:                 If set to True, files set to be used only locally (e.g. specific IP testbenches) are built
-            :type  local: bool 
+            :type  local: bool
 
             :param simulator:             'vsim' or 'ncsim'
-            :type  simulator: str 
+            :type  simulator: str
 
         This function exports Makefiles and scripts to build the simulation platform to be used with Mentor ModelSim/QuestaSim or Cadence NCSim.
         """
@@ -859,15 +859,15 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
     def export_synopsys(self, script_path=".", target_tech=None, source='ips', domain=None):
         """Exports analyze scripts to be used for ASIC synthesis in Synopsys Design Compiler.
-                 
+
             :param script_path:           The path where the Makefiles are collected
-            :type  script_path: str  
+            :type  script_path: str
 
             :param target_tech:           Target silicon technology to be used for script generation
-            :type  target_tech: None str 
+            :type  target_tech: None str
 
             :param domain:                If not None, the domain to be targeting for script generation
-            :type  domain: str or None 
+            :type  domain: str or None
 
         This function exports analyze scripts to be used for ASIC synthesis in Synopsys Design Compiler.
         """
@@ -894,15 +894,15 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
     def export_cadence(self, script_path=".", target_tech='tsmc55', source='ips', domain=None):
         """Exports analyze scripts to be used for ASIC synthesis in Cadence RTL Compiler.
-                 
+
             :param script_path:           The path where the Makefiles are collected
-            :type  script_path: str  
+            :type  script_path: str
 
             :param target_tech:           Target silicon technology to be used for script generation
-            :type  target_tech: str 
+            :type  target_tech: str
 
             :param domain:                If not None, the domain to be targeting for script generation
-            :type  domain: str or None 
+            :type  domain: str or None
 
         This function exports analyze scripts to be used for ASIC synthesis in Cadence RTL Compiler.
         """
@@ -970,18 +970,18 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
     def export_vivado(self, script_path="./src_files.tcl", root='.', source='ips', domain=None, alternatives=[]):
         """Exports analyze scripts to be used for FPGA synthesis in Xilinx Vivado.
-                    
+
             :param script_path:           The path where the Makefiles are collected
-            :type  script_path: str  
+            :type  script_path: str
 
             :param target_tech:           Target silicon technology to be used for script generation
-            :type  target_tech: str 
+            :type  target_tech: str
 
             :param domain:                If not None, the domain to be targeting for script generation
-            :type  domain: str or None 
+            :type  domain: str or None
 
             :param alternatives:          If not empty, the list of alternative IPs to be actually used.
-            :type  alternatives: list 
+            :type  alternatives: list
 
         This function exports analyze scripts to be used for FPGA synthesis in Xilinx Vivado.
         """
@@ -1008,12 +1008,12 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
     def generate_vsim_tcl(self, filename, source='ips'):
         """Exports the `vsim.tcl` script.
-                 
+
             :param filename:              Output TCL script file name.
             :type  filename: str
-                    
+
             :param source:                'ips' or 'rtl'
-            :type  source: str  
+            :type  source: str
 
         This function exports the `vsim.tcl` script necessary to perform the `vopt` or `vsim` stage in ModelSim/QuestaSim.
         """
@@ -1073,12 +1073,12 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
     def generate_ncelab_list(self, filename, source='ips'):
         """Exports the `ncelab.list` list.
-                 
+
             :param filename:              Output ncelab list file name.
             :type  filename: str
-                    
+
             :param source:                'ips' or 'rtl'
-            :type  source: str  
+            :type  source: str
 
         This function exports the `ncelab.list` script necessary to perform the `ncelab` stage in NCsim.
         """
@@ -1097,18 +1097,18 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
     def generate_synopsys_list(self, filename, source='ips', analyze_path='analyze', domain=None):
         """Exports the a TCL list of Synopsys analyze scripts.
-                 
+
             :param filename:              Output script file name.
             :type  filename: str
-                    
+
             :param source:                'ips' or 'rtl'
-            :type  source: str  
+            :type  source: str
 
             :param analyze_path:          Path to analyze scripts.
             :type  analyze_path: str
 
             :param domain:                If not None, the domain to be targeting for script generation
-            :type  domain: str or None 
+            :type  domain: str or None
 
         This function exports a script with a list of analyze scripts to be called for the given IP domain.
         """
@@ -1131,15 +1131,15 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
     def generate_makefile(self, filename, target_tech=None, source='ips'):
         """Exports the mid-level Makefiles for simulation.
-                 
+
             :param filename:              Output Makefile file name.
             :type  filename: str
-                    
+
             :param target_tech:           Target silicon or FPGA technology.
-            :type  target_tech: str or None  
-                    
+            :type  target_tech: str or None
+
             :param source:                'ips' or 'rtl'
-            :type  source: str  
+            :type  source: str
 
         This function exports the mid-level Makefiles for building the simulation platform.
         """
@@ -1227,21 +1227,21 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
     def generate_vivado_add_files(self, filename, domain=None, source='ips', alternatives=[]):
         """Exports the Vivado `add_files` script.
-                 
+
             :param filename:              Output script file name.
             :type  filename: str
 
             :param domain:                If not None, the domain to be targeting for script generation
-            :type  domain: str or None 
-                    
+            :type  domain: str or None
+
             :param target_tech:           Target silicon or FPGA technology.
-            :type  target_tech: str or None  
-                    
+            :type  target_tech: str or None
+
             :param source:                'ips' or 'rtl'
-            :type  source: str  
+            :type  source: str
 
             :param alternatives:          If not empty, the list of alternative IPs to be actually used.
-            :type  alternatives: list 
+            :type  alternatives: list
 
         Exports the Vivado `add_files` script.
         """
@@ -1268,21 +1268,21 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
     def generate_vivado_inc_dirs(self, filename, domain=None, root='.', source='ips', alternatives=[]):
         """Exports the Vivado `inc_dirs` script.
-                 
+
             :param filename:              Output script file name.
             :type  filename: str
 
             :param domain:                If not None, the domain to be targeting for script generation
-            :type  domain: str or None 
-                    
+            :type  domain: str or None
+
             :param target_tech:           Target silicon or FPGA technology.
-            :type  target_tech: str or None  
-                    
+            :type  target_tech: str or None
+
             :param source:                'ips' or 'rtl'
-            :type  source: str  
+            :type  source: str
 
             :param alternatives:          If not empty, the list of alternative IPs to be actually used.
-            :type  alternatives: list 
+            :type  alternatives: list
 
         Exports the Vivado `inc_dirs` script.
         """
@@ -1315,4 +1315,3 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
         vivado_inc_dirs += VIVADO_INC_DIRS_POSTAMBLE
         with open(filename, "w") as f:
             f.write(vivado_inc_dirs)
-

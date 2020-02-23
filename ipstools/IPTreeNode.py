@@ -17,28 +17,28 @@ class IPTreeNode(object):
     """Represents a node in the IP hierarchy tree.
 
         :param node:                Dictionary representing the current IP.
-        :type  node: dict    
+        :type  node: dict
 
         :param default_server:      (Default) git remote repository to be used.
-        :type  default_server: str                         
+        :type  default_server: str
 
         :param default_group:       (Default) group to consider in the Git remote repository.
-        :type  default_group: str                  
+        :type  default_group: str
 
         :param default_commit:      (Default) branch / tag / commit hash to consider in the Git remote repository.
-        :type  default_commit: str            
+        :type  default_commit: str
 
         :param children:            Normally is None - used only to provide a children list to the root :class:`IPTreeNode`.
-        :type  children: list                
+        :type  children: list
 
         :param father:              Dictionary representing the father of the current IP (None for the root :class:`IPTreeNode`).
-        :type  father: dict                 
+        :type  father: dict
 
         :param verbose:             If true, prints all information on the dependencies that are being fetched.
         :type  verbose: bool
 
     This class represents a node in the IP hierarchy tree. It is used to construct
-    the list of all dependencies so that it is possible to resolve conflicts.                       
+    the list of all dependencies so that it is possible to resolve conflicts.
 
     """
 
@@ -87,7 +87,7 @@ class IPTreeNode(object):
     def flattenize_children(self):
         """Constructs a flat list of all descendant IPTreeNode's.
 
-            :returns: `list` -- Flat list of all descendants of self.                 
+            :returns: `list` -- Flat list of all descendants of self.
 
         """
 

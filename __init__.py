@@ -14,4 +14,3 @@ __all__ = [ "ipstools" ]
 __path__ = [ "ipstools" ]
 
 from .ipstools import *
-
