@@ -928,21 +928,21 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
                         f.write(analyze_script)
 
     def export_verilator(self, script_path="Makefile.verilator", root='.', source='ips', domain=None, alternatives=[]):
-        """Exports analyze scripts to be used for FPGA synthesis in Xilinx Vivado.
-                    
-            :param script_path:           The path where the Makefiles are collected
-            :type  script_path: str  
+        """Exports a Makefile to be used to build a verilator simulation flow
 
-            :param target_tech:           Target silicon technology to be used for script generation
-            :type  target_tech: str 
+            :param script_path:           The path where the Makefiles are collected
+            :type  script_path: str
+
+            :param root:                  The path to which the script is placed relative to. By default the current directory.
+            :type  root: str
 
             :param domain:                If not None, the domain to be targeting for script generation
-            :type  domain: str or None 
+            :type  domain: str or None
 
             :param alternatives:          If not empty, the list of alternative IPs to be actually used.
-            :type  alternatives: list 
+            :type  alternatives: list
 
-        This function exports analyze scripts to be used for FPGA synthesis in Xilinx Vivado.
+        This function exports a Makefile to be used to build a verilator simulation flow
         """
         if source not in ALLOWED_SOURCES:
             print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
