@@ -333,7 +333,7 @@ class IPDatabase(object):
             signal.signal(signal.SIGINT, signal.default_int_handler)
             while not flag:
                 try:
-                    std_in = raw_input("Select the desired alternative (1-%d, CTRL+C to exit hierarchical flow): " % (len(conflicts[c])))
+                    std_in = input("Select the desired alternative (1-%d, CTRL+C to exit hierarchical flow): " % (len(conflicts[c])))
                 except KeyboardInterrupt:
                     print(tcolors.WARNING + "\nEscaped from IP choice, switching from hierarchical IP flow to flat IP flow." + tcolors.ENDC)
                     return
