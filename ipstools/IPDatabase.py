@@ -15,6 +15,7 @@ from .IPApproX_common import *
 from .IPTreeNode import *
 from .vsim_defines import *
 from .vivado_defines import *
+from .verilator_defines import *
 from .makefile_defines import *
 from .makefile_defines_ncsim import *
 from .IPConfig import *
@@ -926,6 +927,46 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
                     with open(filename, "w") as f:
                         f.write(analyze_script)
 
+    def export_verilator(self, script_path="Makefile.verilator", root='.', source='ips', domain=None, alternatives=[]):
+        """Exports a Makefile to be used to build a verilator simulation flow
+
+            :param script_path:           The path where the Makefiles are collected
+            :type  script_path: str
+
+            :param root:                  The path to which the script is placed relative to. By default the current directory.
+            :type  root: str
+
+            :param domain:                If not None, the domain to be targeting for script generation
+            :type  domain: str or None
+
+            :param alternatives:          If not empty, the list of alternative IPs to be actually used.
+            :type  alternatives: list
+
+        This function exports a Makefile to be used to build a verilator simulation flow
+        """
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: export_make() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        if source=='ips':
+            ip_dic = self.ip_dic
+            abs_path = '${IPS}'
+        elif source=='rtl':
+            ip_dic = self.rtl_dic
+            abs_path = '${RTL}'
+        filename = "%s" % (script_path)
+        verilator_mk = VERILATOR_PREAMBLE % (os.path.abspath(root), self.rtl_dir, os.path.abspath(root), self.ips_dir)
+        for i in ip_dic.keys():
+            if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
+                try:
+                    if domain==None or domain in ip_dic[i].domain:
+                        verilator_mk += ip_dic[i].export_verilator(abs_path)
+                except TypeError:
+                    verilator_mk += ip_dic[i].export_verilator(abs_path)
+        verilator_mk += self.generate_verilator_inc_dirs(source=source)
+        verilator_mk += "\n\n"
+        verilator_mk += self.generate_verilator_src(source=source)
+        with open(filename, "w") as f:
+            f.write(verilator_mk)
 
     def export_vivado(self, script_path="./src_files.tcl", root='.', source='ips', domain=None, alternatives=[]):
         """Exports analyze scripts to be used for FPGA synthesis in Xilinx Vivado.
@@ -1141,6 +1182,48 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
         vcompile_libs += "\n"
         with open(filename, "w") as f:
             f.write(vcompile_libs)
+
+    def generate_verilator_src(self, domain=None, source='ips', alternatives=[]):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: generate_verilator_src() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        if source=='ips':
+            ip_dic = self.ip_dic
+        elif source=='rtl':
+            ip_dic = self.rtl_dic
+        l = []
+        verilator_src = "SRC_%s=" % (source.upper())
+        for i in ip_dic.keys():
+            if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
+                try:
+                    if domain==None or domain in ip_dic[i].domain:
+                        l.extend(ip_dic[i].generate_verilator_src())
+                except TypeError:
+                    l.extend(ip_dic[i].generate_verilator_src())
+        for el in l:
+            verilator_src += VERILATOR_ADD_FILES_CMD % el.upper()
+        return verilator_src
+
+    def generate_verilator_inc_dirs(self, domain=None, source='ips', alternatives=[]):
+        if source not in ALLOWED_SOURCES:
+            print(tcolors.ERROR + "ERROR: generate_verilator_src() accepts source='ips' or source='rtl', check generate_scripts.py." + tcolors.ENDC)
+            sys.exit(1)
+        if source=='ips':
+            ip_dic = self.ip_dic
+        elif source=='rtl':
+            ip_dic = self.rtl_dic
+        l = []
+        verilator_src = "INC_%s=" % (source.upper())
+        for i in ip_dic.keys():
+            if ip_dic[i].alternatives==None or set.intersection(set([ip_dic[i].ip_name]), set(alternatives), set(ip_dic[i].alternatives))!=set([]):
+                try:
+                    if domain==None or domain in ip_dic[i].domain:
+                        l.extend(ip_dic[i].generate_verilator_inc_dirs())
+                except TypeError:
+                    l.extend(ip_dic[i].generate_verilator_inc_dirs())
+        for el in l:
+            verilator_src += VERILATOR_INC_DIRS_CMD % el.upper()
+        return verilator_src
 
     def generate_vivado_add_files(self, filename, domain=None, source='ips', alternatives=[]):
         """Exports the Vivado `add_files` script.
