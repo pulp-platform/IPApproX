@@ -186,7 +186,10 @@ class SubIPConfig(object):
             for d in self.defines:
                 defines = "%s +define+%s" % (defines, d)
             vlog_rule += mk_buildcmd_svlog % ("%s %s %s" % (more_opts, vlog_opts, defines), self.sub_ip_name.upper(), self.sub_ip_name.upper())
-            vlog_rule += "\n\t"
+            vlog_rule += "\n"
+            # only add tab if we have vhdl files to add too. Prevents spurious tabs in generated Makefile
+            if len(vhdl_files) > 0:
+                vlog_rule += "\t"
         if len(vhdl_files) > 0:
             vlog_rule += mk_buildcmd_vhdl % ("%s %s" % (more_opts, vcom_opts), self.sub_ip_name.upper())
             vlog_rule += "\n"
