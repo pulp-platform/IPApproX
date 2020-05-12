@@ -151,3 +151,9 @@ class IPConfig(object):
                 l.extend(self.sub_ips[s].incdirs)
         return l
 
+    def generate_synopsys_inc_dirs(self):
+        l = []
+        for s in self.sub_ips.keys():
+            if (("all" in  self.sub_ips[s].targets) and ("skip_synthesis" not in self.sub_ips[s].flags)):
+                l.extend(self.sub_ips[s].incdirs)
+        return l

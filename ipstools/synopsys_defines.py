@@ -25,3 +25,6 @@ SYNOPSYS_ANALYZE_VHDL_CMD = "analyze -format vhdl        -work %s_lib ${%s_PATH}
 SYNOPSYS_ADD_IPS_FILES_CMD = "source scripts/analyze/ips/%s\n"
 SYNOPSYS_ADD_RTL_FILES_CMD = "source scripts/analyze/rtl/%s\n"
 
+SYNOPSYS_INC_DIRS_PREAMBLE  = "set synthesis_include_paths [ list \"%s/%s/includes\" \\\n"
+SYNOPSYS_INC_DIRS_CMD       = " \"%s/%s/%s\" \\\n"
+SYNOPSYS_INC_DIRS_POSTAMBLE = " ] "
