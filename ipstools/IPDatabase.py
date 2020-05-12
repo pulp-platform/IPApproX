@@ -1319,21 +1319,21 @@ the '%s' directory.""" % ip['name'] + tcolors.ENDC)
 
     def generate_synopsys_inc_dirs(self, filename, domain=None, root='.', source='ips', alternatives=[]):
         """Exports the Synopsys `inc_dirs` script.
-                 
+
             :param filename:              Output script file name.
             :type  filename: str
 
             :param domain:                If not None, the domain to be targeting for script generation
-            :type  domain: str or None 
-                    
+            :type  domain: str or None
+
             :param target_tech:           Target silicon or FPGA technology.
-            :type  target_tech: str or None  
-                    
+            :type  target_tech: str or None
+
             :param source:                'ips' or 'rtl'
-            :type  source: str  
+            :type  source: str
 
             :param alternatives:          If not empty, the list of alternative IPs to be actually used.
-            :type  alternatives: list 
+            :type  alternatives: list
 
         Exports the Synopsys `inc_dirs` script.
         """
