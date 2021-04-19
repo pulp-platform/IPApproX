@@ -341,7 +341,7 @@ class IPDatabase(object):
                                 max_version = version.bump_minor()
                                 min_version = max_version.replace(minor = max_version.minor - 1)
                             version_requirements.append((min_version, max_version))
-                            version_node_mapping[version] = el.node
+                            version_node_mapping[version] = el
                         else:
                             print(tcolors.WARNING + "'Commit' value {} is not a valid semantic version. Skipping auto-conflict resolution for IP {}.".format(el.itself['commit'], c))
                             break
