@@ -379,7 +379,8 @@ class IPDatabase(object):
                                 ip_tree_updated = True
             else:
                 print(tcolors.ERROR + "Semantic versioning resolution is enabled but python package 'semver' is not "
-                                      "installed. Not using semantic versioning. Please install semver to resolve this issue (pip install 'semver').")
+                                      "installed.Please install semver to resolve this issue (pip install 'semver').")
+                sys.exit(-1)
 
         conflicts = self.ip_tree.get_conflicts()
 
