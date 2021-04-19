@@ -24,6 +24,12 @@ import json, gzip
 import os, sys
 import re
 
+try:
+    from semver import VersionInfo
+    semver_available = True
+except ImportError:
+    semver_available = False
+
 ALLOWED_SOURCES=[
   "ips",
   "rtl"
@@ -98,6 +104,7 @@ class IPDatabase(object):
         skip_scripts=False,
         build_deps_tree=False,
         resolve_deps_conflicts=False,
+        use_semver_resolution=False,
         default_server="git@github.com",
         default_group='pulp-platform',
         default_commit='master',
@@ -133,7 +140,7 @@ class IPDatabase(object):
         else:
             self.ip_tree = None
         if resolve_deps_conflicts:
-            self.ip_list = self.resolve_deps_conflicts(verbose=verbose)
+            self.ip_list = self.resolve_deps_conflicts(verbose=verbose, use_semver_resolution=use_semver_resolution)
         if load_cache:
             self.load_database()
         if not skip_scripts:
@@ -295,10 +302,11 @@ class IPDatabase(object):
         self.ip_tree = root
         print(tcolors.OK + "Generated IP dependency tree." + tcolors.ENDC)
 
-    def resolve_deps_conflicts(self, verbose=False):
+    def resolve_deps_conflicts(self, verbose=False, use_semver_resolution=False):
         """Resolves the IP dependency conflicts in the IP hierarchical flow.                    
 
             :param verbose:             If true, prints all information on the dependencies that are being fetched.
+            :param use_semver_resolution: bool If true, try to auto-resolve conflicts considering semantic versionsing rules.
             :type  verbose: bool
 
             :returns: `list` -- the final list of IPs after resolving all conflicts.
@@ -312,7 +320,54 @@ class IPDatabase(object):
             if len(conflicts[c]) == 1:
                 selected[c] = conflicts[c][0]
                 continue
+
+            if use_semver_resolution:
+                if semver_available:
+                    # Try generating a list of min version, max version tuples for each conflict node e.g. 1.1.1 would yield a max version (exclussive)
+                    # of 2.0.0, thus the requirement <2.0.0. We use the same requirements like bender to determine compatible versions.
+                    version_requirements = []
+                    version_node_mapping = {}
+                    for el in conflicts[c]:
+                        version_str = el.itself['commit']
+                        version_str = version_str[1:] if version_str.startswith('v') else version_str
+                        #Try parsing the commit value as a semantic version. If it is not, abbort semantic versioning
+                        # resolution for this conflict
+                        if (VersionInfo.isvalid(version_str)):
+                            version = VersionInfo.parse(version_str)
+                            if version.major > 0:
+                                max_version = version.bump_major()
+                                min_version = max_version.replace(major=max_version.major-1)
+                            else:
+                                max_version = version.bump_minor()
+                                min_version = max_version.replace(minor = max_version.minor - 1)
+                            version_requirements.append((min_version, max_version))
+                            version_node_mapping[version] = el.node
+                        else:
+                            print(tcolors.WARNING + "'Commit' value {} is not a valid semantic version. Skipping auto-conflict resolution for IP {}.".format(el.itself['commit'], c))
+                            break
+                    # Now check if all versions are compatible with all requirements. If yes, add it to the list of selected
+                    # IP nodes and proceed with the next conflit, else proceed to manual conflict resolution.
+                    conflict_resolvable = True
+                    for version in version_node_mapping.keys():
+                        if conflict_resolvable:
+                            for min_version, max_version in version_requirements:
+                                if min_version <= version and version < max_version:
+                                    continue
+                                else:
+                                    conflict_resolvable = False
+                                    break
+                    # If there are no conflicts save node with max version as selected node
+                    if conflict_resolvable:
+                        max_version = max(version_node_mapping.keys())
+                        selected[c] = version_node_mapping[max_version]
+                        continue
+                    else:
+                        print(tcolors.WARNING + "Semantic version resolution failed. Versions are incompatible. Proceeding with manual resolution.")
+                else:
+                    print(tcolors.ERROR + "Semantic versioning resolution is enabled but python package 'semver' is not "
+                                          "installed. Not using semantic versioning. Please install semver to resolve this issue (pip install 'semver').")
             print(tcolors.WARNING + "Conflict for IP %s" % c + tcolors.ENDC)
+            # In IPApprox, proper version resolution is not easily possible since this would require to reevaluate conflicts after every resolution.
             for i,el in enumerate(conflicts[c]):
                 if el.father is None:
                     if verbose:
