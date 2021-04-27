@@ -84,6 +84,25 @@ class IPTreeNode(object):
             children.append(IPTreeNode(ip, default_server, default_group, default_commit, father=father_of_children, verbose=verbose))
         self.children = children
 
+    def normalize_dependency(self, dependency):
+        """
+        Traverses the IP tree and replaces each occurency of dependency with different version with the given dependency IPTreenode,
+        thus normalizing the version requirements for all nodes.
+
+        :param dependency:
+        :return:
+        """
+        if self.itself and self.itself['name'] == dependency.itself['name']:
+            return dependency
+        else:
+            normalized_children = []
+            for child in self.children:
+                normalized_children.append(child.normalize_dependency(dependency))
+            self.children = normalized_children
+        return self
+
+
+
     def flattenize_children(self):
         """Constructs a flat list of all descendant IPTreeNode's.
 
