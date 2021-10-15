@@ -135,6 +135,7 @@ class IPDatabase(object):
             self.rtl_list = load_ips_list(rtl_list_yml, skip_commit=True)
         except IOError:
             self.rtl_list = None
+        self.save_database()
         if build_deps_tree:
             self.generate_deps_tree(verbose=verbose)
         else:
