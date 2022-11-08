@@ -122,16 +122,21 @@ def store_ips_list(filename, ips):
         f.write(IPS_LIST_PREAMBLE)
         f.write(yaml.dump(ips_list))
 
-def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', verbose=False):
+def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', access_token=None, verbose=False):
     with open(os.devnull, "w") as devnull:
         rawcontent_failed = False
         ips_list_yml = "   "
-        if "github.com" in server:
+        if "gitlab." in server or "github.com" in server:
             if "tags/" in commit:
                 commit = commit[5:]
+            if "gitlab." in server:
+              host = re.sub(r'^.*(@|//)([^:/]+).*', r'\2', server)
+              url = "https://%s/api/v4/projects/%s%%2F%s/repository/files/ips_list.yml/raw?ref=%s&private_token=%s" % (host, group, name, commit, access_token)
+            else: # assume github
+              url = "https://raw.githubusercontent.com/%s/%s/%s/ips_list.yml" % (group, name, commit)
             if verbose:
-                print("   Fetching ips_list.yml from https://raw.githubusercontent.com/%s/%s/%s/ips_list.yml" % (group, name, commit))
-            cmd = "curl https://raw.githubusercontent.com/%s/%s/%s/ips_list.yml" % (group, name, commit)
+                print("   Fetching ips_list.yml from %s" % (url))
+            cmd = "curl %s" % (url)
             try:
                 curl = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=devnull)
                 cmd = "cat"
@@ -140,9 +145,12 @@ def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpi
             except subprocess.CalledProcessError:
                 rawcontent_failed = True
             ips_list_yml = ips_list_yml.decode(sys.stdout.encoding)
+        if ("gitlab." in server and ips_list_yml[12] in "45"):
+          rawcontent_failed = True;
         if ips_list_yml[:3] == "404":
             ips_list_yml = ""
-        if rawcontent_failed or "github.com" not in server:
+        # Fall back to git archive, which will not work for hashes that don't point to any branch head
+        if rawcontent_failed or ("gitlab." not in server and "github.com" not in server):
             if verbose:
                 print("   Fetching ips_list.yml from %s:%s/%s @ %s" % (server, group, name, commit))
             cmd = "git archive --remote=%s:%s/%s %s ips_list.yml" % (server, group, name, commit)
