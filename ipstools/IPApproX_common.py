@@ -100,6 +100,10 @@ def load_ips_list(filename, skip_commit=False):
         except KeyError:
             group = None
         try:
+            access_token = ips_list[i]['access_token']
+        except KeyError:
+            access_token = None
+        try:
             path = ips_list[i]['path']
         except KeyError:
             path = i
@@ -108,7 +112,7 @@ def load_ips_list(filename, skip_commit=False):
             alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
         except KeyError:
             alternatives = None
-        ips.append({'name': name, 'commit': commit, 'server': server, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
+        ips.append({'name': name, 'commit': commit, 'server': server, 'group': group, 'access_token': access_token, 'path': path, 'domain': domain, 'alternatives': alternatives })
     return ips
 
 def store_ips_list(filename, ips):
@@ -165,8 +169,8 @@ def get_ips_list_yml(server="git@github.com", group='pulp-platform', name='pulpi
                 ips_list_yml = ips_list_yml.decode(sys.stdout.encoding)
     return ips_list_yml
 
-def load_ips_list_from_server(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', verbose=False, skip_commit=False):
-    ips_list_yml = get_ips_list_yml(server, group, name, commit, verbose=verbose)
+def load_ips_list_from_server(server="git@github.com", group='pulp-platform', name='pulpissimo.git', commit='master', access_token=None, verbose=False, skip_commit=False):
+    ips_list_yml = get_ips_list_yml(server, group, name, commit, access_token, verbose=verbose)
     if ips_list_yml is None:
         print("No ips_list.yml gathered for %s" % name)
         return []
@@ -192,6 +196,10 @@ def load_ips_list_from_server(server="git@github.com", group='pulp-platform', na
             except KeyError:
                 group = None
             try:
+                access_token = ips_list[i]['access_token']
+            except KeyError:
+                access_token = None
+            try:
                 path = ips_list[i]['path']
             except KeyError:
                 path = i
@@ -200,7 +208,7 @@ def load_ips_list_from_server(server="git@github.com", group='pulp-platform', na
                 alternatives = list(set.union(set(ips_list[i]['alternatives']), set([name])))
             except KeyError:
                 alternatives = None
-            ips.append({'name': name, 'commit': commit, 'server': server, 'group': group, 'path': path, 'domain': domain, 'alternatives': alternatives })
+            ips.append({'name': name, 'commit': commit, 'server': server, 'group': group, 'access_token': access_token, 'path': path, 'domain': domain, 'alternatives': alternatives })
     except AttributeError:
         # here it fails silently (by design). it means that at the same time
         #  1. the ip's version is a commit hash, not a branch or tag

@@ -71,7 +71,7 @@ class IPTreeNode(object):
             commit = node['commit']
         else:
             commit = default_commit
-        ips = load_ips_list_from_server(server, group, node['name'], commit, verbose=verbose)
+        ips = load_ips_list_from_server(server, group, node['name'], commit, access_token=node['access_token'], verbose=verbose)
         father_of_children = {
             'server' : server,
             'group'  : group,
