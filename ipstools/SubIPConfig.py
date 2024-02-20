@@ -161,7 +161,7 @@ class SubIPConfig(object):
         vhdl_files = ""
         vlog_files = ""
         for f in files:
-            if f[0] == '/':
+            if f[0] == '/' or f[0] == '$':
                 if not is_vhdl(f):
                     vlog_files += "\\\n\t%s" % (f)
                 else:
