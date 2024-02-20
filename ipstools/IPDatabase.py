@@ -600,7 +600,7 @@ class IPDatabase(object):
 
                 # make sure we have the correct branch/tag for the pull
                 date_current = int(execute_out("%s show -s --format=%%ct HEAD" % git).rstrip())
-                lines = execute_out("%s show -s --format=%%ct %s" % (git, ip['commit'])).splitlines()
+                lines = execute_out("%s show -s --format=%%ct %s --" % (git, ip['commit'])).splitlines()
                 date_specified = int(lines[-1])
 
                 if (date_current > date_specified) and not force_downgrade:
